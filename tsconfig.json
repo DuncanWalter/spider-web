@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "allowSyntheticDefaultImports": true,
+    "jsx": "react",
+    "strict": true,
+    "lib": ["es2015"],
+    "downlevelIteration": true,
+    "target": "es6"
+  }
+}
