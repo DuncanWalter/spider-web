@@ -1,5 +1,5 @@
-import { Vertex, MonoVertex, PolyVertex, NullVertex } from './vertex'
 import { mapObjectProps } from './utils'
+import { Vertex, NullVertex, MonoVertex, PolyVertex } from './vertex'
 
 type ResourceMap = {
   [prop: string]: Resource
@@ -16,7 +16,7 @@ type ResourceValues<R extends Resources> = R extends Resource<infer V>
 export class Resource<V = any> {
   static define<R extends Resources, V>(
     dependencies: R,
-    create: (dependency: Readonly<ResourceValues<R>>) => V,
+    create: (dependency: ResourceValues<R>) => V,
   ): Resource<V> {
     if (dependencies !== null) {
       return new Resource(new NullVertex(create))
@@ -56,4 +56,3 @@ export class Resource<V = any> {
 
 export const defineResource = Resource.define
 export const requestResource = Resource.request
-// export const projectResource = Resource.project

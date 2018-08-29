@@ -1,4 +1,6 @@
-import { NullVertex, MonoVertex, PolyVertex } from '../src/vertex'
+import { NullVertex } from '../src/vertex/nullVertex'
+import { MonoVertex } from '../src/vertex/monoVertex'
+import { PolyVertex } from '../src/vertex/polyVertex'
 
 function counter() {
   let i = 0
@@ -215,9 +217,8 @@ test('Deep Vertices push values which equal their cached value', () => {
     },
     shallow: false,
   })
-  const j = new MonoVertex(i, i => i)
   let callCount = 0
-  j.subscribe({
+  i.subscribe({
     push() {
       callCount++
     },
