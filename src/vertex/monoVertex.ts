@@ -1,6 +1,24 @@
 import { Vertex, VertexBehavior } from './vertex'
+import { Just } from '../utils'
 
 type VertexValue<V> = V extends Vertex<any, any, infer T> ? T : never
+
+export type MonoVertexBehavior<I extends Just, V extends Just> =
+  | ((arg: I) => V)
+  | {
+      initialValue: V
+      create(arg: I): V | null
+      shallow?: boolean
+      lazy?: boolean
+      volatile?: boolean
+    }
+  | {
+      initialValue?: V
+      create(arg: I): V
+      shallow?: boolean
+      lazy?: boolean
+      volatile?: boolean
+    }
 
 export class MonoVertex<D extends Vertex, V> extends Vertex<
   D,

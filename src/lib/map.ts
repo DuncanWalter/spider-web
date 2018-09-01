@@ -1,8 +1,10 @@
 import { Vertex } from '../vertex/vertex'
 import { MonoVertex } from '../vertex/monoVertex'
 
+type Just = number | string | symbol | Object
+
 declare module '../vertex/vertex' {
-  interface Vertex<D = any, I = any, V = D> {
+  interface Vertex<D = any, I = any, V extends Just = any> {
     map<O>(
       this: Vertex<D, I, V>,
       mapping: (value: V) => O,

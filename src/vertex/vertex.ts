@@ -1,22 +1,17 @@
 export type VertexValue<V> = V extends Vertex<any, infer Value> ? Value : never
 
-// export type DependencyValues<Dependencies> = Dependencies extends VertexMap
-//   ? { [K in keyof Dependencies]: VertexValue<Dependencies[K]> }
-//   : Dependencies extends Vertex ? VertexValue<Dependencies> : null
-
-// TODO: don't export- the impls should declare their own
 export type VertexBehavior<D, I, V> =
   | ((dependencies: I) => V)
   | {
       initialValue: V
-      mapping(dependencies: I): V | null
+      create(dependencies: I): V | null
       shallow?: boolean
       lazy?: boolean
       volatile?: boolean
     }
   | {
       initialValue?: V
-      mapping(dependencies: I): V
+      create(dependencies: I): V
       shallow?: boolean
       lazy?: boolean
       volatile?: boolean
@@ -27,18 +22,14 @@ interface Pushable<V> {
   push(value: V): void
 }
 
-// let noChange
-// if (!Symbol) {
-//   noChange = ({ unique: 'NO_CHANGE' } as any) as symbol
-// } else {
-//   noChange = Symbol('NO_CHANGE')
-// }
+type Just = number | string | symbol | Object
 
 // TODO: make vertices generic on their dependency values as well?
-export abstract class Vertex<D = any, I = any, V = D> implements Pushable<I> {
+export abstract class Vertex<D = any, I = any, V extends Just = any>
+  implements Pushable<I> {
   private children: (null | Pushable<V>)[] = []
   private childCount: number
-  private mapping: (dependencies: I) => V | null
+  private create: (dependencies: I) => V | null
   private cache: V
   private revoked: boolean
   cachedInput: I
@@ -48,15 +39,15 @@ export abstract class Vertex<D = any, I = any, V = D> implements Pushable<I> {
 
   constructor(behavior: VertexBehavior<D, I, V>, cachedInput: any) {
     if (behavior instanceof Function) {
-      this.mapping = behavior
+      this.create = behavior
       this.shallow = true
       this.lazy = true
       this.volatile = false
       this.revoked = true
       this.cache = invalidCache as any
     } else {
-      const { mapping, shallow, lazy, volatile, initialValue } = behavior
-      this.mapping = mapping
+      const { create, shallow, lazy, volatile, initialValue } = behavior
+      this.create = create
       this.shallow = shallow === undefined ? true : shallow
       this.lazy = lazy === undefined ? true : lazy
       this.volatile = volatile === undefined ? false : volatile
@@ -68,11 +59,12 @@ export abstract class Vertex<D = any, I = any, V = D> implements Pushable<I> {
     this.cachedInput = cachedInput
   }
 
-  revoke() {
+  revoke(value?: V) {
     const lastValue = this.cache
     this.revoked = true
-    if (this.childCount > 0 || !this.lazy) {
-      const newValue = this.mapping(this.cachedInput)
+    if (this.childCount > 0 || !this.lazy || value !== undefined) {
+      const newValue =
+        value !== undefined ? value : this.create(this.cachedInput)
       if (newValue !== null) {
         this.cache = newValue
         this.revoked = false
@@ -103,7 +95,7 @@ export abstract class Vertex<D = any, I = any, V = D> implements Pushable<I> {
     } else if (this.childCount === 0) {
       this.assertCachedDependencyValues()
     }
-    const newValue = this.mapping(this.cachedInput)
+    const newValue = this.create(this.cachedInput)
     this.revoked = false
     if (newValue !== null) {
       this.cache = newValue
@@ -138,6 +130,13 @@ export abstract class Vertex<D = any, I = any, V = D> implements Pushable<I> {
     this.children[subscription] = null
     if (this.childCount === 0) {
       this.propagateUnsubscription()
+    }
+  }
+
+  bind<P>(transform: (state: V, payload: P) => V, payload: P) {
+    const newValue = transform(this.cache, payload)
+    if ((!this.shallow || newValue !== this.cache) && newValue !== null) {
+      this.revoke(newValue)
     }
   }
 }

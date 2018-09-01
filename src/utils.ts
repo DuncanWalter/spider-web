@@ -1,3 +1,6 @@
+// TODO: only use from here (or a special types utils)
+export type Just = number | string | symbol | Object
+
 export function mapObjectProps<
   M extends { [props: string]: any },
   F extends (prop: M[keyof M], key: keyof M) => any

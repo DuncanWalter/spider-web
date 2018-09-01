@@ -188,7 +188,7 @@ test('PolyVertices can be unsubscribed from', () => {
 
 test('Volatile Vertices update on every pull', () => {
   const i = new NullVertex({
-    mapping: counter(),
+    create: counter(),
     volatile: true,
   })
   expect(i.pull()).toEqual(1)
@@ -198,7 +198,7 @@ test('Volatile Vertices update on every pull', () => {
 test('Eager Vertices update when revoked', () => {
   let callCount = 0
   const i = new NullVertex({
-    mapping() {
+    create() {
       return ++callCount
     },
     lazy: false,
@@ -212,7 +212,7 @@ test('Eager Vertices update when revoked', () => {
 
 test('Deep Vertices push values which equal their cached value', () => {
   const i = new NullVertex({
-    mapping() {
+    create() {
       return 1
     },
     shallow: false,
@@ -227,3 +227,58 @@ test('Deep Vertices push values which equal their cached value', () => {
   i.revoke()
   expect(callCount).toEqual(2)
 })
+
+test('Vertices accept functional binding', () => {
+  const n = new NullVertex(() => 1)
+  expect(n.pull()).toEqual(1)
+  n.bind((i, d) => i + d, 1)
+  expect(n.pull()).toEqual(2)
+  n.bind((i, d) => i + d, 1)
+  n.bind((i, d) => i + d, 1)
+  expect(n.pull()).toEqual(4)
+  n.revoke()
+  expect(n.pull()).toEqual(1)
+})
+//
+//
+//
+const gameInstance = defineResource(() => {
+  return {
+    score: 0,
+    hand: [],
+  }
+})
+
+const hand = defineResource(gameInstance, {
+  mapping: game => game.hand,
+  actions: {
+    addCard: (hand, payload, publish) => {
+      hand.push(1)
+      publish(hand)
+    },
+    removeCard: (hand, payload, publish) => {
+      hand.pop()
+      publish(hand)
+    },
+  },
+  shallow: false,
+})
+
+const score = defineResource(gameInstance, {
+  mapping: game => game.score,
+  actions: {
+    addScore: (score, payload, publish) => {
+      publish(score + payload)
+    },
+  },
+})
+
+const gameState = defineResource(
+  { hand, score },
+  {
+    mapping: gameState => gameState,
+    shallow: false,
+  },
+)
+
+connectResources(gameState, MyComponent)
