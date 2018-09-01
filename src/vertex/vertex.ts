@@ -1,6 +1,8 @@
+import { Just } from '../utils'
+
 export type VertexValue<V> = V extends Vertex<any, infer Value> ? Value : never
 
-export type VertexBehavior<D, I, V> =
+export type VertexBehavior<I, V> =
   | ((dependencies: I) => V)
   | {
       initialValue: V
@@ -22,9 +24,6 @@ interface Pushable<V> {
   push(value: V): void
 }
 
-type Just = number | string | symbol | Object
-
-// TODO: make vertices generic on their dependency values as well?
 export abstract class Vertex<D = any, I = any, V extends Just = any>
   implements Pushable<I> {
   private children: (null | Pushable<V>)[] = []
@@ -37,7 +36,7 @@ export abstract class Vertex<D = any, I = any, V extends Just = any>
   shallow?: boolean
   lazy?: boolean
 
-  constructor(behavior: VertexBehavior<D, I, V>, cachedInput: any) {
+  constructor(behavior: VertexBehavior<I, V>, cachedInput: any) {
     if (behavior instanceof Function) {
       this.create = behavior
       this.shallow = true
