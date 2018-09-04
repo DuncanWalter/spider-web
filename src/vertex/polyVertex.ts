@@ -1,5 +1,5 @@
 import { mapObjectProps, Just } from '../utils'
-import { Vertex } from './vertex'
+import { Vertex, VertexConfig } from './vertex'
 
 type VertexMap = {
   [props: string]: Vertex
@@ -9,36 +9,39 @@ type ValueMap<VM extends VertexMap> = {
   [K in keyof VM]: VM[K] extends Vertex<any, any, infer T> ? T : never
 }
 
-export type PolyVertexBehavior<
-  I extends { [prop: string]: Just },
-  V extends Just
-> =
-  | ((arg: I) => V)
-  | {
-      initialValue: V
-      create(arg: I): V | null
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
-  | {
-      initialValue?: V
-      create(arg: I): V
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
-
 export class PolyVertex<D extends VertexMap, V> extends Vertex<
   D,
   ValueMap<D>,
   V
 > {
+  static create<D extends VertexMap, V extends Just>(
+    dependency: D,
+    create: (a: ValueMap<D>) => V,
+    config?: VertexConfig<V>,
+  ): PolyVertex<D, V>
+  static create<D extends VertexMap, V extends Just>(
+    dependency: D,
+    create: (a: ValueMap<D>) => V | null,
+    config?: VertexConfig<V> & { initialValue: V },
+  ): PolyVertex<D, V>
+  static create<D extends VertexMap, V extends Just>(
+    dependency: D,
+    create: (a: ValueMap<D>) => V | null,
+    config?: VertexConfig<V>,
+  ) {
+    return new PolyVertex(dependency, create, config)
+  }
+
   dependencies: D
   subscriptions?: { [K in keyof D]: number }
 
-  constructor(dependencies: D, behavior: PolyVertexBehavior<ValueMap<D>, V>) {
-    super(behavior, {})
+  private constructor(
+    dependencies: D,
+    create: (a: ValueMap<D>) => V | null,
+    config?: VertexConfig<V>,
+  ) {
+    // TODO: unsafe?
+    super(create, {} as any, config)
     this.dependencies = dependencies
     this.cachedInput = {} as any
   }

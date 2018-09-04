@@ -1,10 +1,9 @@
 import { Vertex } from '../vertex/vertex'
 import { MonoVertex } from '../vertex/monoVertex'
-import { NullVertex } from '../vertex'
 
-type Predicate<I, O extends I> = <V extends I>(
-  item: V,
-) => V extends O ? boolean : false
+type Predicate<I, O extends I> = (
+  item: I | O,
+) => typeof item extends O ? boolean : false
 
 type Just = number | string | symbol | Object
 
@@ -22,7 +21,6 @@ declare module '../vertex/vertex' {
   }
 }
 
-// TODO: type declarations
 Vertex.prototype.filter = filter
 
 function filter<D, I, V extends Just, O extends V>(
@@ -35,6 +33,6 @@ function filter<D, I, V extends Just, O extends V>(
     create(value): V | null {
       return predicate(value) ? value : null
     },
-    initialValue: seed !== undefined ? seed : that.cache,
+    initialValue: seed !== undefined ? seed : that.pull(),
   })
 }

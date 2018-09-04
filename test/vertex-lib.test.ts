@@ -22,7 +22,7 @@ test('Vertices can be filtered', () => {
   expect(m.pull()).toEqual(1)
   expect(m.pull()).toEqual(1)
   n.revoke()
-  expect(m.pull()).toEqual(1)
+  expect(m.pull()).toEqual(2)
   n.revoke()
   expect(m.pull()).toEqual(2)
 })

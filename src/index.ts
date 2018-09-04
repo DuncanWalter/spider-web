@@ -1,8 +1,6 @@
 import { mapObjectProps, Just } from './utils'
 import { Vertex, NullVertex, MonoVertex, PolyVertex } from './vertex'
-import { NullVertexBehavior } from './vertex/nullVertex'
-import { MonoVertexBehavior } from './vertex/monoVertex'
-import { PolyVertexBehavior } from './vertex/polyVertex'
+import { VertexConfig } from './vertex/vertex'
 
 type ResourceMap = {
   [prop: string]: Resource
@@ -16,9 +14,10 @@ type ResourceValues<R extends Resources> = R extends Resource<infer V>
   ? V
   : R extends ResourceMap ? { [K in keyof R]: ResourceValue<R[K]> } : never
 
-type Action<V extends Just = any, R = any> = (
+type Action<V extends Just = any, P = any, R = any> = (
+  publish: (value: V) => void,
   state: V,
-  resolve: (value: V) => void,
+  payload: P,
 ) => R
 
 type ActionMap<V extends Just = any> = {
@@ -27,64 +26,69 @@ type ActionMap<V extends Just = any> = {
 
 export class Resource<V extends Just = any, A extends ActionMap = any> {
   static define<R extends Resources, V extends Just>(
-    create: NullVertexBehavior<V>,
+    create: () => V,
+    config?: VertexConfig<V> & { actions?: ActionMap<V> },
+  ): Resource<V>
+  static define<R extends Resources, V extends Just>(
+    create: () => V | null,
+    config: VertexConfig<V> & { actions?: ActionMap<V> } & { initialValue: V },
   ): Resource<V>
   static define<R extends Resources, V extends Just>(
     dependencies: R,
-    create:
-      | MonoVertexBehavior<ResourceValues<R>, V>
-      | PolyVertexBehavior<ResourceValues<R>, V>,
+    create: (a: ResourceValues<R>) => V,
+    config?: VertexConfig<V> & { actions?: ActionMap<V> },
   ): Resource<V>
   static define<R extends Resources, V extends Just>(
-    dependencies: NullVertexBehavior<V> | R,
+    dependencies: R,
+    create: (a: ResourceValues<R>) => V,
+    config: VertexConfig<V> & { actions?: ActionMap<V> } & { initialValue: V },
+  ): Resource<V>
+  static define<R extends Resources, V extends Just>(
+    dependencies: (() => V) | R,
     create?:
-      | MonoVertexBehavior<ResourceValues<R>, V>
-      | PolyVertexBehavior<ResourceValues<R>, V>,
+      | (VertexConfig<V> & { actions?: ActionMap<V> })
+      | ((a: ResourceValues<R>) => V),
+    config?: VertexConfig<V> & { actions?: ActionMap<V> },
   ) {
-    if (create === undefined) {
-      if (dependencies === null) {
-        throw new Error('invalid resource definition')
+    if (dependencies instanceof Function) {
+      if (create) {
+        if (!(create instanceof Function)) {
+          return new Resource(
+            NullVertex.create(dependencies, create),
+            create.actions,
+          )
+        }
+      } else {
+        return new Resource(NullVertex.create(dependencies))
       }
-      if (dependencies instanceof Resource) {
-        throw new Error('invalid resource definition')
-      }
-      if (dependencies instanceof Function) {
-        return new Resource(new NullVertex(dependencies))
-      }
-      if ('create' in dependencies && dependencies.create instanceof Function) {
-        return new Resource(new NullVertex<V>(dependencies))
-      }
-      throw new Error('invalid resource definition')
     } else {
-      if (dependencies instanceof Function) {
-        throw new Error('invalid resource definition')
-      }
-      if ('create' in dependencies) {
-        throw new Error('invalid resource definition')
-      }
-      if (dependencies instanceof Resource) {
-        // TODO: TS may be provably not a superset of JS, but it is definitely
-        // a superset of BS; so at least they've got that going for them
-        return new Resource(
-          new MonoVertex<any, V>(
-            (dependencies as Resource).toVertex(),
-            create as any,
-          ),
-        )
-      }
-      if (dependencies instanceof Object) {
-        // TODO: TS may be provably not a superset of JS, but it is definitely
-        // a superset of BS; so at least they've got that going for them
-        return new Resource(
-          new PolyVertex<any, V>(
-            mapObjectProps(dependencies as { [prop: string]: Resource }, res =>
-              res.toVertex(),
+      if (create instanceof Function) {
+        if (dependencies instanceof Resource) {
+          return new Resource(
+            MonoVertex.create(
+              (dependencies as Resource).toVertex(),
+              create,
+              config,
             ),
-            create as any,
-          ),
-        )
+            config ? config.actions : undefined,
+          )
+        } else {
+          return new Resource(
+            PolyVertex.create(
+              mapObjectProps(
+                dependencies as { [prop: string]: Resource },
+                res => res.toVertex(),
+              ),
+              // TODO: need to use the same helper type here and in polyVertex
+              create as any,
+              config,
+            ),
+            config ? config.actions : undefined,
+          )
+        }
       }
     }
+    throw new Error('invalid resource definition')
   }
 
   static request<R extends Resource | { [prop: string]: Resource }>(
@@ -98,18 +102,19 @@ export class Resource<V extends Just = any, A extends ActionMap = any> {
       )
     }
   }
+  private vertex: Vertex<any, any, V>
+
+  // TODO: add the actions to the thing
+  constructor(vertex: Vertex<any, any, V>, actions?: ActionMap<V>) {
+    this.vertex = vertex
+  }
 
   revoke() {
     this.vertex.revoke()
   }
 
-  private vertex: Vertex<any, any, V>
   private toVertex(): Vertex<any, any, V> {
     return this.vertex
-  }
-
-  constructor(vertex: Vertex<any, any, V>) {
-    this.vertex = vertex
   }
 }
 

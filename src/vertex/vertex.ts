@@ -2,22 +2,12 @@ import { Just } from '../utils'
 
 export type VertexValue<V> = V extends Vertex<any, infer Value> ? Value : never
 
-export type VertexBehavior<I, V> =
-  | ((dependencies: I) => V)
-  | {
-      initialValue: V
-      create(dependencies: I): V | null
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
-  | {
-      initialValue?: V
-      create(dependencies: I): V
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
+export type VertexConfig<V extends Just> = {
+  initialValue?: V
+  shallow?: boolean
+  lazy?: boolean
+  volatile?: boolean
+}
 
 const invalidCache = Symbol('INVALID_CACHE')
 interface Pushable<V> {
@@ -36,23 +26,31 @@ export abstract class Vertex<D = any, I = any, V extends Just = any>
   shallow?: boolean
   lazy?: boolean
 
-  constructor(behavior: VertexBehavior<I, V>, cachedInput: any) {
-    if (behavior instanceof Function) {
-      this.create = behavior
+  constructor(
+    create: (a: I) => V | null,
+    cachedInput: I,
+    config?: VertexConfig<V>,
+  ) {
+    if (config) {
+      const {
+        shallow = true,
+        lazy = true,
+        volatile = false,
+        initialValue,
+      } = config
+      this.lazy = lazy
+      this.shallow = shallow
+      this.volatile = volatile
+      this.revoked = initialValue === undefined
+      this.cache = this.revoked ? (invalidCache as any) : initialValue
+    } else {
       this.shallow = true
       this.lazy = true
       this.volatile = false
       this.revoked = true
       this.cache = invalidCache as any
-    } else {
-      const { create, shallow, lazy, volatile, initialValue } = behavior
-      this.create = create
-      this.shallow = shallow === undefined ? true : shallow
-      this.lazy = lazy === undefined ? true : lazy
-      this.volatile = volatile === undefined ? false : volatile
-      this.revoked = initialValue === undefined
-      this.cache = this.revoked ? (invalidCache as any) : initialValue
     }
+    this.create = create
     this.children = []
     this.childCount = 0
     this.cachedInput = cachedInput
@@ -132,10 +130,16 @@ export abstract class Vertex<D = any, I = any, V extends Just = any>
     }
   }
 
-  bind<P>(transform: (state: V, payload: P) => V, payload: P) {
-    const newValue = transform(this.cache, payload)
+  // TODO: Is there a way to do this without adding to the construction cost?
+  private publish = (newValue: V): void => {
     if ((!this.shallow || newValue !== this.cache) && newValue !== null) {
       this.revoke(newValue)
     }
+  }
+  bind<P, R>(
+    transform: (state: V, payload: P, publish: (value: V) => void) => R,
+    payload: P,
+  ): R {
+    return transform(this.cache, payload, this.publish)
   }
 }

@@ -1,27 +1,26 @@
-import { VertexBehavior, Vertex } from './vertex'
+import { VertexConfig, Vertex } from './vertex'
 import { Just } from '../utils'
 
-export type NullVertexBehavior<V extends Just> =
-  | (() => V)
-  | {
-      initialValue: V
-      create(): V | null
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
-  | {
-      initialValue?: V
-      create(): V
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
-
-export class NullVertex<V> extends Vertex<null, null, V> {
-  constructor(behavior: NullVertexBehavior<V>) {
-    super(behavior, null)
+export class NullVertex<V extends Just> extends Vertex<null, null, V> {
+  static create<V extends Just>(
+    create: () => V,
+    config?: VertexConfig<V>,
+  ): NullVertex<V>
+  static create<V extends Just>(
+    create: () => V | null,
+    config?: VertexConfig<V> & { initialValue: V },
+  ): NullVertex<V>
+  static create<V extends Just>(
+    create: () => V | null,
+    config?: VertexConfig<V>,
+  ) {
+    return new NullVertex(create, config)
   }
+
+  private constructor(create: () => V | null, config?: VertexConfig<V>) {
+    super(create, null, config)
+  }
+
   propagateSubscription() {}
   propagateUnsubscription() {}
   assertCachedDependencyValues() {

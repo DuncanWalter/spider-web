@@ -1,42 +1,51 @@
-import { Vertex, VertexBehavior } from './vertex'
+import { Vertex, VertexConfig } from './vertex'
 import { Just } from '../utils'
 
 type VertexValue<V> = V extends Vertex<any, any, infer T> ? T : never
-
-export type MonoVertexBehavior<I extends Just, V extends Just> =
-  | ((arg: I) => V)
-  | {
-      initialValue: V
-      create(arg: I): V | null
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
-  | {
-      initialValue?: V
-      create(arg: I): V
-      shallow?: boolean
-      lazy?: boolean
-      volatile?: boolean
-    }
 
 export class MonoVertex<D extends Vertex, V> extends Vertex<
   D,
   VertexValue<D>,
   V
 > {
+  static create<D extends Vertex, V extends Just>(
+    dependency: D,
+    create: (a: VertexValue<D>) => V,
+    config?: VertexConfig<V>,
+  ): MonoVertex<D, V>
+  static create<D extends Vertex, V extends Just>(
+    dependency: D,
+    create: (a: VertexValue<D>) => V | null,
+    config?: VertexConfig<V> & { initialValue: V },
+  ): MonoVertex<D, V>
+  static create<D extends Vertex, V extends Just>(
+    dependency: D,
+    create: (a: VertexValue<D>) => V | null,
+    config?: VertexConfig<V>,
+  ) {
+    return new MonoVertex(dependency, create, config)
+  }
+
   dependency: D
   subscription?: number
 
-  constructor(dependency: D, behavior: VertexBehavior<D, VertexValue<D>, V>) {
-    super(behavior, null)
+  private constructor(
+    dependency: D,
+    create: ((arg: VertexValue<D>) => V | null),
+    config?: VertexConfig<V>,
+  ) {
+    // TODO: should be invalid cache symbol
+    super(create, null as any, config)
     this.dependency = dependency
-    this.cachedInput = null as any
-    this.lazy = this.lazy === undefined ? dependency.lazy : this.lazy
-    this.shallow =
-      this.shallow === undefined ? dependency.shallow : this.shallow
-    this.volatile =
-      this.volatile === undefined ? dependency.volatile : this.volatile
+    if (this.lazy === undefined) {
+      this.lazy = dependency.lazy
+    }
+    if (this.shallow === undefined) {
+      this.shallow = dependency.shallow
+    }
+    if (this.volatile === undefined) {
+      this.volatile = dependency.volatile
+    }
   }
   propagateSubscription() {
     this.subscription = this.dependency.subscribe(this)
