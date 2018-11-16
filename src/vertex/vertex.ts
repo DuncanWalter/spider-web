@@ -1,8 +1,10 @@
-import { Just } from '../utils'
+import { PrioritySet } from '../utils'
 
-export type VertexValue<V> = V extends Vertex<any, infer Value> ? Value : never
+export type ValueMap<Vs extends Vertex<any, any>[]> = {
+  [K in keyof Vs]: Vs[K] extends Vertex<any, infer Value> ? Value : never
+}
 
-export type VertexConfig<V extends Just> = {
+export type VertexConfig<V> = {
   initialValue?: V
   shallow?: boolean
   lazy?: boolean
@@ -10,100 +12,114 @@ export type VertexConfig<V extends Just> = {
 }
 
 const invalidCache = Symbol('INVALID_CACHE')
-interface Pushable<V> {
-  push(value: V): void
+
+interface Revokable {
+  revoke(): void
 }
 
-export abstract class Vertex<D = any, I = any, V extends Just = any>
-  implements Pushable<I> {
-  private children: (null | Pushable<V>)[] = []
-  private childCount: number
-  private create: (dependencies: I) => V | null
-  private cache: V
-  private revoked: boolean
-  cachedInput: I
+export class Vertex<Ds extends Vertex<any, any>[], V> {
+  id: number
+  children: (null | Revokable)[]
+  childCount: number
+  create: (dependencies: ValueMap<Ds>) => V | null
+  revoked: boolean
+  subscriptions: number[]
+  dependencies: Ds
+  cachedOutput: V
   volatile?: boolean
   shallow?: boolean
   lazy?: boolean
 
-  constructor(
-    create: (a: I) => V | null,
-    cachedInput: I,
-    config?: VertexConfig<V>,
-  ) {
-    if (config) {
-      const {
-        shallow = true,
-        lazy = true,
-        volatile = false,
-        initialValue,
-      } = config
-      this.lazy = lazy
-      this.shallow = shallow
-      this.volatile = volatile
-      this.revoked = initialValue === undefined
-      this.cache = this.revoked ? (invalidCache as any) : initialValue
-    } else {
-      this.shallow = true
-      this.lazy = true
-      this.volatile = false
-      this.revoked = true
-      this.cache = invalidCache as any
-    }
-    this.create = create
-    this.children = []
-    this.childCount = 0
-    this.cachedInput = cachedInput
-  }
-
-  revoke(value?: V) {
-    const lastValue = this.cache
-    this.revoked = true
-    if (this.childCount > 0 || !this.lazy || value !== undefined) {
-      const newValue =
-        value !== undefined ? value : this.create(this.cachedInput)
-      if (newValue !== null) {
-        this.cache = newValue
-        this.revoked = false
-        if (newValue !== lastValue || !this.shallow) {
-          for (const child of this.children) {
-            if (child !== null) {
-              child.push(newValue)
+  static propagate(marks: PrioritySet<Vertex<any, unknown>>) {
+    while (marks.size !== 0) {
+      const node = marks.pop()
+      if (node.revoked) {
+        const updated = node.tryUpdate()
+        if (updated) {
+          for (let child of node.children) {
+            if (child) {
+              child.revoke()
+              marks.add(child)
             }
           }
         }
-      } else {
-        this.revoked = false
       }
     }
   }
 
-  push(value: I) {
-    this.cachedInput = value
-    this.revoke()
+  // TODO: static resolve (pull from bottom)
+
+  constructor(
+    dependencies: Ds,
+    create: (inputs: ValueMap<Ds>) => V | null,
+    config: VertexConfig<V> = {},
+  ) {
+    const {
+      shallow = true,
+      lazy = true,
+      volatile = false,
+      initialValue,
+    } = config
+    this.id = Math.max(0, ...dependencies.map(dep => dep.id)) + 1
+    this.lazy = lazy
+    this.shallow = shallow
+    this.volatile = volatile
+    this.revoked = initialValue === undefined
+    this.cachedOutput = this.revoked ? (invalidCache as any) : initialValue
+    this.create = create
+    this.children = []
+    this.childCount = 0
+    this.subscriptions = []
+    this.dependencies = dependencies
   }
 
-  abstract assertCachedDependencyValues(): boolean
-  pull(): V {
-    if (!this.revoked && !this.volatile) {
-      if (this.childCount > 0 || this.assertCachedDependencyValues()) {
-        return this.cache
+  revoke() {
+    // const lastValue = this.cachedOutput
+    this.revoked = true
+    // if (!this.lazy) {
+    //   this.tryUpdate()
+    // }
+    // if (this.childCount > 0 || !this.lazy) {
+    //   const newValue = this.create(this.cachedInput)
+    //   if (newValue !== null) {
+    //     this.cachedOutput = newValue
+    //     this.revoked = false
+    //     if (newValue !== lastValue || !this.shallow) {
+    //       for (const child of this.children) {
+    //         if (child !== null) {
+    //           child.ping(new Set())
+    //         }
+    //       }
+    //     }
+    //   } else {
+    //     this.revoked = false
+    //   }
+    // }
+  }
+
+  tryUpdate(): boolean {
+    const oldValue = this.cachedOutput
+    const newValue = this.create(this.dependencies.map(
+      dep => dep.cachedOutput,
+    ) as ValueMap<Ds>)
+    this.revoked = !this.volatile
+    switch (true) {
+      case newValue === null: {
+        return false
       }
-    } else if (this.childCount === 0) {
-      this.assertCachedDependencyValues()
+      case this.shallow && newValue === oldValue: {
+        return false
+      }
+      default: {
+        this.cachedOutput = newValue!
+        return true
+      }
     }
-    const newValue = this.create(this.cachedInput)
-    this.revoked = false
-    if (newValue !== null) {
-      this.cache = newValue
-    }
-    return this.cache
   }
 
-  abstract propagateSubscription(): void
-  subscribe(newChild: { push(v: V): void }): number {
+  subscribe(newChild: Revokable): number {
     if (this.childCount === 0) {
-      this.propagateSubscription()
+      this.subscriptions = this.dependencies.map(d => d.subscribe(this))
     }
     this.childCount++
     for (let i = 0; i++; i < this.children.length) {
@@ -114,11 +130,9 @@ export abstract class Vertex<D = any, I = any, V extends Just = any>
     }
     this.children.push(newChild)
     const subscription = this.children.length - 1
-    newChild.push(this.pull())
     return subscription
   }
 
-  abstract propagateUnsubscription(): void
   unsubscribe(subscription: number) {
     if (!this.children[subscription]) {
       throw new Error('Same Vertex child unsubscribed twice')
@@ -126,20 +140,10 @@ export abstract class Vertex<D = any, I = any, V extends Just = any>
     this.childCount--
     this.children[subscription] = null
     if (this.childCount === 0) {
-      this.propagateUnsubscription()
+      this.dependencies.forEach((d, i) => {
+        d.unsubscribe(this.subscriptions[i])
+      })
+      this.subscriptions = []
     }
-  }
-
-  // TODO: Is there a way to do this without adding to the construction cost?
-  private publish = (newValue: V): void => {
-    if ((!this.shallow || newValue !== this.cache) && newValue !== null) {
-      this.revoke(newValue)
-    }
-  }
-  bind<P, R>(
-    transform: (state: V, payload: P, publish: (value: V) => void) => R,
-    payload: P,
-  ): R {
-    return transform(this.cache, payload, this.publish)
   }
 }

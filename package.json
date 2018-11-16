@@ -43,8 +43,11 @@
     "babel-plugin-transform-class-properties": "^6.24.1",
     "jest": "^23.5.0",
     "ts-jest": "^23.1.4",
-    "typescript": "^3.0.1",
+    "typescript": "^3.1.6",
     "webpack": "^4.17.1",
     "webpack-cli": "^3.1.0"
+  },
+  "dependencies": {
+    "flatqueue": "^1.1.0"
   }
 }

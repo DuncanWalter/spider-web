@@ -213,23 +213,6 @@ test('Deep Vertices push values which equal their cached value', () => {
   expect(callCount).toEqual(2)
 })
 
-test('Vertices accept functional binding', () => {
-  const n = NullVertex.create(() => 1)
-  expect(n.pull()).toEqual(1)
-  n.bind((i, d, publish) => publish(i + d), 1)
-  expect(n.pull()).toEqual(2)
-  n.bind((i, d, publish) => publish(i + d), 1)
-  expect(
-    n.bind((i, d, publish) => {
-      publish(i + d)
-      return 'R'
-    }, 1),
-  ).toEqual('R')
-  expect(n.pull()).toEqual(4)
-  n.revoke()
-  expect(n.pull()).toEqual(1)
-})
-
 // const gameInstance = defineResource(() => {
 //   return {
 //     score: 0,

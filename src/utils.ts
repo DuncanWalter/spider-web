@@ -1,16 +1,32 @@
-// TODO: only use from here (or a special types utils)
-export type Just = number | string | symbol | Object
+import FlatQueue from 'flatqueue'
 
-export function mapObjectProps<
-  M extends { [props: string]: any },
-  F extends (prop: M[keyof M], key: keyof M) => any
->(
-  model: M,
-  mapper: F,
-  target: { [K in keyof M]?: ReturnType<F> } = {},
-): { [K in keyof M]: ReturnType<F> } {
-  for (const key of Object.keys(model)) {
-    target[key] = mapper(model[key], key)
+export class PrioritySet<T extends { id: number }> {
+  set: Set<T>
+  priorityQueue: FlatQueue
+
+  constructor() {
+    this.set = new Set()
+    this.priorityQueue = new FlatQueue()
   }
-  return target as any
+
+  add(t: T) {
+    if (!this.set.has(t)) {
+      this.set.add(t)
+      this.priorityQueue.add(t.id, t)
+    }
+  }
+
+  has(t: T): boolean {
+    return this.set.has(t)
+  }
+
+  pop(): T {
+    const t = this.priorityQueue.popValue()
+    this.set.delete(t)
+    return t
+  }
+
+  get size() {
+    return this.set.size
+  }
 }
