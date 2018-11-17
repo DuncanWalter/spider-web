@@ -1,4 +1,4 @@
-import { PrioritySet } from '../utils'
+import { PrioritySet } from '../prioritySet'
 
 export type ValueMap<Vs extends Vertex<any, any>[]> = {
   [K in keyof Vs]: Vs[K] extends Vertex<any, infer Value> ? Value : never
@@ -11,11 +11,11 @@ export type VertexConfig<V> = {
   volatile?: boolean
 }
 
-const invalidCache = Symbol('INVALID_CACHE')
-
-interface Revokable {
-  revoke(): void
+type Revokable = {
+  revoke(): unknown
 }
+
+const invalidCache = '@vertex/INVALID_CACHE'
 
 export class Vertex<Ds extends Vertex<any, any>[], V> {
   id: number
@@ -39,7 +39,9 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
           for (let child of node.children) {
             if (child) {
               child.revoke()
-              marks.add(child)
+              if (child instanceof Vertex) {
+                marks.add(child)
+              }
             }
           }
         }
@@ -47,7 +49,20 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
     }
   }
 
-  // TODO: static resolve (pull from bottom)
+  static resolve<V>(vertex: Vertex<any, V>): V {
+    const marks = new PrioritySet<Vertex<any, unknown>>()
+    ;(function mark(v: Vertex<any, any>) {
+      if (v.childCount === 0 && !marks.has(v)) {
+        marks.add(v)
+        v.dependencies.forEach(mark)
+      }
+    })(vertex)
+    while (marks.size !== 0) {
+      const node = marks.pop()
+      node.tryUpdate()
+    }
+    return vertex.cachedOutput
+  }
 
   constructor(
     dependencies: Ds,
@@ -64,8 +79,8 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
     this.lazy = lazy
     this.shallow = shallow
     this.volatile = volatile
-    this.revoked = initialValue === undefined
-    this.cachedOutput = this.revoked ? (invalidCache as any) : initialValue
+    this.cachedOutput = initialValue || (invalidCache as any)
+    this.revoked = this.cachedOutput === (invalidCache as any)
     this.create = create
     this.children = []
     this.childCount = 0
@@ -74,27 +89,7 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
   }
 
   revoke() {
-    // const lastValue = this.cachedOutput
     this.revoked = true
-    // if (!this.lazy) {
-    //   this.tryUpdate()
-    // }
-    // if (this.childCount > 0 || !this.lazy) {
-    //   const newValue = this.create(this.cachedInput)
-    //   if (newValue !== null) {
-    //     this.cachedOutput = newValue
-    //     this.revoked = false
-    //     if (newValue !== lastValue || !this.shallow) {
-    //       for (const child of this.children) {
-    //         if (child !== null) {
-    //           child.ping(new Set())
-    //         }
-    //       }
-    //     }
-    //   } else {
-    //     this.revoked = false
-    //   }
-    // }
   }
 
   tryUpdate(): boolean {
@@ -107,6 +102,11 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
       case newValue === null: {
         return false
       }
+      case newValue === undefined: {
+        throw new Error(
+          'Vertex emitted undefined. For noop, please explicitly emit null.',
+        )
+      }
       case this.shallow && newValue === oldValue: {
         return false
       }
@@ -117,7 +117,14 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
     }
   }
 
-  subscribe(newChild: Revokable): number {
+  subscribe(newChild: Revokable | ((v: V) => unknown)): number {
+    if (newChild instanceof Function || !(newChild instanceof Object)) {
+      newChild(Vertex.resolve(this))
+      return this.subscribe({
+        revoke: () => newChild(this.cachedOutput),
+      })
+    }
+
     if (this.childCount === 0) {
       this.subscriptions = this.dependencies.map(d => d.subscribe(this))
     }

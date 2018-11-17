@@ -1,18 +1,18 @@
-import FlatQueue from 'flatqueue'
+import * as FlatQueue from 'flatqueue'
 
 export class PrioritySet<T extends { id: number }> {
   set: Set<T>
-  priorityQueue: FlatQueue
+  priorityQueue: FlatQueue<T>
 
   constructor() {
     this.set = new Set()
-    this.priorityQueue = new FlatQueue()
+    this.priorityQueue = new FlatQueue<T>()
   }
 
   add(t: T) {
     if (!this.set.has(t)) {
       this.set.add(t)
-      this.priorityQueue.add(t.id, t)
+      this.priorityQueue.push(t, t.id)
     }
   }
 
@@ -21,7 +21,7 @@ export class PrioritySet<T extends { id: number }> {
   }
 
   pop(): T {
-    const t = this.priorityQueue.popValue()
+    const t = this.priorityQueue.pop()
     this.set.delete(t)
     return t
   }

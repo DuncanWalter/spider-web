@@ -1,38 +1,38 @@
-// import { Vertex } from '../vertex/vertex'
-// import { MonoVertex } from '../vertex/monoVertex'
+import { Vertex } from '../vertex/vertex'
 
-// type Predicate<I, O extends I> = (
-//   item: I | O,
-// ) => typeof item extends O ? boolean : false
+declare module '../vertex/vertex' {
+  interface Vertex<Ds, V> {
+    filter<U extends V>(
+      this: Vertex<Ds, V>,
+      predicate: Predicate<V, U>,
+    ): Vertex<[Vertex<Ds, V>], V>
+    filter<U extends V>(
+      this: Vertex<Ds, V>,
+      predicate: Predicate<V, U>,
+      seed: U,
+    ): Vertex<[Vertex<Ds, V>], U>
+  }
+}
 
-// type Just = number | string | symbol | Object
+type Predicate<I, O extends I> = (
+  item: I | O,
+) => typeof item extends O ? boolean : false
 
-// declare module '../vertex/vertex' {
-//   interface Vertex<D = any, I = any, V extends Just = any> {
-//     filter<U extends V>(
-//       this: Vertex<D, I, V>,
-//       predicate: Predicate<V, U>,
-//     ): MonoVertex<Vertex<D, I, V>, V>
-//     filter<U extends V>(
-//       this: Vertex<D, I, V>,
-//       predicate: Predicate<V, U>,
-//       seed: U,
-//     ): MonoVertex<Vertex<D, I, V>, U>
-//   }
-// }
+Vertex.prototype.filter = filter
 
-// Vertex.prototype.filter = filter
-
-// function filter<D, I, V extends Just, O extends V>(
-//   this: Vertex<D, I, V>,
-//   predicate: Predicate<V, O>,
-//   seed?: O,
-// ): MonoVertex<Vertex<D, I, V>, V> {
-//   const that = this
-//   return new MonoVertex(this, {
-//     create(value): V | null {
-//       return predicate(value) ? value : null
-//     },
-//     initialValue: seed !== undefined ? seed : that.pull(),
-//   })
-// }
+function filter<Ds extends Vertex<any, any>[], V, O extends V>(
+  this: Vertex<Ds, V>,
+  predicate: Predicate<V, O>,
+  seed?: O,
+): Vertex<[Vertex<Ds, V>], V> {
+  const that = this
+  return new Vertex(
+    [this] as [Vertex<Ds, V>],
+    ([value]): V | null => {
+      return predicate(value) ? value : null
+    },
+    {
+      initialValue: seed !== undefined ? seed : Vertex.resolve(that),
+    },
+  )
+}
