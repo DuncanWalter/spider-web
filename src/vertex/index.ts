@@ -1,1 +1,0 @@
-export { Vertex } from './vertex'

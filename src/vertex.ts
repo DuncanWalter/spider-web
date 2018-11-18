@@ -1,4 +1,4 @@
-import { PrioritySet } from '../prioritySet'
+import { resolveVertex } from './resolveVertex'
 
 export type ValueMap<Vs extends Vertex<any, any>[]> = {
   [K in keyof Vs]: Vs[K] extends Vertex<any, infer Value> ? Value : never
@@ -29,40 +29,6 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
   volatile?: boolean
   shallow?: boolean
   lazy?: boolean
-
-  static propagate(marks: PrioritySet<Vertex<any, unknown>>) {
-    while (marks.size !== 0) {
-      const node = marks.pop()
-      if (node.revoked) {
-        const updated = node.tryUpdate()
-        if (updated) {
-          for (let child of node.children) {
-            if (child) {
-              child.revoke()
-              if (child instanceof Vertex) {
-                marks.add(child)
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  static resolve<V>(vertex: Vertex<any, V>): V {
-    const marks = new PrioritySet<Vertex<any, unknown>>()
-    ;(function mark(v: Vertex<any, any>) {
-      if (v.childCount === 0 && !marks.has(v)) {
-        marks.add(v)
-        v.dependencies.forEach(mark)
-      }
-    })(vertex)
-    while (marks.size !== 0) {
-      const node = marks.pop()
-      node.tryUpdate()
-    }
-    return vertex.cachedOutput
-  }
 
   constructor(
     dependencies: Ds,
@@ -119,7 +85,7 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
 
   subscribe(newChild: Revokable | ((v: V) => unknown)): number {
     if (newChild instanceof Function || !(newChild instanceof Object)) {
-      newChild(Vertex.resolve(this))
+      newChild(resolveVertex(this))
       return this.subscribe({
         revoke: () => newChild(this.cachedOutput),
       })

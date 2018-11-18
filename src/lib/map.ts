@@ -1,6 +1,6 @@
-import { Vertex } from '../vertex/vertex'
+import { Vertex } from '../vertex'
 
-declare module '../vertex/vertex' {
+declare module '../vertex' {
   interface Vertex<Ds, V> {
     map<U>(
       this: Vertex<Ds, V>,

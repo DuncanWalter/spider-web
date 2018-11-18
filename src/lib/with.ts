@@ -1,7 +1,7 @@
-import { Vertex, VertexConfig, ValueMap } from '../vertex/vertex'
+import { Vertex, VertexConfig, ValueMap } from '../vertex'
 import './thru'
 
-declare module '../vertex/vertex' {
+declare module '../vertex' {
   interface Vertex<Ds, V> {
     with<Vs extends Vertex<any, any>[], U>(
       this: Vertex<Ds, V>,

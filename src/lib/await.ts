@@ -1,7 +1,8 @@
-import { Vertex } from '../vertex/vertex'
+import { Vertex } from '../vertex'
 import { PrioritySet } from '../prioritySet'
+import { propagateVertex } from '../propagateVertex'
 
-declare module '../vertex/vertex' {
+declare module '../vertex' {
   interface Vertex<Ds, V> {
     await<U>(this: Vertex<Ds, Promise<U>>): Vertex<[Vertex<Ds, Promise<U>>], U>
   }
@@ -17,7 +18,7 @@ Vertex.prototype.await = function<Ds extends Vertex<any, any>[], U>(
         awaiter.revoke()
         const marks = new PrioritySet<Vertex<any, any>>()
         marks.add(awaiter)
-        Vertex.propagate(marks)
+        propagateVertex(marks)
       })
       .catch(err => {
         throw err

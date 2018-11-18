@@ -1,6 +1,7 @@
-import { Vertex } from '../vertex/vertex'
+import { Vertex } from '../vertex'
+import { resolveVertex } from '../resolveVertex'
 
-declare module '../vertex/vertex' {
+declare module '../vertex' {
   interface Vertex<Ds, V> {
     filter<U extends V>(
       this: Vertex<Ds, V>,
@@ -32,7 +33,7 @@ function filter<Ds extends Vertex<any, any>[], V, O extends V>(
       return predicate(value) ? value : null
     },
     {
-      initialValue: seed !== undefined ? seed : Vertex.resolve(that),
+      initialValue: seed !== undefined ? seed : resolveVertex(that),
     },
   )
 }

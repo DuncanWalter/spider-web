@@ -1,4 +1,4 @@
-import { createStore } from '.'
+import { createStore } from './createStore'
 import './lib/with'
 import './lib/thru'
 import './lib/map'
