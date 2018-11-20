@@ -5,7 +5,7 @@ export type ValueMap<Vs extends Vertex[]> = {
   [K in keyof Vs]: Vs[K] extends Vertex<infer Value> ? Value : never
 }
 
-export type VertexMixin<Vs extends Vertex<any, any>[]> = Vs extends Array<
+type VertexMixin<Vs extends Vertex<any, any>[]> = Vs extends Array<
   Vertex<any, infer M>
 >
   ? M

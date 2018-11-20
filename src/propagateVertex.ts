@@ -10,7 +10,7 @@ export function propagateVertex(marks: PrioritySet<Vertex<unknown>>) {
         for (let child of node.children) {
           if (child) {
             child.revoke()
-            if (child instanceof Vertex) {
+            if (child.id) {
               marks.add(child)
             }
           }

@@ -2,10 +2,11 @@
   "name": "spider-web",
   "version": "1.0.0",
   "description": "waste free state management",
-  "main": "lib/index.js",
+  "main": "index/index.js",
   "scripts": {
     "test": "jest",
-    "build": "webpack"
+    "prepublishOnly": "tsc && npm run build",
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",
@@ -42,10 +43,11 @@
     "babel-loader": "^8.0.0-beta.6",
     "babel-plugin-transform-class-properties": "^6.24.1",
     "jest": "^23.5.0",
+    "rollup": "^0.67.3",
+    "rollup-plugin-typescript": "^1.0.0",
     "ts-jest": "^23.1.4",
-    "typescript": "^3.1.6",
-    "webpack": "^4.17.1",
-    "webpack-cli": "^3.1.0"
+    "tslib": "^1.9.3",
+    "typescript": "^3.1.6"
   },
   "dependencies": {
     "flatqueue": "^1.1.0"
