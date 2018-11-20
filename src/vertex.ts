@@ -18,16 +18,20 @@ export type VertexConfig<V> = {
   volatile?: boolean
 }
 
-interface Revokable {
-  revoke(): unknown
-}
+type Revokable =
+  | Vertex
+  | {
+      type: '@vertex/subscription'
+      revoke(): unknown
+    }
 
-const invalidCache = '@vertex/INVALID_CACHE'
+const invalidCache = '@vertex/invalid-cache'
 
 export type Vertex<Value = any, Ops = {}> = __Vertex__<any, Value> & Ops
 
 class __Vertex__<Ds extends Vertex<any, any>[], V> {
   id: number
+  type: undefined
   children: (null | Revokable)[]
   childCount: number
   create: (dependencies: ValueMap<Ds>) => V | null
@@ -96,6 +100,7 @@ class __Vertex__<Ds extends Vertex<any, any>[], V> {
     if (newChild instanceof Function || !(newChild instanceof Object)) {
       newChild(resolveVertex(this))
       return this.subscribe({
+        type: '@vertex/subscription',
         revoke: () => newChild(this.cachedOutput),
       })
     }

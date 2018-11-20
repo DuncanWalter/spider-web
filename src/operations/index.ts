@@ -1,9 +1,3 @@
-export type Intersection<Union> = (Union extends infer U
-  ? (u: U) => any
-  : never) extends (i: infer I) => any
-  ? I
-  : never
-
 export interface Operation<Mixin extends { [operation: string]: Function }> {
   type: '@vertex/operation'
   operation: Mixin
@@ -19,7 +13,6 @@ export interface OperationCluster<Children extends (Operation<any>)[]> {
 export type OperationSet = Operation<any> | OperationCluster<any>
 
 export { createOperation } from './createOperation'
-export { joinOperations } from './joinOperations'
 
 type OperationSetMixin<O extends OperationSet> = O extends Operation<infer M>
   ? M
@@ -33,3 +26,9 @@ export type OperationSetListMixin<Os extends OperationSet[]> = Intersection<
 
 export { map } from './map'
 export { join } from './join'
+
+export type Intersection<Union> = (Union extends infer U
+  ? (u: U) => any
+  : never) extends (i: infer I) => any
+  ? I
+  : never
