@@ -1,11 +1,11 @@
 import { PrioritySet } from './prioritySet'
-import { Vertex } from './vertex'
+import { Vertex, createVertex } from './vertex'
 import { propagateVertex } from './propagateVertex'
 
 export const sliceKey = '@store/slices'
 
 export interface Slice<A> {
-  (action: A, marks: PrioritySet<Vertex<any, unknown>>): void
+  (action: A, marks: PrioritySet<Vertex<unknown>>): void
 }
 
 export interface Dispatch<A> {
@@ -18,7 +18,7 @@ export interface Reducer<S, A> {
 
 export interface Store<A> {
   dispatch: Dispatch<A>
-  wrapReducer: <S>(reducer: Reducer<S, A>) => Vertex<any, S>
+  wrapReducer: <S>(reducer: Reducer<S, A>) => Vertex<S>
   [sliceKey]: Slice<A>[]
 }
 
@@ -35,7 +35,7 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
     if (action instanceof Function) {
       return action(dispatch)
     }
-    const marks: PrioritySet<Vertex<any, unknown>> = new PrioritySet()
+    const marks: PrioritySet<Vertex<unknown>> = new PrioritySet()
     store[sliceKey].forEach(slice => slice(action, marks))
     propagateVertex(marks)
     return undefined as any
@@ -53,7 +53,7 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
     const { shallow = true, volatile = false, initialState } = config
     let state =
       initialState || reducer(undefined, { type: '@store/init' } as Action)
-    const resource = new Vertex([], _ => state, {
+    const resource = createVertex([] as Vertex[], _ => state, {
       initialValue: state,
       shallow,
       volatile,

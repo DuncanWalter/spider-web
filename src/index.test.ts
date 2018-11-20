@@ -1,9 +1,7 @@
 import { createStore } from './createStore'
-import './lib/with'
-import './lib/thru'
-import './lib/map'
+import { map, join } from './operations'
 
-test('Diamond case optimization', () => {
+test('Diamond case duplicates no work', () => {
   const { dispatch, wrapReducer } = createStore()
 
   let reducerCalls = 0
@@ -19,11 +17,12 @@ test('Diamond case optimization', () => {
   expect(reducerCalls).toBe(1)
   expect(subscriptionCalls).toBe(0)
 
-  const double = counter.map(v => 2 * v)
+  const double = counter.use(map).map(v => 2 * v)
 
   counter
+    .use(map, join)
     .map(v => -v)
-    .with([double], (neg, dub) => neg + dub)
+    .join([double], (neg, dub) => neg + dub)
     .subscribe(v => {
       subscriptionCalls++
       value = v

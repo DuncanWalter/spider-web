@@ -1,8 +1,15 @@
 import { resolveVertex } from './resolveVertex'
+import { OperationSet, OperationSetListMixin } from './operations'
 
-export type ValueMap<Vs extends Vertex<any, any>[]> = {
-  [K in keyof Vs]: Vs[K] extends Vertex<any, infer Value> ? Value : never
+export type ValueMap<Vs extends Vertex[]> = {
+  [K in keyof Vs]: Vs[K] extends Vertex<infer Value> ? Value : never
 }
+
+export type VertexMixin<Vs extends Vertex<any, any>[]> = Vs extends Array<
+  Vertex<any, infer M>
+>
+  ? M
+  : never
 
 export type VertexConfig<V> = {
   initialValue?: V
@@ -11,13 +18,15 @@ export type VertexConfig<V> = {
   volatile?: boolean
 }
 
-type Revokable = {
+interface Revokable {
   revoke(): unknown
 }
 
 const invalidCache = '@vertex/INVALID_CACHE'
 
-export class Vertex<Ds extends Vertex<any, any>[], V> {
+export type Vertex<Value = any, Ops = {}> = __Vertex__<any, Value> & Ops
+
+class __Vertex__<Ds extends Vertex<any, any>[], V> {
   id: number
   children: (null | Revokable)[]
   childCount: number
@@ -119,4 +128,42 @@ export class Vertex<Ds extends Vertex<any, any>[], V> {
       this.subscriptions = []
     }
   }
+
+  use<M, Os extends OperationSet[]>(
+    this: Vertex<V, M>,
+    ...operations: Os
+  ): Vertex<V, M & OperationSetListMixin<Os>> {
+    for (let set of operations) {
+      if (set.applied) {
+        continue
+      } else if (set.type === '@vertex/operation-cluster') {
+        for (let operation of set.operations) {
+          this.use(operation)
+        }
+      } else {
+        Object.assign(__Vertex__.prototype, set.operation)
+      }
+    }
+    return this as any
+  }
+}
+
+export function createVertex<Ds extends Vertex[], V>(
+  dependencies: Ds,
+  create: (inputs: ValueMap<Ds>) => V,
+  config?: VertexConfig<V>,
+): Vertex<V, VertexMixin<Ds>>
+
+export function createVertex<Ds extends Vertex[], V>(
+  dependencies: Ds,
+  create: (inputs: ValueMap<Ds>) => V | null,
+  config: { initialValue: V } & VertexConfig<V>,
+): Vertex<V, VertexMixin<Ds>>
+
+export function createVertex<Ds extends Vertex[], V>(
+  dependencies: Ds,
+  create: (inputs: ValueMap<Ds>) => V | null,
+  config: VertexConfig<V> = {},
+) {
+  return new __Vertex__(dependencies, create, config)
 }

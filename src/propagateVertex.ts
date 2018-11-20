@@ -1,7 +1,7 @@
 import { PrioritySet } from './prioritySet'
 import { Vertex } from './vertex'
 
-export function propagateVertex(marks: PrioritySet<Vertex<any, unknown>>) {
+export function propagateVertex(marks: PrioritySet<Vertex<unknown>>) {
   while (marks.size !== 0) {
     const node = marks.pop()
     if (node.revoked) {
