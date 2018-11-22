@@ -5,6 +5,10 @@
   "main": "index.js",
   "module": "index.js",
   "types": "index.d.ts",
+  "files": [
+    "**/*.js",
+    "**/*.ts"
+  ],
   "scripts": {
     "test": "jest",
     "prepublishOnly": "tsc --emitDeclarationOnly --declaration --declarationDir types && npm run build",
