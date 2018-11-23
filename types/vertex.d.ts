@@ -14,7 +14,7 @@ declare type Revokable = Vertex | {
     revoke(): unknown;
 };
 export declare type Vertex<Value = any, Ops = {}> = __Vertex__<any, Value> & Ops;
-export declare class __Vertex__<Ds extends Vertex<any, any>[], V> {
+declare class __Vertex__<Ds extends Vertex<any, any>[], V> {
     id: number;
     type: undefined;
     children: (null | Revokable)[];

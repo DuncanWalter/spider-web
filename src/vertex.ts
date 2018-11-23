@@ -29,7 +29,7 @@ const invalidCache = '@vertex/invalid-cache'
 
 export type Vertex<Value = any, Ops = {}> = __Vertex__<any, Value> & Ops
 
-class __Vertex__<Ds extends Vertex<any, any>[], V> {
+export class __Vertex__<Ds extends Vertex<any, any>[], V> {
   id: number
   type: undefined
   children: (null | Revokable)[]
