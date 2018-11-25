@@ -1,11 +1,11 @@
 export interface Operation<Mixin extends { [operation: string]: Function }> {
-  type: '@vertex/operation'
+  type: '@slice/operation'
   operation: Mixin
   applied: boolean
 }
 
 export interface OperationCluster<Children extends (Operation<any>)[]> {
-  type: '@vertex/operation-cluster'
+  type: '@slice/operation-cluster'
   operations: Children
   applied: boolean
 }

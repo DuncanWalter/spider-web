@@ -1,8 +1,8 @@
-import { Vertex, createVertex } from '../vertex'
+import { Slice, createSlice } from '../slice'
 import { createOperation } from './createOperation'
 
 export const map = createOperation({
-  map<U, V, O>(this: Vertex<U, O>, mapping: (u: U) => V): Vertex<V, O> {
-    return createVertex([this], ([u]) => mapping(u))
+  map<U, V, O>(this: Slice<U, O>, mapping: (u: U) => V): Slice<V, O> {
+    return createSlice([this], ([u]) => mapping(u))
   },
 })

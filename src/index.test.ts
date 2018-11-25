@@ -1,5 +1,7 @@
 import { createStore } from './createStore'
 import { map, join } from './operations'
+import { fork } from './operations/fork'
+import { resolveSlice } from './resolveSlice'
 
 test('Diamond case duplicates no work', () => {
   const { dispatch, wrapReducer } = createStore()
@@ -37,4 +39,42 @@ test('Diamond case duplicates no work', () => {
   expect(value).toBe(2)
   expect(reducerCalls).toBe(2)
   expect(subscriptionCalls).toBe(2)
+})
+
+test('Slices can be forked successfully', () => {
+  const { dispatch, wrapReducer } = createStore()
+
+  const slice = wrapReducer<number[]>((state = [], action) => {
+    switch (action.type) {
+      case 'add': {
+        return [state.length, ...state]
+      }
+      case 'cull': {
+        return state.filter(i => i % 2)
+      }
+      default: {
+        return state
+      }
+    }
+  })
+    .use(fork, map)
+    .fork(s => s.map(v => -1 * v))
+
+  expect(resolveSlice(slice).length).toBe(0)
+
+  dispatch({ type: 'add' })
+
+  const [innerSlice] = resolveSlice(slice)
+
+  expect(resolveSlice(innerSlice)).toBe(-0)
+
+  dispatch({ type: 'add' })
+
+  const [nextSlice] = resolveSlice(slice)
+
+  expect(nextSlice === innerSlice).toBeTruthy()
+
+  expect(resolveSlice(innerSlice)).toBe(-1)
+
+  dispatch({ type: 'cull' })
 })

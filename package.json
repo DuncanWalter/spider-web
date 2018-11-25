@@ -1,6 +1,6 @@
 {
-  "name": "spider-web",
-  "version": "1.0.0",
+  "name": "@dwalter/spider-web",
+  "version": "1.0.1",
   "description": "waste free state management",
   "main": "index.js",
   "module": "index.js",
@@ -11,7 +11,7 @@
   ],
   "scripts": {
     "test": "jest",
-    "prepublishOnly": "tsc --emitDeclarationOnly --declaration --declarationDir types && npm run build",
+    "prepublishOnly": "npm run build",
     "build": "rollup -c"
   },
   "repository": {

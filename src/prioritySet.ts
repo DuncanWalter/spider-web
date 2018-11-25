@@ -1,6 +1,6 @@
 import * as FlatQueue from 'flatqueue'
 
-export class PrioritySet<T extends { id: number }> {
+export class PrioritySet<T extends { depth: number }> {
   set: Set<T>
   priorityQueue: FlatQueue<T>
 
@@ -12,7 +12,7 @@ export class PrioritySet<T extends { id: number }> {
   add(t: T) {
     if (!this.set.has(t)) {
       this.set.add(t)
-      this.priorityQueue.push(t, t.id)
+      this.priorityQueue.push(t, t.depth)
     }
   }
 

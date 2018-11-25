@@ -1,17 +1,17 @@
-// import { Vertex } from '../vertex'
-// import { resolveVertex } from '../resolveVertex'
+// import { Slice } from '../slice'
+// import { resolveSlice } from '../resolveSlice'
 
-// declare module '../vertex' {
-//   interface Vertex<Ds, V> {
+// declare module '../slice' {
+//   interface Slice<Ds, V> {
 //     filter<U extends V>(
-//       this: Vertex<Ds, V>,
+//       this: Slice<Ds, V>,
 //       predicate: Predicate<V, U>,
-//     ): Vertex<[Vertex<Ds, V>], V>
+//     ): Slice<[Slice<Ds, V>], V>
 //     filter<U extends V>(
-//       this: Vertex<Ds, V>,
+//       this: Slice<Ds, V>,
 //       predicate: Predicate<V, U>,
 //       seed: U,
-//     ): Vertex<[Vertex<Ds, V>], U>
+//     ): Slice<[Slice<Ds, V>], U>
 //   }
 // }
 
@@ -19,21 +19,21 @@
 //   item: I | O,
 // ) => typeof item extends O ? boolean : false
 
-// Vertex.prototype.filter = filter
+// Slice.prototype.filter = filter
 
-// function filter<Ds extends Vertex<any, any>[], V, O extends V>(
-//   this: Vertex<Ds, V>,
+// function filter<Ds extends Slice<any, any>[], V, O extends V>(
+//   this: Slice<Ds, V>,
 //   predicate: Predicate<V, O>,
 //   seed?: O,
-// ): Vertex<[Vertex<Ds, V>], V> {
+// ): Slice<[Slice<Ds, V>], V> {
 //   const that = this
-//   return new Vertex(
-//     [this] as [Vertex<Ds, V>],
+//   return new Slice(
+//     [this] as [Slice<Ds, V>],
 //     ([value]): V | null => {
 //       return predicate(value) ? value : null
 //     },
 //     {
-//       initialValue: seed !== undefined ? seed : resolveVertex(that),
+//       initialValue: seed !== undefined ? seed : resolveSlice(that),
 //     },
 //   )
 // }

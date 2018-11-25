@@ -1,36 +1,34 @@
-import { resolveVertex } from './resolveVertex'
+import { resolveSlice } from './resolveSlice'
 import { OperationSet, OperationSetListMixin } from './operations'
 
-export type ValueMap<Vs extends Vertex[]> = {
-  [K in keyof Vs]: Vs[K] extends Vertex<infer Value> ? Value : never
+export type ValueMap<Slices extends Slice[]> = {
+  [K in keyof Slices]: Slices[K] extends Slice<infer Value> ? Value : never
 }
 
-type VertexMixin<Vs extends Vertex<any, any>[]> = Vs extends Array<
-  Vertex<any, infer M>
+type SliceMixin<Slices extends Slice<any, any>[]> = Slices extends Array<
+  Slice<any, infer M>
 >
   ? M
   : never
 
-export type VertexConfig<V> = {
+export type SliceConfig<V> = {
   initialValue?: V
   shallow?: boolean
-  lazy?: boolean
-  volatile?: boolean
 }
 
 type Revokable =
-  | Vertex
+  | Slice
   | {
-      type: '@vertex/subscription'
+      type: '@slice/subscription'
       revoke(): unknown
     }
 
-const invalidCache = '@vertex/invalid-cache'
+const invalidCache = '@slice/invalid-cache'
 
-export type Vertex<Value = any, Ops = {}> = __Vertex__<any, Value> & Ops
+export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
 
-export class __Vertex__<Ds extends Vertex<any, any>[], V> {
-  id: number
+export class __Slice__<Ds extends Slice<any, any>[], V> {
+  depth: number
   type: undefined
   children: (null | Revokable)[]
   childCount: number
@@ -46,18 +44,11 @@ export class __Vertex__<Ds extends Vertex<any, any>[], V> {
   constructor(
     dependencies: Ds,
     create: (inputs: ValueMap<Ds>) => V | null,
-    config: VertexConfig<V> = {},
+    shallow: boolean = true,
+    initialValue?: V,
   ) {
-    const {
-      shallow = true,
-      lazy = true,
-      volatile = false,
-      initialValue,
-    } = config
-    this.id = Math.max(0, ...dependencies.map(dep => dep.id)) + 1
-    this.lazy = lazy
+    this.depth = Math.max(0, ...dependencies.map(dep => dep.depth)) + 1
     this.shallow = shallow
-    this.volatile = volatile
     this.cachedOutput = initialValue || (invalidCache as any)
     this.revoked = this.cachedOutput === (invalidCache as any)
     this.create = create
@@ -83,7 +74,7 @@ export class __Vertex__<Ds extends Vertex<any, any>[], V> {
       }
       case newValue === undefined: {
         throw new Error(
-          'Vertex emitted undefined. For noop, please explicitly emit null.',
+          'Slice emitted undefined. For noop explicitly return null.',
         )
       }
       case this.shallow && newValue === oldValue: {
@@ -98,9 +89,9 @@ export class __Vertex__<Ds extends Vertex<any, any>[], V> {
 
   subscribe(newChild: Revokable | ((v: V) => unknown)): number {
     if (newChild instanceof Function || !(newChild instanceof Object)) {
-      newChild(resolveVertex(this))
+      newChild(resolveSlice(this))
       return this.subscribe({
-        type: '@vertex/subscription',
+        type: '@slice/subscription',
         revoke: () => newChild(this.cachedOutput),
       })
     }
@@ -122,7 +113,7 @@ export class __Vertex__<Ds extends Vertex<any, any>[], V> {
 
   unsubscribe(subscription: number) {
     if (!this.children[subscription]) {
-      throw new Error('Same Vertex child unsubscribed twice')
+      throw new Error('Same Slice child unsubscribed twice')
     }
     this.childCount--
     this.children[subscription] = null
@@ -135,40 +126,45 @@ export class __Vertex__<Ds extends Vertex<any, any>[], V> {
   }
 
   use<M, Os extends OperationSet[]>(
-    this: Vertex<V, M>,
+    this: Slice<V, M>,
     ...operations: Os
-  ): Vertex<V, M & OperationSetListMixin<Os>> {
+  ): Slice<V, M & OperationSetListMixin<Os>> {
     for (let set of operations) {
       if (set.applied) {
         continue
-      } else if (set.type === '@vertex/operation-cluster') {
+      } else if (set.type === '@slice/operation-cluster') {
         for (let operation of set.operations) {
           this.use(operation)
         }
       } else {
-        Object.assign(__Vertex__.prototype, set.operation)
+        Object.assign(__Slice__.prototype, set.operation)
       }
     }
     return this as any
   }
 }
 
-export function createVertex<Ds extends Vertex[], V>(
+export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   create: (inputs: ValueMap<Ds>) => V,
-  config?: VertexConfig<V>,
-): Vertex<V, VertexMixin<Ds>>
+  config?: SliceConfig<V>,
+): Slice<V, SliceMixin<Ds>>
 
-export function createVertex<Ds extends Vertex[], V>(
+export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   create: (inputs: ValueMap<Ds>) => V | null,
-  config: { initialValue: V } & VertexConfig<V>,
-): Vertex<V, VertexMixin<Ds>>
+  config: { initialValue: V } & SliceConfig<V>,
+): Slice<V, SliceMixin<Ds>>
 
-export function createVertex<Ds extends Vertex[], V>(
+export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   create: (inputs: ValueMap<Ds>) => V | null,
-  config: VertexConfig<V> = {},
+  config: SliceConfig<V> = {},
 ) {
-  return new __Vertex__(dependencies, create, config)
+  return new __Slice__(
+    dependencies,
+    create,
+    config.shallow,
+    config.initialValue,
+  )
 }

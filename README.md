@@ -1,6 +1,6 @@
 # spider-web
 
-Yet another state store implementation. `spider-web` is meant to bring together the best features of `redux`, `redux-thunk`, `reselect`, `rxjs`/`mobx`, and in some sense `ngrx`.
+Yet another state store implementation. `spider-web` is meant to bring together the best features of `redux`, `redux-thunk`, `reselect`, `rxjs`/`mobx`, and in some sense `ngrx`. It still needs some streamlining. Contributions are welcome.
 
 `spider-web` is:
 
@@ -21,7 +21,7 @@ Yet another state store implementation. `spider-web` is meant to bring together 
 Here's a contrived counter app example. In order to demonstrate important features, this counter app tracks two counters.
 
 ```javascript
-import { createStore } from 'spider-web'
+import { createStore } from '@dwalter/spider-web'
 
 // create a universal store
 const { dispatch, wrapReducer } = createStore()
@@ -67,3 +67,31 @@ In blog-speak, there are 3 main differences between `spider-web` state slices an
 2. `rxjs` is not designed to solve what is sometimes called the 'diamond' problem. The diamond problem occurs in observables when a destination observable subscribes to multiple observables which in turn subscribe to the same root observable. When the shared root pushes a new value, the destination observable will push two new values in quick succession. Further, the first value pushed will not be valid. This is sometimes called 'glitching.' Glitching is fine for many use cases of observables, but problematic for observing state from a 'single source of truth.' Because all `spider-web` state slices are tied to a store, `spider-web` is able to efficiently handle the diamond problem; the destination state slice in all diamond cases will only push a single, valid value.
 
 3. `spider-web` state slices never 'complete' in the sense that an `rxjs` observable can. State never runs out or ends, so there is no need for a state slice to either.
+
+## TODO
+
+- make wrapReducer accept an optional param for initial state
+- implement `joinSlices()`
+- implement `joinOperations()`
+- implement `fork()` operator
+- add single-parent optimization to `propagateSlice()`
+- add time travel hook to `dispatch()`
+- add store middleware
+- remove volatile and eager; Simplify `Slice` construction params
+- assert `Just` types for all Slices
+- squash multiple synchronous dispatches
+- make a list of viable, safe operators
+  - map
+  - fork
+  - thru
+  - ???
+- make a list of viable, unsafe operators
+  - filter (seeded?)
+  - scan (seeded)
+  - debounce (seeded)
+  - throttle
+  - await (seeded)
+  - ???
+- move all operator types to interfaces like fork
+- remove uses of iterator protocol (performance)
+- add more exports to support `useSlice()`
