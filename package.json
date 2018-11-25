@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-web",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "waste free state management",
   "main": "index.js",
   "module": "index.js",
