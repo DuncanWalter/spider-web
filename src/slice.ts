@@ -16,13 +16,6 @@ export type SliceConfig<V> = {
   shallow?: boolean
 }
 
-type Revokable =
-  | Slice
-  | {
-      type: '@slice/subscription'
-      revoke(): unknown
-    }
-
 const invalidCache = '@slice/invalid-cache'
 
 export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
@@ -30,10 +23,9 @@ export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
 export class __Slice__<Ds extends Slice<any, any>[], V> {
   depth: number
   type: undefined
-  children: (null | Revokable)[]
+  children: (null | __Slice__<any, unknown> | ((v: V) => unknown))[]
   childCount: number
   create: (dependencies: ValueMap<Ds>) => V | null
-  revoked: boolean
   subscriptions: number[]
   dependencies: Ds
   cachedOutput: V
@@ -44,13 +36,12 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
   constructor(
     dependencies: Ds,
     create: (inputs: ValueMap<Ds>) => V | null,
-    shallow: boolean = true,
     initialValue?: V,
+    shallow: boolean = true,
   ) {
     this.depth = Math.max(0, ...dependencies.map(dep => dep.depth)) + 1
     this.shallow = shallow
     this.cachedOutput = initialValue || (invalidCache as any)
-    this.revoked = this.cachedOutput === (invalidCache as any)
     this.create = create
     this.children = []
     this.childCount = 0
@@ -58,16 +49,11 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
     this.dependencies = dependencies
   }
 
-  revoke() {
-    this.revoked = true
-  }
-
   tryUpdate(): boolean {
     const oldValue = this.cachedOutput
     const newValue = this.create(this.dependencies.map(
       dep => dep.cachedOutput,
     ) as ValueMap<Ds>)
-    this.revoked = !this.volatile
     switch (true) {
       case newValue === null: {
         return false
@@ -87,15 +73,10 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
     }
   }
 
-  subscribe(newChild: Revokable | ((v: V) => unknown)): number {
-    if (newChild instanceof Function || !(newChild instanceof Object)) {
+  subscribe(newChild: __Slice__<any, unknown> | ((v: V) => unknown)): number {
+    if (!(newChild instanceof __Slice__)) {
       newChild(resolveSlice(this))
-      return this.subscribe({
-        type: '@slice/subscription',
-        revoke: () => newChild(this.cachedOutput),
-      })
     }
-
     if (this.childCount === 0) {
       this.subscriptions = this.dependencies.map(d => d.subscribe(this))
     }
@@ -147,24 +128,23 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   create: (inputs: ValueMap<Ds>) => V,
-  config?: SliceConfig<V>,
+  initialValue?: V,
+  shallow?: boolean,
 ): Slice<V, SliceMixin<Ds>>
 
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   create: (inputs: ValueMap<Ds>) => V | null,
-  config: { initialValue: V } & SliceConfig<V>,
+  initialValue: V,
+  shallow?: boolean,
 ): Slice<V, SliceMixin<Ds>>
 
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   create: (inputs: ValueMap<Ds>) => V | null,
-  config: SliceConfig<V> = {},
+  initialValue?: V,
+  shallow: boolean = true,
+  // config: SliceConfig<V> = {},
 ) {
-  return new __Slice__(
-    dependencies,
-    create,
-    config.shallow,
-    config.initialValue,
-  )
+  return new __Slice__(dependencies, create, initialValue, shallow)
 }

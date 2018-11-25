@@ -73,13 +73,11 @@ In blog-speak, there are 3 main differences between `spider-web` state slices an
 - make wrapReducer accept an optional param for initial state
 - implement `joinSlices()`
 - implement `joinOperations()`
-- implement `fork()` operator
-- add single-parent optimization to `propagateSlice()`
-- add time travel hook to `dispatch()`
+- implement `fork()` operator (85%)
+- add time travel hooks to `dispatch()`
 - add store middleware
-- remove volatile and eager; Simplify `Slice` construction params
 - assert `Just` types for all Slices
-- squash multiple synchronous dispatches
+- squash multiple synchronous dispatches; debate making dispatch take a callback or return Promise? Or not...
 - make a list of viable, safe operators
   - map
   - fork
@@ -93,5 +91,7 @@ In blog-speak, there are 3 main differences between `spider-web` state slices an
   - await (seeded)
   - ???
 - move all operator types to interfaces like fork
-- remove uses of iterator protocol (performance)
-- add more exports to support `useSlice()`
+- remove uses of iterator protocol (perf)
+- debate using sets for subscription logic (or linked list tables)
+- add more exports to support `useSlice()` (70%)
+- move operator tests to the operator directory

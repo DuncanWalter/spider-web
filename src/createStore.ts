@@ -50,13 +50,10 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
       initialState?: State
     } = {},
   ) {
-    const { shallow = true, volatile = false, initialState } = config
+    const { shallow = true, initialState } = config
     let state =
       initialState || reducer(undefined, { type: '@store/init' } as Action)
-    const resource = createSlice([] as Slice[], _ => state, {
-      initialValue: state,
-      shallow,
-    })
+    const resource = createSlice([] as Slice[], _ => state, state, shallow)
     store[sliceKey].push((action, marks) => {
       const oldState = state
       const newState = (state = reducer(state, action))
@@ -64,7 +61,6 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
         throw new Error('Reducer returned undefined')
       }
       if (!shallow || newState !== oldState) {
-        resource.revoke()
         marks.add(resource)
       }
     })

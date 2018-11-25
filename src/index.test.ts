@@ -3,7 +3,7 @@ import { map, join } from './operations'
 import { fork } from './operations/fork'
 import { resolveSlice } from './resolveSlice'
 
-test('Diamond case duplicates no work', () => {
+test('Diamond case handling is efficient and stable', () => {
   const { dispatch, wrapReducer } = createStore()
 
   let reducerCalls = 0
@@ -29,6 +29,8 @@ test('Diamond case duplicates no work', () => {
       subscriptionCalls++
       value = v
     })
+
+  expect(counter.children.length).toBe(2)
 
   expect(value).toBe(1)
   expect(reducerCalls).toBe(1)

@@ -12,12 +12,13 @@ interface Fork {
   [ops: string]: Function
 }
 
+// TODO: keyed forking
 export const fork = createOperation({
   fork<U, V, O>(
     this: Slice<U[], O>,
     builder: (u: Slice<U, O>) => Slice<V> = i => i as any,
   ): Slice<Slice<V, O>[], O> {
-    const forkedSlices: Slice<V>[] = []
+    const forkedSlices: Slice<V, O>[] = []
     let forks: U[]
     const root = createSlice([this], ([rawForks]) => {
       forks = rawForks
@@ -27,8 +28,8 @@ export const fork = createOperation({
           forkedSlices[i] = builder(createSlice<any, U>(
             [root],
             _ => (i >= forks.length ? null : forks[i]),
-            { initialValue: forks[i] },
-          ) as Slice<U, O>)
+            forks[i],
+          ) as Slice<U, O>) as Slice<V, O>
         }
         return forkedSlices[i]
       })
