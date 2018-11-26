@@ -13,6 +13,7 @@ export interface OperationCluster<Children extends (Operation<any>)[]> {
 export type OperationSet = Operation<any> | OperationCluster<any>
 
 export { createOperation } from './createOperation'
+export { joinOperations } from './joinOperations'
 
 type OperationSetMixin<O extends OperationSet> = O extends Operation<infer M>
   ? M
@@ -25,7 +26,6 @@ export type OperationSetListMixin<Os extends OperationSet[]> = Intersection<
 >
 
 export { map } from './map'
-export { join } from './join'
 export { thru } from './thru'
 export { fork } from './fork'
 

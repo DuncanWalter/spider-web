@@ -1,9 +1,10 @@
 import { createStore } from './createStore'
-import { map, join } from './operations'
+import { map } from './operations'
 import { fork } from './operations/fork'
 import { resolveSlice } from './resolveSlice'
+import { joinSlices } from './joinSlices'
 
-test('Diamond case handling is efficient and stable', () => {
+test('Diamond case handling is efficient and stable', async done => {
   const { dispatch, wrapReducer } = createStore()
 
   let reducerCalls = 0
@@ -20,15 +21,12 @@ test('Diamond case handling is efficient and stable', () => {
   expect(subscriptionCalls).toBe(0)
 
   const double = counter.use(map).map(v => 2 * v)
+  const negative = counter.use(map).map(v => -v)
 
-  counter
-    .use(map, join)
-    .map(v => -v)
-    .join([double], (neg, dub) => neg + dub)
-    .subscribe(v => {
-      subscriptionCalls++
-      value = v
-    })
+  joinSlices([double, negative], (neg, dub) => neg + dub).subscribe(v => {
+    subscriptionCalls++
+    value = v
+  })
 
   expect(counter.children.length).toBe(2)
 
@@ -36,14 +34,16 @@ test('Diamond case handling is efficient and stable', () => {
   expect(reducerCalls).toBe(1)
   expect(subscriptionCalls).toBe(1)
 
-  dispatch({ type: 'increment' })
+  await dispatch({ type: 'increment' })
 
   expect(value).toBe(2)
   expect(reducerCalls).toBe(2)
   expect(subscriptionCalls).toBe(2)
+
+  done()
 })
 
-test('Slices can be forked successfully', () => {
+test('Slices can be forked successfully', async done => {
   const { dispatch, wrapReducer } = createStore()
 
   const slice = wrapReducer<number[]>((state = [], action) => {
@@ -64,13 +64,13 @@ test('Slices can be forked successfully', () => {
 
   expect(resolveSlice(slice).length).toBe(0)
 
-  dispatch({ type: 'add' })
+  await dispatch({ type: 'add' })
 
   const [innerSlice] = resolveSlice(slice)
 
   expect(resolveSlice(innerSlice)).toBe(-0)
 
-  dispatch({ type: 'add' })
+  await dispatch({ type: 'add' })
 
   const [nextSlice] = resolveSlice(slice)
 
@@ -78,5 +78,7 @@ test('Slices can be forked successfully', () => {
 
   expect(resolveSlice(innerSlice)).toBe(-1)
 
-  dispatch({ type: 'cull' })
+  await dispatch({ type: 'cull' })
+
+  done()
 })
