@@ -23,12 +23,14 @@ test('Diamond case handling is efficient and stable', async done => {
   const double = counter.use(map).map(v => 2 * v)
   const negative = counter.use(map).map(v => -v)
 
-  joinSlices([double, negative], (neg, dub) => neg + dub).subscribe(v => {
+  joinSlices([double, negative], (neg, dub) => {
+    return neg + dub
+  }).subscribe(v => {
     subscriptionCalls++
     value = v
   })
 
-  expect(counter.children.length).toBe(2)
+  expect(counter.children.size).toBe(2)
 
   expect(value).toBe(1)
   expect(reducerCalls).toBe(1)

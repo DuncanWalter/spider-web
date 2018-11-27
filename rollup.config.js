@@ -2,7 +2,11 @@ const typescript = require('rollup-plugin-typescript2')
 
 module.exports = [
   {
-    input: ['./src/index.ts', './src/operations/operations.ts'],
+    input: [
+      './src/index.ts',
+      './src/operations/operations.ts',
+      './src/react/useSlice.ts',
+    ],
     output: [
       {
         dir: '.',
@@ -11,7 +15,7 @@ module.exports = [
       },
     ],
     plugins: [typescript()],
-    external: ['flatqueue'],
+    external: ['flatqueue', 'react'],
     experimentalCodeSplitting: true,
   },
 ]

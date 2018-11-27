@@ -23,15 +23,11 @@ export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
 export class __Slice__<Ds extends Slice<any, any>[], V> {
   depth: number
   type: undefined
-  children: (null | __Slice__<any, unknown> | ((v: V) => unknown))[]
-  childCount: number
+  children: Set<__Slice__<any, unknown> | ((v: V) => unknown)>
   create: (dependencies: ValueMap<Ds>) => V | null
-  subscriptions: number[]
   dependencies: Ds
   cachedOutput: V
-  volatile?: boolean
   shallow?: boolean
-  lazy?: boolean
 
   constructor(
     dependencies: Ds,
@@ -43,9 +39,7 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
     this.shallow = shallow
     this.cachedOutput = initialValue || (invalidCache as any)
     this.create = create
-    this.children = []
-    this.childCount = 0
-    this.subscriptions = []
+    this.children = new Set()
     this.dependencies = dependencies
   }
 
@@ -73,36 +67,23 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
     }
   }
 
-  subscribe(newChild: __Slice__<any, unknown> | ((v: V) => unknown)): number {
+  subscribe(newChild: __Slice__<any, unknown> | ((v: V) => unknown)) {
+    if (this.children.size === 0) {
+      this.dependencies.forEach(d => d.subscribe(this))
+    }
+    const content = resolveSlice(this)
+    this.children.add(newChild)
     if (!(newChild instanceof __Slice__)) {
-      newChild(resolveSlice(this))
+      newChild(content)
     }
-    if (this.childCount === 0) {
-      this.subscriptions = this.dependencies.map(d => d.subscribe(this))
-    }
-    this.childCount++
-    for (let i = 0; i++; i < this.children.length) {
-      if (!this.children[i]) {
-        this.children[i] = newChild
-        return i
-      }
-    }
-    this.children.push(newChild)
-    const subscription = this.children.length - 1
-    return subscription
   }
 
-  unsubscribe(subscription: number) {
-    if (!this.children[subscription]) {
-      throw new Error('Same Slice child unsubscribed twice')
-    }
-    this.childCount--
-    this.children[subscription] = null
-    if (this.childCount === 0) {
+  unsubscribe(child: __Slice__<any, unknown> | ((v: V) => unknown)) {
+    this.children.delete(child)
+    if (this.children.size === 0) {
       this.dependencies.forEach((d, i) => {
-        d.unsubscribe(this.subscriptions[i])
+        d.unsubscribe(this)
       })
-      this.subscriptions = []
     }
   }
 
@@ -144,7 +125,6 @@ export function createSlice<Ds extends Slice[], V>(
   create: (inputs: ValueMap<Ds>) => V | null,
   initialValue?: V,
   shallow: boolean = true,
-  // config: SliceConfig<V> = {},
 ) {
   return new __Slice__(dependencies, create, initialValue, shallow)
 }
