@@ -23,7 +23,7 @@ export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
 export class __Slice__<Ds extends Slice<any, any>[], V> {
   depth: number
   type: undefined
-  children: Set<__Slice__<any, unknown> | ((v: V) => unknown)>
+  children: Set<Slice | ((v: V) => unknown)>
   create: (dependencies: ValueMap<Ds>) => V | null
   dependencies: Ds
   cachedOutput: V
@@ -67,7 +67,7 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
     }
   }
 
-  subscribe(newChild: __Slice__<any, unknown> | ((v: V) => unknown)) {
+  subscribe(newChild: Slice | ((v: V) => unknown)) {
     if (this.children.size === 0) {
       this.dependencies.forEach(d => d.subscribe(this))
     }
@@ -78,7 +78,7 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
     }
   }
 
-  unsubscribe(child: __Slice__<any, unknown> | ((v: V) => unknown)) {
+  unsubscribe(child: Slice | ((v: V) => unknown)) {
     this.children.delete(child)
     if (this.children.size === 0) {
       this.dependencies.forEach((d, i) => {

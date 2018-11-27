@@ -1,6 +1,6 @@
 # spider-web
 
-Yet another state store implementation. `spider-web` is meant to bring together the best features of `redux`, `redux-thunk`, `reselect`, `rxjs`/`mobx`, and in some sense `ngrx`. It still needs some streamlining. Contributions are welcome.
+Yet another state store implementation. `spider-web` brings together the best features of `redux`, `redux-thunk`, `reselect`, `rxjs`/`mobx`, and in some sense `ngrx`. Contributions are welcome.
 
 `spider-web` is:
 
@@ -8,14 +8,12 @@ Yet another state store implementation. `spider-web` is meant to bring together 
 - efficient: never duplicates work like `reselect`
 - lazy: never does work that won't be used like `reselect` and `mobx`
 - strongly typed: complete type coverage with `typescript`
-- time travelling: supports `redux` style time travelling\*
-- dynamic: code-split friendly
+- dynamic: code-split and tree-shake friendly
 - declarative: functional graph structure resembling observables
 - diamond-proof: properly handles diamond cases (unlike observables)
 - tolerant: supports mutable state slices for edge cases
-- extensible: operators and middleware\* support
-
-\* Roadmapped features
+- extensible: support for custom operators
+- agnostic: framework and library agnostic
 
 ## How does it work?
 
@@ -71,16 +69,20 @@ In blog-speak, there are 3 main differences between `spider-web` state slices an
 
 ## TODO
 
-- make wrapReducer accept an optional param for initial state
-- implement `joinOperations()`
-- implement `fork()` operator (85%)
+- implement `fork()` operator (90%)
 - add time travel hooks to `dispatch()`
 - add store middleware
 - assert `Just` types for all Slices
+- come up with a list of guidelines or some api for dynamic slices
 - make a list of viable, safe operators
   - ~~map~~
   - ~~fork~~
   - ~~thru~~
+  - join (???)
+  - flatten (???)
+  - dedup
+  - keyFork
+  - convolve (???)
   - ???
 - make a list of viable, unsafe operators
   - filter (seeded?)
@@ -90,5 +92,4 @@ In blog-speak, there are 3 main differences between `spider-web` state slices an
   - await (seeded)
   - ???
 - remove uses of iterator protocol (perf)
-- debate using sets for subscription logic (or linked list tables)
 - move operator tests to the operator directory

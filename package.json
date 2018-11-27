@@ -2,6 +2,12 @@
   "name": "@dwalter/spider-web",
   "version": "1.0.5",
   "description": "waste free state management",
+  "keywords": [
+    "state",
+    "hooks",
+    "observable",
+    "store"
+  ],
   "main": "index.js",
   "module": "index.js",
   "types": "index.d.ts",
@@ -54,6 +60,6 @@
     "typescript": "^3.1.6"
   },
   "dependencies": {
-    "flatqueue": "^1.1.0"
+    "flatqueue": "1.1.0"
   }
 }

@@ -28,6 +28,7 @@ export type OperationSetListMixin<Os extends OperationSet[]> = Intersection<
 export { map } from './map'
 export { thru } from './thru'
 export { fork } from './fork'
+export { flatten } from './flatten'
 
 export type Intersection<Union> = (Union extends infer U
   ? (u: U) => any
