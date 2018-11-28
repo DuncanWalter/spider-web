@@ -69,27 +69,22 @@ In blog-speak, there are 3 main differences between `spider-web` state slices an
 
 ## TODO
 
-- implement `fork()` operator (90%)
+- make fork forget unused slices
 - add time travel hooks to `dispatch()`
 - add store middleware
 - assert `Just` types for all Slices
-- come up with a list of guidelines or some api for dynamic slices
 - make a list of viable, safe operators
   - ~~map~~
   - ~~fork~~
   - ~~thru~~
-  - join (???)
-  - flatten (???)
-  - dedup
-  - keyFork
+  - ~~dedup~~
+  - keyFork (???)
   - convolve (???)
-  - ???
 - make a list of viable, unsafe operators
   - filter (seeded?)
   - scan (seeded)
   - debounce (seeded)
   - throttle
   - await (seeded)
-  - ???
-- remove uses of iterator protocol (perf)
 - move operator tests to the operator directory
+- kill either joinSlices or createSlice (???)

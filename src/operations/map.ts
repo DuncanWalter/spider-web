@@ -6,8 +6,8 @@ interface Map {
   [ops: string]: Function
 }
 
-export const map = createOperation({
-  map<U, V, O>(this: Slice<U, O>, mapping: (u: U) => V): Slice<V, O> {
-    return createSlice([this], ([u]) => mapping(u))
+export const map = createOperation<Map>({
+  map(mapping) {
+    return createSlice([this], u => mapping(u))
   },
-} as Map)
+})

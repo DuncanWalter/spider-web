@@ -5,10 +5,5 @@ export function joinSlices<Slices extends Slice[], V>(
   mapping: (...values: ValueMap<Slices>) => V,
   shallow: boolean = true,
 ): Slice<V> {
-  return createSlice(
-    slices,
-    args => mapping(...(args as any)),
-    undefined,
-    shallow,
-  )
+  return createSlice(slices, mapping, undefined, shallow)
 }

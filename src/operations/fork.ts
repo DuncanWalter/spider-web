@@ -19,13 +19,13 @@ export const fork = createOperation({
     builder: (u: Slice<U, O>) => Slice<V> = i => i as any,
   ): Slice<Slice<V, O>[], O> {
     const forkedSlices: Slice<V, O>[] = []
-    const root = createSlice([this], ([rawForks]) => {
+    const root = createSlice([this], rawForks => {
       // TODO: remove slices when forks shrinks
       return rawForks.map((_, i) => {
         if (!forkedSlices[i]) {
           forkedSlices[i] = builder(createSlice(
             [this],
-            ([forks]) => (i >= forks.length ? null : forks[i]),
+            forks => (i >= forks.length ? null : forks[i]),
             rawForks[i],
           ) as Slice<U, O>) as Slice<V, O>
         }

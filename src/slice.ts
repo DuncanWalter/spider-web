@@ -16,38 +16,67 @@ export type SliceConfig<V> = {
   shallow?: boolean
 }
 
-const invalidCache = '@slice/invalid-cache'
-
 export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
 
-export class __Slice__<Ds extends Slice<any, any>[], V> {
+export class __Slice__<Ds extends Slice[], V> {
   depth: number
   type: undefined
   children: Set<Slice | ((v: V) => unknown)>
-  create: (dependencies: ValueMap<Ds>) => V | null
+  create: (...dependencies: ValueMap<Ds>) => V | null
   dependencies: Ds
   cachedOutput: V
   shallow?: boolean
 
   constructor(
     dependencies: Ds,
-    create: (inputs: ValueMap<Ds>) => V | null,
+    create: (...inputs: ValueMap<Ds>) => V | null,
     initialValue?: V,
     shallow: boolean = true,
   ) {
-    this.depth = Math.max(0, ...dependencies.map(dep => dep.depth)) + 1
+    this.depth = 0
+    for (let i = 0; i < dependencies.length; i++) {
+      if (this.depth < dependencies[i].depth) {
+        this.depth = dependencies[i].depth
+      }
+    }
+    this.depth++
     this.shallow = shallow
-    this.cachedOutput = initialValue || (invalidCache as any)
+    this.cachedOutput = initialValue || ('@slice/invalid-cache' as any)
     this.create = create
     this.children = new Set()
     this.dependencies = dependencies
   }
 
+  dep<N extends number>(n: N): ValueMap<Ds>[N] {
+    return this.dependencies[n].cachedOutput
+  }
+
   tryUpdate(): boolean {
     const oldValue = this.cachedOutput
-    const newValue = this.create(this.dependencies.map(
-      dep => dep.cachedOutput,
-    ) as ValueMap<Ds>)
+    let newValue: V | null
+    switch (this.dependencies.length) {
+      case 0: {
+        newValue = (this.create as any)()
+        break
+      }
+      case 1: {
+        newValue = (this.create as any)(this.dep(0))
+        break
+      }
+      case 2: {
+        newValue = (this.create as any)(this.dep(0), this.dep(1))
+        break
+      }
+      case 3: {
+        newValue = (this.create as any)(this.dep(0), this.dep(1), this.dep(2))
+        break
+      }
+      default: {
+        newValue = this.create(
+          ...(this.dependencies.map(dep => dep.cachedOutput) as any),
+        )
+      }
+    }
     switch (true) {
       case newValue === null: {
         return false
@@ -108,21 +137,21 @@ export class __Slice__<Ds extends Slice<any, any>[], V> {
 
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
-  create: (inputs: ValueMap<Ds>) => V,
+  create: (...inputs: ValueMap<Ds>) => V,
   initialValue?: V,
   shallow?: boolean,
 ): Slice<V, SliceMixin<Ds>>
 
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
-  create: (inputs: ValueMap<Ds>) => V | null,
+  create: (...inputs: ValueMap<Ds>) => V | null,
   initialValue: V,
   shallow?: boolean,
 ): Slice<V, SliceMixin<Ds>>
 
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
-  create: (inputs: ValueMap<Ds>) => V | null,
+  create: (...inputs: ValueMap<Ds>) => V | null,
   initialValue?: V,
   shallow: boolean = true,
 ) {
