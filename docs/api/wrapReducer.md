@@ -1,4 +1,4 @@
-# `wrapReducer()`
+# wrapReducer()
 
 `wrapReducer()` creates a state slice from a `flux` or `redux` style reducer function. If the reducer is a pure function and returns plain JSON, `spider-web` will always have a one-to-one mapping from every store state to every state slice. This means `spider-web` will be able to time travel like `redux`.
 
@@ -15,3 +15,18 @@ interface Reducer<State, Action> {
 ## Returns:
 
 Returns a [Slice](./Slice) of state.
+
+## Example:
+
+```javascript
+const counter: Slice<number> = wrapReducer((state = 0, action) => {
+  switch (action.type) {
+    case '@counter/increment':
+      return state + 1
+    case '@counter/decrement':
+      return state - 1
+    default:
+      return state
+  }
+})
+```

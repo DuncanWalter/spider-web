@@ -12,6 +12,7 @@ module.exports = [
         dir: '.',
         format: 'es',
         name: 'spider-web',
+        chunkFileNames: '[name].js',
       },
     ],
     plugins: [typescript()],

@@ -1,6 +1,6 @@
 # Spider Web
 
-Tiny, efficient, subscribable, agnostic, and consistent state management library.
+Tiny, efficient, and consistent state management library.
 
 ## Overview
 
