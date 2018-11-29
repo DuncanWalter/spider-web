@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-web",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "waste free state management",
   "keywords": [
     "state",
