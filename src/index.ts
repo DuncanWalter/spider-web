@@ -1,4 +1,5 @@
 export * from './createStore'
 export * from './mergeStores'
+export * from './operations'
 export { resolveSlice } from './resolveSlice'
 export { Slice } from './slice'

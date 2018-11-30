@@ -1,14 +1,17 @@
-import { Store, sliceKey } from './createStore'
+import { Store, getMaster } from './createStore'
 
 export function mergeStores(...stores: Store<any>[]) {
-  const allSlices = new Set()
-  for (let slices of stores.map(store => store[sliceKey])) {
-    for (let slice of slices) {
-      allSlices.add(slice)
+  if (stores.length <= 1) {
+    return
+  }
+
+  const [master, ...children] = stores
+
+  children.forEach(child => {
+    const oldMaster = getMaster(child)
+    oldMaster.master = master
+    if (master.slices.indexOf(oldMaster.slices[0]) < 0) {
+      master.slices.push(...oldMaster.slices)
     }
-  }
-  const sliceList = [...allSlices]
-  for (let store of stores) {
-    store['@store/slices'] = sliceList
-  }
+  })
 }

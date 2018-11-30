@@ -1,16 +1,17 @@
-import { PrioritySet } from './prioritySet'
 import { Slice, createSlice } from './slice'
 import { propagateSlice } from './propagateSlice'
 import { createRequester } from './createRequester'
+import { SliceSet } from './SliceSet'
 
 export const sliceKey = '@store/slices'
 
 export interface StateSlice<A> {
-  (action: A, marks: PrioritySet<Slice<unknown>>): void
+  (action: A, marks: SliceSet): void
 }
 
 export interface Dispatch<A> {
   (a: A): Promise<undefined>
+  (a: Promise<A>): Promise<undefined>
   <R>(a: (d: Dispatch<A>) => R): R
 }
 
@@ -21,28 +22,44 @@ export interface Reducer<S, A> {
 export interface Store<A> {
   dispatch: Dispatch<A>
   wrapReducer: <S>(reducer: Reducer<S, A>) => Slice<S>
-  [sliceKey]: StateSlice<A>[]
+  slices: StateSlice<A>[]
+  master: Store<any>
+}
+
+export function getMaster(store: Store<any>) {
+  let s = store
+  while (s.master !== s) {
+    s = s.master
+  }
+  return s
 }
 
 export function createStore<Action extends { type: string }>(): Store<Action> {
   const store = {
-    [sliceKey]: [] as StateSlice<Action>[],
+    slices: [] as StateSlice<Action>[],
   } as Store<Action>
 
-  let marks: PrioritySet<Slice<unknown>> = new PrioritySet()
+  store.master = store
+
+  let marks: SliceSet = new SliceSet()
 
   const requestResolve = createRequester(() => {
     propagateSlice(marks)
-    marks = new PrioritySet()
+    marks = new SliceSet()
   })
 
   const dispatch: Dispatch<Action> = <R>(
-    action: Action | ((dispatch: Dispatch<Action>) => R),
+    action: Action | Promise<Action> | ((dispatch: Dispatch<Action>) => R),
   ) => {
+    if (action instanceof Promise) {
+      return new Promise(resolve => {
+        action.then(action => dispatch(action).then(resolve))
+      })
+    }
     if (action instanceof Function) {
       return action(dispatch)
     }
-    store[sliceKey].forEach(slice => slice(action, marks))
+    getMaster(store).slices.forEach(slice => slice(action, marks))
     return new Promise(requestResolve)
   }
   store.dispatch = dispatch
@@ -59,7 +76,7 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
     let state =
       initialState || reducer(undefined, { type: '@store/init' } as Action)
     const resource = createSlice([] as Slice[], _ => state, state, shallow)
-    store[sliceKey].push((action, marks) => {
+    store.slices.push((action, marks) => {
       const oldState = state
       const newState = (state = reducer(state, action))
       if (newState === undefined) {

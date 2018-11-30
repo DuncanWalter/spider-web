@@ -1,5 +1,6 @@
 import { resolveSlice } from './resolveSlice'
 import { OperationSet, OperationSetListMixin } from './operations'
+import { SliceSet } from './SliceSet'
 
 export type ValueMap<Slices extends Slice[]> = {
   [K in keyof Slices]: Slices[K] extends Slice<infer Value> ? Value : never
@@ -18,14 +19,17 @@ export type SliceConfig<V> = {
 
 export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
 
+let depth = 0
+
 export class __Slice__<Ds extends Slice[], V> {
   depth: number
   type: undefined
-  children: Set<Slice | ((v: V) => unknown)>
+  children: SliceSet
   create: (...dependencies: ValueMap<Ds>) => V | null
   dependencies: Ds
   cachedOutput: V
   shallow?: boolean
+  subscriptions: null | number[]
 
   constructor(
     dependencies: Ds,
@@ -33,18 +37,13 @@ export class __Slice__<Ds extends Slice[], V> {
     initialValue?: V,
     shallow: boolean = true,
   ) {
-    this.depth = 0
-    for (let i = 0; i < dependencies.length; i++) {
-      if (this.depth < dependencies[i].depth) {
-        this.depth = dependencies[i].depth
-      }
-    }
-    this.depth++
+    this.depth = ++depth
     this.shallow = shallow
     this.cachedOutput = initialValue || ('@slice/invalid-cache' as any)
     this.create = create
-    this.children = new Set()
+    this.children = new SliceSet()
     this.dependencies = dependencies
+    this.subscriptions = null
   }
 
   dep<N extends number>(n: N): ValueMap<Ds>[N] {
@@ -77,42 +76,39 @@ export class __Slice__<Ds extends Slice[], V> {
         )
       }
     }
-    switch (true) {
-      case newValue === null: {
-        return false
-      }
-      case newValue === undefined: {
-        throw new Error(
-          'Slice emitted undefined. For noop explicitly return null.',
-        )
-      }
-      case this.shallow && newValue === oldValue: {
-        return false
-      }
-      default: {
-        this.cachedOutput = newValue!
-        return true
-      }
+    if (newValue === null) {
+      return false
     }
+    if (newValue === undefined) {
+      return false
+    }
+    if (this.shallow && newValue === oldValue) {
+      return false
+    }
+    this.cachedOutput = newValue!
+    return true
   }
 
-  subscribe(newChild: Slice | ((v: V) => unknown)) {
+  subscribe(newChild: Slice | ((v: V) => unknown)): number {
     if (this.children.size === 0) {
-      this.dependencies.forEach(d => d.subscribe(this))
+      this.subscriptions = this.dependencies.map(d => d.subscribe(this))
     }
     const content = resolveSlice(this)
-    this.children.add(newChild)
-    if (!(newChild instanceof __Slice__)) {
+    if (newChild instanceof __Slice__) {
+      return this.children.add(newChild)
+    } else {
       newChild(content)
+      return this.children.add(createSlice([this], newChild as any))
     }
   }
 
-  unsubscribe(child: Slice | ((v: V) => unknown)) {
-    this.children.delete(child)
+  unsubscribe(subscription: number) {
+    this.children.remove(subscription)
     if (this.children.size === 0) {
       this.dependencies.forEach((d, i) => {
-        d.unsubscribe(this)
+        d.unsubscribe(this.subscriptions![i])
       })
+      this.subscriptions = null
     }
   }
 

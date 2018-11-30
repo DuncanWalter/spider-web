@@ -20,14 +20,13 @@ export function useSlice<V extends Slice>(
   const [state, setState] = useState(() => resolveSlice(innerSlice))
   useEffect(
     () => {
-      const callback = (v: V) => {
+      const subscription = innerSlice.subscribe((v: V) => {
         if (v !== state || !innerSlice.shallow) {
           requestUpdate(() => setState(v))
         }
-      }
-      innerSlice.subscribe(callback)
+      })
       return () => {
-        innerSlice.unsubscribe(callback)
+        innerSlice.unsubscribe(subscription)
       }
     },
     [innerSlice],

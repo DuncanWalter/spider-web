@@ -1,12 +1,9 @@
 const typescript = require('rollup-plugin-typescript2')
+// const { terser } = require('rollup-plugin-terser')
 
 module.exports = [
   {
-    input: [
-      './src/index.ts',
-      './src/operations/operations.ts',
-      './src/react/useSlice.ts',
-    ],
+    input: ['./src/index.ts'],
     output: [
       {
         dir: '.',
@@ -15,7 +12,7 @@ module.exports = [
         chunkFileNames: '[name].js',
       },
     ],
-    plugins: [typescript()],
+    plugins: [typescript() /*terser()*/],
     external: ['flatqueue', 'react'],
     experimentalCodeSplitting: true,
   },
