@@ -27,7 +27,7 @@ export function useSlice<V extends Slice>(
       })
       return () => {
         innerSlice.unsubscribe(subscription)
-      }
+      } 
     },
     [innerSlice],
   )

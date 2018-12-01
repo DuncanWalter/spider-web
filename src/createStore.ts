@@ -68,7 +68,6 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
     reducer: (state: State | undefined, action: Action) => State,
     config: {
       shallow?: boolean
-      volatile?: boolean
       initialState?: State
     } = {},
   ) {
@@ -76,7 +75,7 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
     let state =
       initialState || reducer(undefined, { type: '@store/init' } as Action)
     const resource = createSlice([] as Slice[], _ => state, state, shallow)
-    store.slices.push((action, marks) => {
+    getMaster(store).slices.push((action, marks) => {
       const oldState = state
       const newState = (state = reducer(state, action))
       if (newState === undefined) {

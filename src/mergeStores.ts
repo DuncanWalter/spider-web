@@ -5,7 +5,8 @@ export function mergeStores(...stores: Store<any>[]) {
     return
   }
 
-  const [master, ...children] = stores
+  let [master, ...children] = stores
+  master = getMaster(master)
 
   children.forEach(child => {
     const oldMaster = getMaster(child)
@@ -13,5 +14,6 @@ export function mergeStores(...stores: Store<any>[]) {
     if (master.slices.indexOf(oldMaster.slices[0]) < 0) {
       master.slices.push(...oldMaster.slices)
     }
+    oldMaster.slices = []
   })
 }

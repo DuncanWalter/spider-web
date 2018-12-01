@@ -12,14 +12,9 @@ type SliceMixin<Slices extends Slice<any, any>[]> = Slices extends Array<
   ? M
   : never
 
-export type SliceConfig<V> = {
-  initialValue?: V
-  shallow?: boolean
-}
-
 export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
 
-let depth = 0
+let depth = Number.MIN_SAFE_INTEGER
 
 export class __Slice__<Ds extends Slice[], V> {
   depth: number
