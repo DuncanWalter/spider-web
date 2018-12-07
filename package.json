@@ -1,6 +1,6 @@
 {
   "name": "spider-web",
-  "version": "1.0.0",
+  "version": "1.0.7",
   "description": "monorepo for spider state management",
   "main": "index.js",
   "dependencies": {
@@ -15,8 +15,9 @@
     "lerna": "^3.5.1"
   },
   "scripts": {
-    "test": "test",
-    "bootstrap": "lerna bootstrap"
+    "test": "lerna run build && lerna run test",
+    "bootstrap": "lerna bootstrap",
+    "postinstall": "npm run bootstrap"
   },
   "repository": {
     "type": "git",

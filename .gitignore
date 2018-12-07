@@ -1,7 +1,3 @@
 node_modules
 .*
-*.js
-*gz
-!rollup.config.js
 !.gitignore
-types

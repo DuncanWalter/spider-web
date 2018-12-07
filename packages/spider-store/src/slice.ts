@@ -1,6 +1,6 @@
 import { resolveSlice } from './resolveSlice'
-import { OperationSet, OperationSetListMixin } from './operations'
 import { SliceSet } from './SliceSet'
+import { OperationSet, OperationSetListMixin } from '@dwalter/spider-operations'
 
 export type ValueMap<Slices extends Slice[]> = {
   [K in keyof Slices]: Slices[K] extends Slice<infer Value> ? Value : never
