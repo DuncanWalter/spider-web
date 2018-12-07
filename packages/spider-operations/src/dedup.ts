@@ -1,5 +1,5 @@
 import { createOperation } from './createOperation'
-import { Slice, createSlice } from '../slice'
+import { Slice, createSlice } from '@dwalter/spider-store'
 
 interface Dedup {
   dedup<U, O>(this: Slice<U, O>): Slice<U, O>

@@ -1,4 +1,4 @@
-import { Slice, createSlice } from '../slice'
+import { Slice, createSlice } from '@dwalter/spider-store'
 import { createOperation } from './createOperation'
 
 interface Map {

@@ -1,4 +1,4 @@
-import { Slice } from '../slice'
+import { Slice } from '@dwalter/spider-store'
 import { createOperation } from './createOperation'
 
 interface Thru {

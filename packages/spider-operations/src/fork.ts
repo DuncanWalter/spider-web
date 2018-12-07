@@ -1,4 +1,4 @@
-import { Slice, createSlice } from '../slice'
+import { Slice, createSlice } from '@dwalter/spider-store'
 import { createOperation } from './createOperation'
 
 type Prong<S> = S extends Slice<Array<infer U>, infer O> ? Slice<U, O> : never

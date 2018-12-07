@@ -1,0 +1,6 @@
+export * from './createStore'
+export * from './mergeStores'
+export { resolveSlice } from './resolveSlice'
+export { joinSlices } from './joinSlices'
+export { Slice, createSlice } from './slice'
+export { createRequester } from './createRequester'
