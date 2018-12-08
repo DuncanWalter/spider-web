@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
-import { createRequester, resolveSlice, Slice } from '@dwalter/spider-store'
+import { Slice, utils } from '@dwalter/spider-store'
+
+const { createRequester, resolveSlice } = utils
 
 const requestUpdate = createRequester()
 

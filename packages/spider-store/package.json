@@ -18,8 +18,7 @@
   "scripts": {
     "test": "jest",
     "prepublishOnly": "npm run build",
-    "build": "rollup -c",
-    "precommit": "npm run test"
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",

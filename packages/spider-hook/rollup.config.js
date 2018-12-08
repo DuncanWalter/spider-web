@@ -1,19 +1,32 @@
 const typescript = require('rollup-plugin-typescript2')
-// const { terser } = require('rollup-plugin-terser')
+const { terser } = require('rollup-plugin-terser')
 
 module.exports = [
   {
-    input: ['./src/index.ts'],
+    input: './src/index.ts',
     output: [
       {
-        dir: '.',
+        file: 'lib/index.js',
+        format: 'umd',
+        name: 'spider-operations',
+      },
+      {
+        file: 'lib/index.es',
         format: 'es',
-        name: 'spider-web',
-        chunkFileNames: '[name].js',
+        name: 'spider-operations',
       },
     ],
-    plugins: [typescript() /*terser()*/],
-    external: ['flatqueue', 'react'],
-    experimentalCodeSplitting: true,
+    plugins: [typescript()],
+  },
+  {
+    input: './src/index.ts',
+    output: [
+      {
+        file: 'lib/index.min.js',
+        format: 'umd',
+        name: 'spider-operations',
+      },
+    ],
+    plugins: [typescript(), terser()],
   },
 ]

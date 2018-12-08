@@ -1,5 +1,7 @@
-import { Slice, createSlice } from '@dwalter/spider-store'
+import { Slice, utils } from '@dwalter/spider-store'
 import { createOperation } from './createOperation'
+
+const { createSlice } = utils
 
 type Prong<S> = S extends Slice<Array<infer U>, infer O> ? Slice<U, O> : never
 

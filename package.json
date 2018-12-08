@@ -1,23 +1,19 @@
 {
-  "name": "spider-web",
+  "name": "@dwalter/spider-web",
   "version": "1.0.7",
   "description": "monorepo for spider state management",
   "main": "index.js",
-  "dependencies": {
-    "husky": "^1.2.0",
-    "rollup": "^0.67.3",
-    "rollup-plugin-terser": "^3.0.0",
-    "rollup-plugin-typescript2": "^0.18.0",
-    "tslib": "^1.9.3",
-    "typescript": "^3.1.6"
-  },
   "devDependencies": {
+    "husky": "^1.2.0",
     "lerna": "^3.5.1"
   },
   "scripts": {
     "test": "lerna run build && lerna run test",
     "bootstrap": "lerna bootstrap",
-    "postinstall": "npm run bootstrap"
+    "postinstall": "npm run bootstrap",
+    "precommit": "npm run test",
+    "publish": "lerna publish from-package",
+    "lerna": "lerna exec"
   },
   "repository": {
     "type": "git",

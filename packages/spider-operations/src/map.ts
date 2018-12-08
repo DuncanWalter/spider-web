@@ -1,5 +1,7 @@
-import { Slice, createSlice } from '@dwalter/spider-store'
+import { Slice, utils } from '@dwalter/spider-store'
 import { createOperation } from './createOperation'
+
+const { createSlice } = utils
 
 interface Map {
   map<U, V, O>(this: Slice<U, O>, mapping: (u: U) => V): Slice<V, O>

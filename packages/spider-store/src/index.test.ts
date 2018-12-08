@@ -1,5 +1,4 @@
-import { createStore, joinSlices, resolveSlice } from '../lib/index'
-// import { map, fork } from '@dwalter/spider-operations'
+import { createStore, joinSlices, utils } from '../lib/index'
 
 test('Diamond case handling is efficient and stable', async done => {
   const { dispatch, wrapReducer } = createStore()

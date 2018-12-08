@@ -8,9 +8,9 @@
     "observable",
     "store"
   ],
-  "main": "index.js",
-  "module": "index.js",
-  "types": "index.d.ts",
+  "main": "lib/index.js",
+  "module": "lib/index.es",
+  "types": "lib/index.d.ts",
   "files": [
     "**/*.js",
     "**/*.ts"
@@ -18,8 +18,7 @@
   "scripts": {
     "test": "jest",
     "prepublishOnly": "npm run build",
-    "build": "rollup -c",
-    "precommit": "npm run test"
+    "build": "rollup -c"
   },
   "repository": {
     "type": "git",

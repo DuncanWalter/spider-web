@@ -1,5 +1,7 @@
-import { createStore, resolveSlice } from '@dwalter/spider-store'
+import { createStore, utils } from '@dwalter/spider-store'
 import { map, fork } from '.'
+
+const { resolveSlice } = utils
 
 test('Slices can be forked successfully', async done => {
   const { dispatch, wrapReducer } = createStore()
