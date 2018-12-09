@@ -1,5 +1,7 @@
 import { createOperation } from './createOperation'
-import { Slice, joinSlices } from '@dwalter/spider-store'
+import { Slice, utils } from '@dwalter/spider-store'
+
+const { createSlice } = utils
 
 interface Dedup {
   dedup<U, O>(this: Slice<U, O>): Slice<U, O>
@@ -12,6 +14,6 @@ function id<T>(t: T) {
 
 export const dedup = createOperation<Dedup>({
   dedup(this) {
-    return joinSlices([this], id)
+    return createSlice([this], id)
   },
 })

@@ -49,27 +49,22 @@ export class __Slice__<Ds extends Slice[], V> {
     const oldValue = this.cachedOutput
     let newValue: V | null
     switch (this.dependencies.length) {
-      case 0: {
+      case 0:
         newValue = (this.create as any)()
         break
-      }
-      case 1: {
+      case 1:
         newValue = (this.create as any)(this.dep(0))
         break
-      }
-      case 2: {
+      case 2:
         newValue = (this.create as any)(this.dep(0), this.dep(1))
         break
-      }
-      case 3: {
+      case 3:
         newValue = (this.create as any)(this.dep(0), this.dep(1), this.dep(2))
         break
-      }
-      default: {
+      default:
         newValue = this.create(
           ...(this.dependencies.map(dep => dep.cachedOutput) as any),
         )
-      }
     }
     if (newValue === null) {
       return false
