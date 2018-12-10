@@ -16,14 +16,13 @@ test('Diamond case handling is efficient and stable', async done => {
   expect(reducerCalls).toBe(1)
   expect(subscriptionCalls).toBe(0)
 
-  const left = joinSlices(counter)
-  const right = joinSlices(counter)
+  const left = joinSlices(counter, i => i)
+  const right = joinSlices(counter, i => i)
+  const union = joinSlices(left, right, (l, r) => l + r)
 
-  const union = joinSlices(left, right)
-
-  union.subscribe(([l, r]) => {
+  union.subscribe(u => {
     subscriptionCalls++
-    value = l[0] + r[0]
+    value = u
   })
 
   expect(counter.children.size).toBe(2)
@@ -37,6 +36,18 @@ test('Diamond case handling is efficient and stable', async done => {
   expect(value).toBe(4)
   expect(reducerCalls).toBe(2)
   expect(subscriptionCalls).toBe(2)
+
+  const resolution = dispatch({ type: 'increment' })
+
+  expect(value).toBe(4)
+  expect(reducerCalls).toBe(3)
+  expect(subscriptionCalls).toBe(2)
+
+  await resolution
+
+  expect(value).toBe(6)
+  expect(reducerCalls).toBe(3)
+  expect(subscriptionCalls).toBe(3)
 
   done()
 })

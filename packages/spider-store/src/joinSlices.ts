@@ -1,21 +1,51 @@
-import { Slice, ValueMap, createSlice } from './slice'
+import { Slice, createSlice } from './slice'
 
-const single: (...args: any[]) => any = a => [a]
-const double: (...args: any[]) => any = (a, b) => [a, b]
-const triple: (...args: any[]) => any = (a, b, c) => [a, b, c]
-const variadic: (...args: any[]) => any = (...args) => args
+export function joinSlices<V, S1>(
+  s1: Slice<S1>,
+  mapping: (s1: S1) => V,
+): Slice<V>
 
-export function joinSlices<Slices extends Slice[]>(
-  ...slices: Slices
-): Slice<ValueMap<Slices>> {
-  switch (slices.length) {
-    case 1:
-      return createSlice(slices, single)
-    case 2:
-      return createSlice(slices, double)
-    case 3:
-      return createSlice(slices, triple)
-    default:
-      return createSlice(slices, variadic)
-  }
+export function joinSlices<V, S1, S2>(
+  s1: Slice<S1>,
+  s2: Slice<S2>,
+  mapping: (s1: S1, s2: S2) => V,
+): Slice<V>
+
+export function joinSlices<V, S1, S2, S3>(
+  s1: Slice<S1>,
+  s2: Slice<S2>,
+  s3: Slice<S3>,
+  mapping: (s1: S1, s2: S2, s3: S3) => V,
+): Slice<V>
+
+export function joinSlices<V, S1, S2, S3, S4>(
+  s1: Slice<S1>,
+  s2: Slice<S2>,
+  s3: Slice<S3>,
+  s4: Slice<S4>,
+  mapping: (s1: S1, s2: S2, s3: S3, s4: S4) => V,
+): Slice<V>
+
+export function joinSlices<V, S1, S2, S3, S4, S5>(
+  s1: Slice<S1>,
+  s2: Slice<S2>,
+  s3: Slice<S3>,
+  s4: Slice<S4>,
+  s5: Slice<S5>,
+  mapping: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5) => V,
+): Slice<V>
+
+export function joinSlices<V, S1, S2, S3, S4, S5, S6>(
+  s1: Slice<S1>,
+  s2: Slice<S2>,
+  s3: Slice<S3>,
+  s4: Slice<S4>,
+  s5: Slice<S5>,
+  s6: Slice<S6>,
+  mapping: (s1: S1, s2: S2, s3: S3, s4: S4, s5: S5, s6: S6) => V,
+): Slice<V>
+
+export function joinSlices(...slices: any[]) {
+  const mapping = slices.pop()
+  return createSlice(slices, mapping)
 }
