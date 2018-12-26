@@ -17,6 +17,6 @@ function updateSlice(slice: Slice, marks: SliceSet): void {
 
 export function propagateSlice(marks: SliceSet) {
   while (marks.size !== 0) {
-    updateSlice(marks.pop()!, marks)
+    updateSlice(marks.popMin()!, marks)
   }
 }

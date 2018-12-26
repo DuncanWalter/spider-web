@@ -30,7 +30,7 @@ export class SliceSet {
     this.next = i
   }
 
-  pop() {
+  popMin() {
     if (this.size === 0) {
       return null
     }
@@ -47,7 +47,7 @@ export class SliceSet {
     return min
   }
 
-  take() {
+  popAny() {
     if (this.size === 0) {
       return null
     }

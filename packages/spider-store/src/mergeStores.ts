@@ -1,19 +1,11 @@
 import { Store, getMaster } from './createStore'
 
-export function mergeStores(...stores: Store<any>[]) {
-  if (stores.length <= 1) {
-    return
+export function mergeStores(master: Store<any>, child: Store<any>) {
+  const newMaster = getMaster(master)
+  const oldMaster = getMaster(child)
+  oldMaster.master = newMaster
+  if (newMaster.slices.indexOf(oldMaster.slices[0]) < 0) {
+    newMaster.slices = newMaster.slices.concat(oldMaster.slices)
   }
-
-  let [master, ...children] = stores
-  master = getMaster(master)
-
-  children.forEach(child => {
-    const oldMaster = getMaster(child)
-    oldMaster.master = master
-    if (master.slices.indexOf(oldMaster.slices[0]) < 0) {
-      master.slices.push(...oldMaster.slices)
-    }
-    oldMaster.slices = []
-  })
+  oldMaster.slices = []
 }
