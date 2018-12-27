@@ -1,4 +1,5 @@
 import { createStore, joinSlices } from '../lib/index'
+import { resolveSlice } from './resolveSlice'
 
 test('Diamond case handling is efficient and stable', async done => {
   const { dispatch, wrapReducer } = createStore()
@@ -40,7 +41,7 @@ test('Diamond case handling is efficient and stable', async done => {
   const resolution = dispatch({ type: 'increment' })
 
   expect(value).toBe(4)
-  expect(reducerCalls).toBe(3)
+  expect(reducerCalls).toBe(2)
   expect(subscriptionCalls).toBe(2)
 
   await resolution
@@ -50,4 +51,34 @@ test('Diamond case handling is efficient and stable', async done => {
   expect(subscriptionCalls).toBe(3)
 
   done()
+})
+
+test('Calls to dispatch are flattened', done => {
+  const { dispatch, wrapReducer } = createStore()
+  const counter = wrapReducer<number>((i = 0) => i + 1)
+  let count = -1
+  counter.subscribe(i => {
+    expect(i).toBe(count + 2)
+    count = i
+    if (i < 10) {
+      dispatch(d => {
+        d({ type: 'any' })
+        d({ type: 'any' })
+      })
+    } else {
+      expect(count).toBe(11)
+      done()
+    }
+  })
+})
+
+test('Resolving works on complex structures', () => {
+  const { wrapReducer } = createStore()
+  const counter = wrapReducer<number>((i = 0) => i + 1)
+
+  const double = joinSlices(counter, counter, (a, b) => a + b)
+  const quadruple = joinSlices(double, double, (a, b) => a + b)
+  const octuple = joinSlices(quadruple, quadruple, (a, b) => a + b)
+
+  expect(resolveSlice(octuple)).toBe(8)
 })

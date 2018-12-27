@@ -12,11 +12,11 @@ type SliceMixin<Slices extends Slice<any, any>[]> = Slices extends Array<
   ? M
   : never
 
-export type Slice<Value = any, Ops = {}> = __Slice__<any, Value> & Ops
+export type Slice<Value = any, Ops = {}> = __Slice__<Value, any> & Ops
 
 let depth = Number.MIN_SAFE_INTEGER
 
-export class __Slice__<Ds extends Slice[], V> {
+export class __Slice__<V, Ds extends Slice[] = any> {
   depth: number
   children: SliceSet
   evaluate: (...dependencies: ValueMap<Ds>) => V | null
@@ -101,10 +101,10 @@ export class __Slice__<Ds extends Slice[], V> {
     }
   }
 
-  use<M, Os extends OperationSet[]>(
-    this: Slice<V, M>,
+  use<Os extends OperationSet[]>(
+    this: __Slice__<V>,
     ...operations: Os
-  ): Slice<V, M & OperationSetListMixin<Os>> {
+  ): __Slice__<V> & OperationSetListMixin<Os> {
     for (let set of operations) {
       if (set.applied) {
         continue

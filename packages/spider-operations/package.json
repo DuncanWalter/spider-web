@@ -9,7 +9,7 @@
     "store"
   ],
   "main": "lib/index.js",
-  "module": "lib/index.es",
+  "module": "lib/index.es.js",
   "types": "lib/index.d.ts",
   "files": [
     "**/*.js",
@@ -48,7 +48,7 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dwalter/spider-store": "^1.0.7"
+    "@dwalter/spider-store": "^1.1.1"
   },
   "devDependencies": {
     "@types/jest": "^23.3.1",

@@ -10,6 +10,6 @@ interface Map {
 
 export const map = createOperation<Map>({
   map(mapping) {
-    return createSlice([this], u => mapping(u), undefined, false)
+    return createSlice([this], u => mapping(u), undefined, this.shallow)
   },
 })

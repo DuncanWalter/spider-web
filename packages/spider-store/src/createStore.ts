@@ -1,6 +1,6 @@
 import { Slice, createSlice } from './slice'
 import { propagateSlice } from './propagateSlice'
-import { createRequester } from './createRequester'
+import { createScheduler } from './createScheduler'
 import { SliceSet } from './SliceSet'
 
 export const sliceKey = '@store/slices'
@@ -9,11 +9,22 @@ export interface StateSlice<A> {
   (action: A, marks: SliceSet): void
 }
 
+// interface SetState<State = unknown> {
+//   type: '@store/set-state'
+//   target: Slice<State>
+//   newState: State | ((state: State) => State)
+// }
+
 export interface Dispatch<A> {
   (a: A): Promise<undefined>
   (a: Promise<A>): Promise<undefined>
   <R>(a: (d: Dispatch<A>) => R): R
 }
+
+export type Actionable<A> =
+  | A
+  | Promise<A>
+  | ((dispatch: Dispatch<A>) => unknown)
 
 export interface Reducer<S, A> {
   (state: S | undefined, action: A): S
@@ -22,6 +33,9 @@ export interface Reducer<S, A> {
 export interface Store<A> {
   dispatch: Dispatch<A>
   wrapReducer: <S>(reducer: Reducer<S, A>) => Slice<S>
+  // wrapState: <S>(
+  //   state: S | ((s: S) => S),
+  // ) => [Slice<S>, (state: S | ((s: S) => S)) => Actionable<A>]
   slices: StateSlice<A>[]
   master: Store<any>
 }
@@ -34,19 +48,24 @@ export function getMaster(store: Store<any>) {
   return s
 }
 
-export function createStore<Action extends { type: string }>(): Store<Action> {
+export function createStore<Action extends { type: string }>(
+  ...enhancers: ((store: Store<Action>) => unknown)[]
+): Store<Action> {
   const store = {
     slices: [] as StateSlice<Action>[],
   } as Store<Action>
 
   store.master = store
 
-  let marks: SliceSet = new SliceSet()
-
-  const requestResolve = createRequester(() => {
-    propagateSlice(marks)
-    marks = new SliceSet()
-  })
+  const scheduleUpdate = createScheduler<(marks: SliceSet) => unknown>(
+    tasks => {
+      const marks = new SliceSet()
+      for (let task of tasks) {
+        task(marks)
+      }
+      propagateSlice(marks)
+    },
+  )
 
   const dispatch: Dispatch<Action> = <R>(
     action: Action | Promise<Action> | ((dispatch: Dispatch<Action>) => R),
@@ -59,8 +78,13 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
     if (action instanceof Function) {
       return action(dispatch)
     }
-    getMaster(store).slices.forEach(slice => slice(action, marks))
-    return new Promise(requestResolve)
+
+    return new Promise(resolve => {
+      scheduleUpdate(marks => {
+        getMaster(store).slices.forEach(slice => slice(action, marks))
+        resolve()
+      })
+    })
   }
   store.dispatch = dispatch
 
@@ -87,6 +111,41 @@ export function createStore<Action extends { type: string }>(): Store<Action> {
     })
     return resource
   }
+
   store.wrapReducer = wrapReducer
+
+  // function wrapState<State>(
+  //   initialState: State,
+  // ): [
+  //   Slice<State>,
+  //   (
+  //     newState: State | ((state: State) => State),
+  //   ) => (dispatch: Dispatch<Action>) => unknown
+  // ] {
+  //   const slice = wrapReducer<State>((state = initialState, action: Action) => {
+  //     if (action.type === '@store/set-state') {
+  //       if (action.target === slice) {
+  //         if (action.newState instanceof Function) {
+  //           return action.newState(state)
+  //         } else {
+  //           return action.newState
+  //         }
+  //       }
+  //     }
+  //     return state
+  //   })
+
+  //   function setState(newState: State | ((state: State) => State)) {
+  //     return (dispatcher: Dispatch<Action>) =>
+  //       dispatcher({ type: '@store/set-state', target: slice, newState })
+  //   }
+
+  //   return [slice, setState]
+  // }
+
+  // store.wrapState = wrapState
+
+  enhancers.forEach(enhancer => enhancer(store))
+
   return store
 }

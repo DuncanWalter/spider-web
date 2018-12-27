@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
 import { Slice, utils } from '@dwalter/spider-store'
 
-const { createRequester, resolveSlice } = utils
+const { createScheduler, resolveSlice } = utils
 
-const requestUpdate = createRequester()
+const scheduleUpdate = createScheduler<() => unknown>(tasks =>
+  tasks.forEach(task => task()),
+)
 
 export function useSlice<V extends Slice>(
   slice: V,
@@ -21,9 +23,7 @@ export function useSlice<V extends Slice>(
   useEffect(
     () => {
       const subscription = innerSlice.subscribe((v: V) => {
-        if (v !== state || !innerSlice.shallow) {
-          requestUpdate(() => setState(v))
-        }
+        scheduleUpdate(() => setState(v))
       })
       return () => {
         innerSlice.unsubscribe(subscription)

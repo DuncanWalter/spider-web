@@ -11,7 +11,7 @@ module.exports = [
         name: 'spider-operations',
       },
       {
-        file: 'lib/index.es',
+        file: 'lib/index.es.js',
         format: 'es',
         name: 'spider-operations',
       },
