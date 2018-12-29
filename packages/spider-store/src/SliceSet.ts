@@ -15,9 +15,8 @@ export class SliceSet {
     this.size += 1
     if (this.next !== null) {
       const index = this.next
-      const next = this.slices[index] as number | null
+      this.next = this.slices[index] as number | null
       this.slices[index] = slice
-      this.next = next
       return index
     }
     this.slices.push(slice)

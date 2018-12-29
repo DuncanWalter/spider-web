@@ -3,17 +3,9 @@ import { propagateSlice } from './propagateSlice'
 import { createScheduler } from './createScheduler'
 import { SliceSet } from './SliceSet'
 
-export const sliceKey = '@store/slices'
-
 export interface StateSlice<A> {
   (action: A, marks: SliceSet): void
 }
-
-// interface SetState<State = unknown> {
-//   type: '@store/set-state'
-//   target: Slice<State>
-//   newState: State | ((state: State) => State)
-// }
 
 export interface Dispatch<A> {
   (a: A): Promise<undefined>
@@ -21,131 +13,130 @@ export interface Dispatch<A> {
   <R>(a: (d: Dispatch<A>) => R): R
 }
 
-export type Actionable<A> =
-  | A
-  | Promise<A>
-  | ((dispatch: Dispatch<A>) => unknown)
-
 export interface Reducer<S, A> {
   (state: S | undefined, action: A): S
 }
 
 export interface Store<A> {
   dispatch: Dispatch<A>
-  wrapReducer: <S>(reducer: Reducer<S, A>) => Slice<S>
-  // wrapState: <S>(
-  //   state: S | ((s: S) => S),
-  // ) => [Slice<S>, (state: S | ((s: S) => S)) => Actionable<A>]
-  slices: StateSlice<A>[]
-  master: Store<any>
+  wrapReducer: <S>(
+    reducer: Reducer<S, A>,
+    initialState?: S,
+    shallow?: boolean,
+  ) => Slice<S>
+  slices: Map<unknown, StateSlice<A>>
+  master: Store<unknown> | null
+  with<Self, Return>(this: Self, enhancer: (self: Self) => Return): Return
 }
 
+// TODO: on the chopping block
 export function getMaster(store: Store<any>) {
   let s = store
-  while (s.master !== s) {
+  while (s.master !== null) {
     s = s.master
+  }
+  if (s !== store) {
+    store.master = s
   }
   return s
 }
 
-export function createStore<Action extends { type: string }>(
-  ...enhancers: ((store: Store<Action>) => unknown)[]
-): Store<Action> {
+export function createStore<
+  Action extends { type: string; reducer?: Reducer<unknown, Action> }
+>(): Store<Action> {
   const store = {
-    slices: [] as StateSlice<Action>[],
+    slices: new Map(),
+    master: null,
+    with(enhancer) {
+      return enhancer(this)
+    },
   } as Store<Action>
 
-  store.master = store
-
-  const scheduleUpdate = createScheduler<(marks: SliceSet) => unknown>(
-    tasks => {
-      const marks = new SliceSet()
-      for (let task of tasks) {
-        task(marks)
+  const scheduleUpdate = createScheduler<Action, void>(actions => {
+    const marks = new SliceSet()
+    for (let action of actions) {
+      const slices = getMaster(store).slices
+      if (action.reducer) {
+        slices.get(action.reducer)!(action, marks)
+      } else {
+        slices.forEach(slice => slice(action, marks))
       }
-      propagateSlice(marks)
-    },
-  )
+    }
+    propagateSlice(marks)
+  })
 
   const dispatch: Dispatch<Action> = <R>(
     action: Action | Promise<Action> | ((dispatch: Dispatch<Action>) => R),
   ) => {
     if (action instanceof Promise) {
-      return new Promise(resolve => {
-        action.then(action => dispatch(action).then(resolve))
-      })
+      return action.then(action => dispatch(action))
     }
-    if (action instanceof Function) {
+    if (typeof action === 'function') {
       return action(dispatch)
     }
-
-    return new Promise(resolve => {
-      scheduleUpdate(marks => {
-        getMaster(store).slices.forEach(slice => slice(action, marks))
-        resolve()
-      })
-    })
+    return scheduleUpdate(action)
   }
-  store.dispatch = dispatch
 
   function wrapReducer<State>(
     reducer: (state: State | undefined, action: Action) => State,
-    config: {
-      shallow?: boolean
-      initialState?: State
-    } = {},
+    initialState?: State,
+    shallow: boolean = true,
   ) {
-    const { shallow = true, initialState } = config
     let state =
       initialState || reducer(undefined, { type: '@store/init' } as Action)
+
     const resource = createSlice([] as Slice[], _ => state, state, shallow)
-    getMaster(store).slices.push((action, marks) => {
+
+    getMaster(store).slices.set(reducer, (action, marks) => {
       const oldState = state
       const newState = (state = reducer(state, action))
       if (newState === undefined) {
         throw new Error('Reducer returned undefined')
       }
+      if (newState === null) {
+        throw new Error('Reducer returned null')
+      }
       if (!shallow || newState !== oldState) {
         marks.add(resource)
       }
     })
+
     return resource
   }
 
+  store.dispatch = dispatch
   store.wrapReducer = wrapReducer
-
-  // function wrapState<State>(
-  //   initialState: State,
-  // ): [
-  //   Slice<State>,
-  //   (
-  //     newState: State | ((state: State) => State),
-  //   ) => (dispatch: Dispatch<Action>) => unknown
-  // ] {
-  //   const slice = wrapReducer<State>((state = initialState, action: Action) => {
-  //     if (action.type === '@store/set-state') {
-  //       if (action.target === slice) {
-  //         if (action.newState instanceof Function) {
-  //           return action.newState(state)
-  //         } else {
-  //           return action.newState
-  //         }
-  //       }
-  //     }
-  //     return state
-  //   })
-
-  //   function setState(newState: State | ((state: State) => State)) {
-  //     return (dispatcher: Dispatch<Action>) =>
-  //       dispatcher({ type: '@store/set-state', target: slice, newState })
-  //   }
-
-  //   return [slice, setState]
-  // }
-
-  // store.wrapState = wrapState
-
-  enhancers.forEach(enhancer => enhancer(store))
-
   return store
+}
+
+function createSettableState<State>(
+  initialState: State,
+): [
+  Reducer<State, { type: string; reducer?: unknown }>,
+  (
+    newState: State | ((state: State) => State),
+  ) => { type: any; reducer: unknown }
+] {
+  function reducer(
+    state = initialState,
+    action: { type: string; reducer?: unknown; newState?: any },
+  ) {
+    const { type, newState } = action
+    if (type === '@store/set-state') {
+      if (action.reducer === reducer) {
+        if (typeof newState === 'function') {
+          return newState(state)
+        } else {
+          return newState
+        }
+      }
+    }
+    return state
+  }
+
+  function setState(newState: State | ((state: State) => State)) {
+    return { type: '@store/set-state', reducer, newState }
+  }
+
+  return [reducer, setState]
 }

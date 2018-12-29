@@ -74,9 +74,10 @@ test('Calls to dispatch are flattened', done => {
 
 test('Resolving works on complex structures', () => {
   const { wrapReducer } = createStore()
-  const counter = wrapReducer<number>((i = 0) => i + 1)
+  const lCounter = wrapReducer<number>((i = 0) => i + 1)
+  const rCounter = wrapReducer<number>((i = 0) => i + 1)
 
-  const double = joinSlices(counter, counter, (a, b) => a + b)
+  const double = joinSlices(lCounter, rCounter, (a, b) => a + b)
   const quadruple = joinSlices(double, double, (a, b) => a + b)
   const octuple = joinSlices(quadruple, quadruple, (a, b) => a + b)
 
