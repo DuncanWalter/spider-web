@@ -7,28 +7,26 @@ const scheduleUpdate = createScheduler<() => unknown, void>(tasks =>
   tasks.forEach(task => task()),
 )
 
-export function useSlice<V extends Slice>(
-  slice: V,
-): V extends Slice<infer T> ? T : never
+export function useSlice<V>(slice: Slice<V>): V
 
-export function useSlice<V extends Slice>(
-  slice: () => V,
-): V extends Slice<infer T> ? T : never
+export function useSlice<V>(slice: () => Slice<V>): V
 
-export function useSlice<V extends Slice>(
-  slice: V | (() => V),
-): V extends Slice<infer T> ? T : never {
-  const [innerSlice] = useState(slice)
-  const [state, setState] = useState(null as null | V)
-  useEffect(() => {
-    const subscription = innerSlice.subscribe((v: V) => {
-      if (state !== null) {
-        scheduleUpdate(() => setState(v))
+export function useSlice<V>(slice: Slice<V> | (() => Slice<V>)): V {
+  const [innerSlice]: [Slice<V>, unknown] = useState(slice)
+  let state
+  let setState: (v: V) => unknown = () => {}
+  useEffect(
+    () => {
+      const subscription = innerSlice.subscribe((v: V) => {
+        const exec = setState
+        scheduleUpdate(() => exec(v))
+      })
+      return () => {
+        innerSlice.unsubscribe(subscription)
       }
-    })
-    return () => {
-      innerSlice.unsubscribe(subscription)
-    }
-  }, [])
-  return state === null ? innerSlice.value : state
+    },
+    [innerSlice],
+  )
+  ;[state, setState] = useState(innerSlice.value)
+  return state
 }

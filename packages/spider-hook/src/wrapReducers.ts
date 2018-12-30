@@ -1,24 +1,30 @@
 import { createContext, useContext } from 'react'
 import { Slice } from '@dwalter/spider-store'
-import { Reducer } from '@dwalter/spider-store/src/createStore'
+
+// TODO: needs to track reducers individually?
+
+interface Action {
+  type: string
+  reducer?: Reducer<unknown>
+}
+
+interface Reducer<State> {
+  (state: State | undefined, action: Action): State
+}
 
 export interface UseStore<Slices extends { [key: string]: Slice<unknown> }> {
   (): Slices
 }
 
 interface StoreContextContent {
-  wrapReducer: <State>(
-    reducer: Reducer<State, { type: string; reducer?: Reducer<unknown, {}> }>,
-  ) => Slice<State>
+  wrapReducer: <State>(reducer: Reducer<State>) => Slice<State>
   storeFragments: Map<unknown, { [key: string]: Slice<unknown> }>
 }
 
-type ReducerMap = {
-  [key: string]: Reducer<unknown, unknown>
-}
+type ReducerMap = { [key: string]: Reducer<unknown> }
 
 type SliceMap<Reducers extends ReducerMap> = {
-  [K in keyof Reducers]: Reducers[K] extends Reducer<infer State, any>
+  [K in keyof Reducers]: Reducers[K] extends Reducer<infer State>
     ? Slice<State>
     : never
 }
@@ -34,7 +40,7 @@ export const StoreContext = createContext<StoreContextContent>({
 
 export function wrapReducers<
   Reducers extends {
-    [key: string]: Reducer<unknown, unknown>
+    [key: string]: Reducer<any>
   }
 >(reducers: Reducers): UseStore<SliceMap<Reducers>> {
   return function useStore() {

@@ -11,6 +11,7 @@ export const utils = {
 }
 
 export { Slice } from './slice'
-export { createStore, Dispatch, Actionable, Store } from './createStore'
-export { mergeStores } from './mergeStores'
+export { createStore, Dispatch, Reducer, Action, Store } from './createStore'
+export { createSettableState } from './createSettableState'
 export { joinSlices } from './joinSlices'
+// export { mergeStores } from './mergeStores'

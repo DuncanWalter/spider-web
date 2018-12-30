@@ -1,4 +1,4 @@
-import React from 'react'
+import * as React from 'react'
 import { createStore } from '@dwalter/spider-store'
 import { DispatchContext } from './useAction'
 import { StoreContext } from './wrapReducers'

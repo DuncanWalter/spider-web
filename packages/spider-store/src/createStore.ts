@@ -7,25 +7,30 @@ export interface StateSlice<A> {
   (action: A, marks: SliceSet): void
 }
 
-export interface Dispatch<A> {
+export interface Dispatch<A = Action> {
   (a: A): Promise<undefined>
   (a: Promise<A>): Promise<undefined>
   <R>(a: (d: Dispatch<A>) => R): R
 }
 
-export interface Reducer<S, A> {
-  (state: S | undefined, action: A): S
+export interface Action {
+  type: string
+  reducer?: Reducer<any>
 }
 
-export interface Store<A> {
+export interface Reducer<State> {
+  (state: State | undefined, action: Action): State
+}
+
+export interface Store<A extends Action> {
   dispatch: Dispatch<A>
   wrapReducer: <S>(
-    reducer: Reducer<S, A>,
+    reducer: Reducer<S>,
     initialState?: S,
     shallow?: boolean,
   ) => Slice<S>
   slices: Map<unknown, StateSlice<A>>
-  master: Store<unknown> | null
+  master: Store<Action> | null
   with<Self, Return>(this: Self, enhancer: (self: Self) => Return): Return
 }
 
@@ -41,18 +46,16 @@ export function getMaster(store: Store<any>) {
   return s
 }
 
-export function createStore<
-  Action extends { type: string; reducer?: Reducer<unknown, Action> }
->(): Store<Action> {
+export function createStore<A extends Action>(): Store<A> {
   const store = {
     slices: new Map(),
     master: null,
     with(enhancer) {
       return enhancer(this)
     },
-  } as Store<Action>
+  } as Store<A>
 
-  const scheduleUpdate = createScheduler<Action, void>(actions => {
+  const scheduleUpdate = createScheduler<A, void>(actions => {
     const marks = new SliceSet()
     for (let action of actions) {
       const slices = getMaster(store).slices
@@ -65,8 +68,8 @@ export function createStore<
     propagateSlice(marks)
   })
 
-  const dispatch: Dispatch<Action> = <R>(
-    action: Action | Promise<Action> | ((dispatch: Dispatch<Action>) => R),
+  const dispatch: Dispatch<A> = <R>(
+    action: A | Promise<A> | ((dispatch: Dispatch<A>) => R),
   ) => {
     if (action instanceof Promise) {
       return action.then(action => dispatch(action))
@@ -78,12 +81,11 @@ export function createStore<
   }
 
   function wrapReducer<State>(
-    reducer: (state: State | undefined, action: Action) => State,
+    reducer: Reducer<State>,
     initialState?: State,
     shallow: boolean = true,
   ) {
-    let state =
-      initialState || reducer(undefined, { type: '@store/init' } as Action)
+    let state = initialState || reducer(undefined, { type: '@store/init' } as A)
 
     const resource = createSlice([] as Slice[], _ => state, state, shallow)
 
@@ -107,36 +109,4 @@ export function createStore<
   store.dispatch = dispatch
   store.wrapReducer = wrapReducer
   return store
-}
-
-function createSettableState<State>(
-  initialState: State,
-): [
-  Reducer<State, { type: string; reducer?: unknown }>,
-  (
-    newState: State | ((state: State) => State),
-  ) => { type: any; reducer: unknown }
-] {
-  function reducer(
-    state = initialState,
-    action: { type: string; reducer?: unknown; newState?: any },
-  ) {
-    const { type, newState } = action
-    if (type === '@store/set-state') {
-      if (action.reducer === reducer) {
-        if (typeof newState === 'function') {
-          return newState(state)
-        } else {
-          return newState
-        }
-      }
-    }
-    return state
-  }
-
-  function setState(newState: State | ((state: State) => State)) {
-    return { type: '@store/set-state', reducer, newState }
-  }
-
-  return [reducer, setState]
 }

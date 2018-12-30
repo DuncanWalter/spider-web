@@ -55,7 +55,7 @@ test('Diamond case handling is efficient and stable', async done => {
 
 test('Calls to dispatch are flattened', done => {
   const { dispatch, wrapReducer } = createStore()
-  const counter = wrapReducer<number>((i = 0) => i + 1)
+  const counter = wrapReducer((i: number = 0) => i + 1)
   let count = -1
   counter.subscribe(i => {
     expect(i).toBe(count + 2)

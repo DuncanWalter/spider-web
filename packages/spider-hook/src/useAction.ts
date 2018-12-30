@@ -1,25 +1,20 @@
 import { createContext, useContext } from 'react'
-import { Dispatch } from '@dwalter/spider-store'
-import { Reducer } from '@dwalter/spider-store/src/createStore'
+import { Dispatch, Action } from '@dwalter/spider-store'
 
-export const DispatchContext = createContext<
-  Dispatch<{ type: string; reducer?: Reducer<unknown, {}> }>
->(() => {
+export const DispatchContext = createContext<Dispatch>(() => {
   throw new Error(
     'DispatchContext referenced from outside the context of a SpiderRoot',
   )
 })
 
-interface Action {
-  type: string
-  reducer?: Reducer<unknown, {}>
-}
 interface ThunkAction<Result = unknown> {
-  (dispatch: Dispatch<Action>): Result
+  (dispatch: Dispatch): Result
 }
+
 interface ActionCreator<Args extends any[]> {
   (...args: Args): Action
 }
+
 interface ActionScheduler<Args extends any[], Result> {
   (...args: Args): ThunkAction<Result>
 }

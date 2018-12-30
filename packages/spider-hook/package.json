@@ -32,12 +32,13 @@
   "homepage": "https://github.com/DuncanWalter/spider-web#readme",
   "jest": {
     "transform": {
-      "^.+\\.ts$": "ts-jest"
+      "^.+\\.tsx?$": "ts-jest"
     },
-    "testRegex": "(\\.|/)test\\.ts$",
+    "testRegex": "(\\.|/)test\\.tsx?$",
     "moduleFileExtensions": [
       "ts",
-      "js"
+      "js",
+      "tsx"
     ]
   },
   "prettier": {
@@ -48,13 +49,16 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dwalter/spider-store": "^1.0.7"
+    "@dwalter/spider-store": "^1.1.1"
   },
   "devDependencies": {
     "@types/jest": "^23.3.1",
     "@types/react": "^16.7.7",
     "husky": "^1.2.0",
     "jest": "^23.5.0",
+    "react": "16.7.0-alpha.0 - next",
+    "react-dom": "16.7.0-alpha.0 - next",
+    "react-testing-library": "^5.4.2",
     "rollup": "^0.67.3",
     "rollup-plugin-terser": "^3.0.0",
     "rollup-plugin-typescript2": "^0.18.0",

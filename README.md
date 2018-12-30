@@ -4,7 +4,7 @@
 - clean up enhancer API (`store.with(asyncActionsEnhancer()).with(wrapStateEnhancer())`)
 - create those two enhancers
 - get rid of the redundant render in useSlice (on first call)
-- enhancers need to be passed the create store function, I guess... (thats a separate react-spider API, realistically)
+- make hook track reducers individually to prevent duplication problems (what if reducer is loaded twice?)
 
 # Redux
 
