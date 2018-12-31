@@ -32,7 +32,7 @@ test('Testing the useAction hook', async done => {
     const { counters } = useCounters()
 
     // bind actions
-    const increment = useIncrement(incrementer)
+    const increment = useIncrement()
 
     // unwrap values in slices
     const counter = useSlice(counters)
