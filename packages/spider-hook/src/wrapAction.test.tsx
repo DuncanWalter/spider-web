@@ -9,7 +9,7 @@ import { Dispatch } from '@dwalter/spider-store'
 import { useSlice } from './useSlice'
 import { SpiderRoot } from './SpiderRoot'
 import { wrapReducers } from './wrapReducers'
-import { useAction } from './useAction'
+import { wrapAction } from './wrapAction'
 
 afterEach(cleanup)
 
@@ -22,15 +22,17 @@ test('Testing the useAction hook', async done => {
 
   // create actions / actionCreators / actionSchedulers
   function incrementer() {
-    return (dispatch: Dispatch<unknown>) => dispatch({ type: '@test' })
+    return (dispatch: Dispatch) => dispatch({ type: '@test' })
   }
+
+  const useIncrement = wrapAction(incrementer)
 
   function Counter() {
     // get fragments of your store
     const { counters } = useCounters()
 
     // bind actions
-    const increment = useAction(incrementer)
+    const increment = useIncrement(incrementer)
 
     // unwrap values in slices
     const counter = useSlice(counters)

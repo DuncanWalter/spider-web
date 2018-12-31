@@ -31,7 +31,6 @@ export interface Store<A extends Action> {
   ) => Slice<S>
   slices: Map<unknown, StateSlice<A>>
   master: Store<Action> | null
-  with<Self, Return>(this: Self, enhancer: (self: Self) => Return): Return
 }
 
 // TODO: on the chopping block
@@ -50,9 +49,6 @@ export function createStore<A extends Action>(): Store<A> {
   const store = {
     slices: new Map(),
     master: null,
-    with(enhancer) {
-      return enhancer(this)
-    },
   } as Store<A>
 
   const scheduleUpdate = createScheduler<A, void>(actions => {

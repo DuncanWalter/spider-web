@@ -1,24 +1,10 @@
 import { createContext, useContext } from 'react'
-import { Slice } from '@dwalter/spider-store'
-
-// TODO: needs to track reducers individually?
-
-interface Action {
-  type: string
-  reducer?: Reducer<unknown>
-}
-
-interface Reducer<State> {
-  (state: State | undefined, action: Action): State
-}
-
-export interface UseStore<Slices extends { [key: string]: Slice<unknown> }> {
-  (): Slices
-}
+import { Slice, Reducer } from '@dwalter/spider-store'
 
 interface StoreContextContent {
   wrapReducer: <State>(reducer: Reducer<State>) => Slice<State>
-  storeFragments: Map<unknown, { [key: string]: Slice<unknown> }>
+  slices: Map<unknown, Slice>
+  storeFragments: Map<unknown, unknown>
 }
 
 type ReducerMap = { [key: string]: Reducer<unknown> }
@@ -35,6 +21,7 @@ export const StoreContext = createContext<StoreContextContent>({
       'StoreContext referenced from outside the context of a SpiderRoot',
     )
   },
+  slices: new Map(),
   storeFragments: new Map(),
 })
 
@@ -42,21 +29,47 @@ export function wrapReducers<
   Reducers extends {
     [key: string]: Reducer<any>
   }
->(reducers: Reducers): UseStore<SliceMap<Reducers>> {
+>(reducers: Reducers): () => SliceMap<Reducers>
+
+export function wrapReducers<
+  Reducers extends {
+    [key: string]: Reducer<any>
+  },
+  Result
+>(
+  reducers: Reducers,
+  configure: (slices: SliceMap<Reducers>) => Result,
+): () => Result
+
+export function wrapReducers<
+  Reducers extends {
+    [key: string]: Reducer<any>
+  },
+  Result
+>(
+  reducers: Reducers,
+  configure: (slices: SliceMap<Reducers>) => Result = i => i as any,
+): () => Result {
   return function useStore() {
-    const { wrapReducer, storeFragments } = useContext(StoreContext)
+    const { wrapReducer, slices, storeFragments } = useContext(StoreContext)
     if (storeFragments.has(useStore)) {
-      return storeFragments.get(useStore) as SliceMap<Reducers>
+      return storeFragments.get(useStore) as Result
     } else {
-      const slices = Object.keys(reducers).reduce(
+      const result = configure(Object.keys(reducers).reduce(
         (acc, key) => {
-          acc[key] = wrapReducer(reducers[key]) as Slice<any>
+          const reducer = reducers[key]
+          if (slices.has(reducer)) {
+            acc[key] = slices.get(reducers[key])!
+          } else {
+            acc[key] = wrapReducer(reducers[key])
+            slices.set(reducer, acc[key])
+          }
           return acc
         },
         {} as { [key: string]: Slice<unknown> },
-      )
-      storeFragments.set(useStore, slices)
-      return slices as SliceMap<Reducers>
+      ) as SliceMap<Reducers>)
+      storeFragments.set(useStore, result)
+      return result
     }
   }
 }

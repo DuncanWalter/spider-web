@@ -1,4 +1,4 @@
 export { useSlice } from './useSlice'
-export { useAction } from './useAction'
+export { wrapAction } from './wrapAction'
 export { wrapReducers } from './wrapReducers'
 export { SpiderRoot } from './SpiderRoot'
