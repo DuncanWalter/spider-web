@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-hook",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "description": "waste free state management",
   "keywords": [
     "state",
