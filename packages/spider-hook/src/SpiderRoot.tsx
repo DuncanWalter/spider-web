@@ -1,7 +1,25 @@
 import * as React from 'react'
 import { createStore, Dispatch, Slice, Reducer } from '@dwalter/spider-store'
-import { DispatchContext } from './wrapAction'
-import { StoreContext } from './wrapReducers'
+
+export interface StoreContextContent {
+  wrapReducer: <State>(reducer: Reducer<State>) => Slice<State>
+  slices: Map<unknown, Slice>
+}
+
+export const StoreContext = React.createContext<StoreContextContent>({
+  wrapReducer: () => {
+    throw new Error(
+      'StoreContext referenced from outside the context of a SpiderRoot',
+    )
+  },
+  slices: new Map(),
+})
+
+export const DispatchContext = React.createContext<Dispatch>(() => {
+  throw new Error(
+    'DispatchContext referenced from outside the context of a SpiderRoot',
+  )
+})
 
 export interface SpiderRootProps {
   children: any
@@ -21,7 +39,6 @@ export function SpiderRoot({
       value={{
         wrapReducer,
         slices: new Map(),
-        storeFragments: new Map(),
       }}
     >
       <DispatchContext.Provider value={dispatch}>

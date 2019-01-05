@@ -1,4 +1,5 @@
 export { useSlice } from './useSlice'
-export { wrapAction } from './wrapAction'
-export { wrapReducers } from './wrapReducers'
+export { useActions } from './useActions'
 export { SpiderRoot } from './SpiderRoot'
+export { useStoreState, createSelector } from './useStoreState'
+export { useSideEffect, createSideEffect } from './useSideEffect'
