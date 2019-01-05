@@ -14,7 +14,7 @@ test('State setters work on a variety of types', () => {
     bar: 0,
   })
 
-  expect(object(undefined, setObject({ bar: 1 })).foo).toBe(0)
+  expect(object(undefined, setObject(s => ({ bar: s.bar + 1 }))).foo).toBe(0)
   expect(object(undefined, setObject({ bar: 1 })).bar).toBe(1)
   expect(object(undefined, setObject(null)).bar).toBe(0)
 })

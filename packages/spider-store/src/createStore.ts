@@ -18,14 +18,14 @@ export interface Action {
   reducer?: Reducer<any>
 }
 
-export interface Reducer<State> {
-  (state: State | undefined, action: Action): State
+export interface Reducer<State, A extends Action = Action> {
+  (state: State | undefined, action: A): State
 }
 
 export interface Store<A extends Action> {
   dispatch: Dispatch<A>
   wrapReducer: <S>(
-    reducer: Reducer<S>,
+    reducer: Reducer<S, any>,
     initialState?: S,
     shallow?: boolean,
   ) => Slice<S>

@@ -3,6 +3,7 @@
 - Demo app
 - refine hooks api
 - look into keyed-fork
+- fix types for verbose reducers
 
 # Redux
 

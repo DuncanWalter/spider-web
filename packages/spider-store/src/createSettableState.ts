@@ -1,31 +1,13 @@
 import { Reducer, Action } from './createStore'
 
-function writeState<S extends { [key: string]: any }>(
-  state: S,
-  newState: S | null,
-  keys: null | (keyof S)[],
-) {
-  if (newState === null) {
-    return state
-  }
-  if (keys) {
-    const result: S = {} as S
-    for (let key of keys) {
-      result[key] = newState.hasOwnProperty(key) ? newState[key] : state[key]
-    }
-    return result
-  } else {
-    return newState
-  }
-}
-
 type StateUpdate<State> = null | (State extends Object ? Partial<State> : State)
 
 const foo: StateUpdate<number[]> = null
 
 interface Setter<State> {
-  (newState: StateUpdate<State>): Action
-  (newState: (state: State) => StateUpdate<State>): Action
+  (
+    newState: StateUpdate<State> | ((state: State) => StateUpdate<State>),
+  ): Action
 }
 
 export function createSettableState<State>(
@@ -58,4 +40,23 @@ export function createSettableState<State>(
   }
 
   return [reducer, setState]
+}
+
+function writeState<S extends { [key: string]: any }>(
+  state: S,
+  newState: S | null,
+  keys: null | (keyof S)[],
+) {
+  if (newState === null) {
+    return state
+  }
+  if (keys) {
+    const result: S = {} as S
+    for (let key of keys) {
+      result[key] = newState.hasOwnProperty(key) ? newState[key] : state[key]
+    }
+    return result
+  } else {
+    return newState
+  }
 }

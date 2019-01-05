@@ -1,4 +1,4 @@
-import { createStore, joinSlices } from '../lib/index'
+import { createStore, joinSlices, Action } from '../lib'
 import { resolveSlice } from './resolveSlice'
 
 test('Diamond case handling is efficient and stable', async done => {
@@ -82,4 +82,22 @@ test('Resolving works on complex structures', () => {
   const octuple = joinSlices(quadruple, quadruple, (a, b) => a + b)
 
   expect(resolveSlice(octuple)).toBe(8)
+})
+
+test('Arbitrary reducers with known action types can be used', () => {
+  interface TestAction1 extends Action {
+    type: 'test-action-1'
+  }
+
+  interface TestAction2 extends Action {
+    type: 'test-action-2'
+  }
+
+  function reducer(state = 1, action: TestAction1 | TestAction2) {
+    return state + 1
+  }
+
+  const { wrapReducer } = createStore()
+
+  wrapReducer(reducer)
 })
