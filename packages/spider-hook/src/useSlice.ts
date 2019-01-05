@@ -29,7 +29,9 @@ export function useSlice<V>(slice: Slice<V> | (() => Slice<V>)): V {
   useEffect(
     subscription === null
       ? noop
-      : () => () => innerSlice.unsubscribe(subscription as number),
+      : () => () => {
+          innerSlice.unsubscribe(subscription as number)
+        },
     [],
   )
   return state

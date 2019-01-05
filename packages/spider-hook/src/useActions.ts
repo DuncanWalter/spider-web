@@ -20,9 +20,9 @@ type BindableAction =
   | ActionScheduler<any[], any>
 
 type BoundAction<A extends BindableAction> = A extends Action
-  ? () => void
+  ? () => Promise<void>
   : A extends ActionCreator<infer Args>
-  ? (...args: Args) => void
+  ? (...args: Args) => Promise<void>
   : A extends ActionScheduler<infer Args, infer Result>
   ? (...args: Args) => Result
   : never
@@ -32,7 +32,7 @@ interface BindableActionMap {
 }
 
 type BoundActionMap<Actions extends BindableActionMap> = {
-  [K in keyof BindableActionMap]: BoundAction<Actions[K]>
+  [K in keyof Actions]: BoundAction<Actions[K]>
 }
 
 export function useActions<Actions extends BindableActionMap>(
@@ -58,7 +58,9 @@ function bindAction<Action extends BindableAction>(
 
 function bindAction(dispatch: Dispatch, action: Action | Function) {
   if (typeof action === 'function') {
-    return (...args: unknown[]) => dispatch(action(...args))
+    return function() {
+      return dispatch(action.apply(null, arguments))
+    }
   } else {
     return () => dispatch(action)
   }
