@@ -11,7 +11,7 @@
     "test": "lerna run build && lerna run test",
     "bootstrap": "lerna bootstrap",
     "postinstall": "npm run bootstrap",
-    "precommit": "npm run test",
+    "pre-commit": "npm run test",
     "publish": "lerna publish from-package",
     "lerna": "lerna exec"
   },
