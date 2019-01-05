@@ -5,7 +5,13 @@ import { useSlice } from './useSlice'
 
 const { createSlice } = utils
 
-export type Source<T> = Reducer<T> | Selector<T>
+interface Selector<Sources extends SourceList, T> {
+  sources: Sources
+  mapping: (...args: InputList<Sources>) => T
+  shallow: boolean
+}
+
+export type Source<T> = Reducer<T> | Selector<any[], T>
 
 type SourceList = Source<any>[]
 
@@ -13,17 +19,11 @@ type InputList<Sources extends SourceList> = {
   [K in keyof Sources]: Sources[K] extends Source<infer T> ? T : never
 }
 
-interface Selector<T> {
-  sources: SourceList
-  mapping: (...args: any[]) => T
-  shallow: boolean
-}
-
 export function createSelector<Sources extends SourceList, Result>(
   sources: Sources,
   mapping: (...args: InputList<Sources>) => Result,
   shallow: boolean = true,
-) {
+): Selector<Sources, Result> {
   return { sources, mapping, shallow }
 }
 
