@@ -49,6 +49,7 @@
     "tabWidth": 2
   },
   "dependencies": {
+    "@dwalter/spider-operations": "^1.3.3",
     "@dwalter/spider-store": "^1.1.1"
   },
   "devDependencies": {

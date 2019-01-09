@@ -4,6 +4,7 @@
 - refine hooks api
 - look into keyed-fork
 - fix types for verbose reducers
+- MIN_SAFE_INTEGER is not in IE- shim it in as (Math.pow(2, 53) - 1)
 
 # Redux
 

@@ -1,38 +1,48 @@
 import { useEffect, useState } from 'react'
-import { Slice, utils } from '@dwalter/spider-store'
 
-const { createScheduler } = utils
+import { Slice } from '@dwalter/spider-store'
 
-const scheduleUpdate = createScheduler<() => unknown, void>(tasks => {
-  tasks.forEach(task => task())
-})
+import { scheduleUpdate, useIsFirstRender, noop, constant } from './utils'
+import { StoreContextContent } from './SpiderRoot'
+import { Source, deleteSlice } from './useStoreState'
 
-function noop() {}
+export function useSlice<T>(
+  store: StoreContextContent,
+  source: Source<any>,
+  slice: Slice<T>,
+) {
+  const setup = useIsFirstRender()
+  let subscription: number = -1
 
-export function useSlice<V>(slice: Slice<V>): V
+  if (setup && typeof source !== 'function') {
+    source.targets += 1
+  }
 
-export function useSlice<V>(slice: () => Slice<V>): V
-
-// NOTE: This assumes the slice being watched never changes
-// (could be a problem with forking)
-export function useSlice<V>(slice: Slice<V> | (() => Slice<V>)): V {
-  const [innerSlice]: [Slice<V>, unknown] = useState(slice)
-  let subscription: null | number = null
-  const [state, setState] = useState(() => {
-    subscription = innerSlice.subscribe(v => {
-      if (setState) {
-        scheduleUpdate(() => setState(v))
-      }
-    })
-    return innerSlice.value
-  })
+  const [state, setState] = useState(
+    setup
+      ? () => {
+          subscription = slice.subscribe(v => {
+            if (setState) {
+              scheduleUpdate(() => setState(v))
+            }
+          })
+          return slice.value
+        }
+      : noop,
+  )
   useEffect(
-    subscription === null
-      ? noop
-      : () => () => {
-          innerSlice.unsubscribe(subscription as number)
-        },
-    [],
+    setup
+      ? () => () => {
+          slice.unsubscribe(subscription as number)
+          if (typeof source !== 'function') {
+            source.targets -= 1
+            if (!source.targets) {
+              deleteSlice(store, source)
+            }
+          }
+        }
+      : noop,
+    constant,
   )
   return state
 }

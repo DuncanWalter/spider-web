@@ -1,17 +1,21 @@
+import { useContext, useState } from 'react'
+
 import { Reducer, Slice, utils } from '@dwalter/spider-store'
+
 import { StoreContextContent, StoreContext } from './SpiderRoot'
-import { useContext } from 'react'
+import { useIsFirstRender, noop } from './utils'
 import { useSlice } from './useSlice'
 
 const { createSlice } = utils
 
 interface Selector<Sources extends SourceList, T> {
+  targets: number
   sources: Sources
   mapping: (...args: InputList<Sources>) => T
   shallow: boolean
 }
 
-export type Source<T> = Reducer<T> | Selector<any[], T>
+export type Source<T> = Reducer<T, any> | Selector<any[], T>
 
 type SourceList = Source<any>[]
 
@@ -24,7 +28,7 @@ export function createSelector<Sources extends SourceList, Result>(
   mapping: (...args: InputList<Sources>) => Result,
   shallow: boolean = true,
 ): Selector<Sources, Result> {
-  return { sources, mapping, shallow }
+  return { sources, mapping, shallow, targets: 0 }
 }
 
 function setSlice<T>(store: StoreContextContent, source: Source<T>): Slice<T> {
@@ -34,13 +38,33 @@ function setSlice<T>(store: StoreContextContent, source: Source<T>): Slice<T> {
     return slice
   } else {
     const slice = createSlice(
-      source.sources.map(s => getSlice(store, s)),
+      source.sources.map(s => {
+        if (typeof s !== 'function') {
+          s.targets += 1
+        }
+        return getSlice(store, s)
+      }),
       source.mapping,
       undefined,
       source.shallow,
     )
     store.slices.set(source, slice)
     return slice
+  }
+}
+
+export function deleteSlice(
+  store: StoreContextContent,
+  selector: Selector<SourceList, unknown>,
+) {
+  store.slices.delete(selector)
+  for (let source of selector.sources) {
+    if (typeof source !== 'function') {
+      source.targets -= 1
+      if (!source.targets) {
+        deleteSlice(store, source)
+      }
+    }
   }
 }
 
@@ -57,8 +81,8 @@ export function getSlice<T>(
 
 export function useStoreState<T>(source: Source<T>): T {
   const store = useContext(StoreContext)
-  return useSlice(() => {
-    const slice = getSlice(store, source)
-    return slice
-  })
+  const setup = useIsFirstRender()
+  const [slice] = useState(setup ? getSlice(store, source) : noop)
+
+  return useSlice(store, source, slice)
 }

@@ -1,7 +1,10 @@
 import { useContext, useEffect } from 'react'
+
+import { Dispatch } from '@dwalter/spider-store'
+
 import { StoreContext, DispatchContext } from './SpiderRoot'
 import { Source, getSlice } from './useStoreState'
-import { Dispatch } from '@dwalter/spider-store'
+import { useIsFirstRender, noop, constant } from './utils'
 
 interface SideEffect<T = any> {
   source: Source<T>
@@ -19,22 +22,28 @@ export function createSideEffect<T>(
 
 export function useSideEffect<T>(sideEffect: SideEffect<T>) {
   const store = useContext(StoreContext)
+  const setup = useIsFirstRender()
   const dispatch = useContext(DispatchContext)
-  useEffect(() => {
-    if (sideEffect.semaphore === 0) {
-      const slice = getSlice(store, sideEffect.source)
-      sideEffect.subscription = slice.subscribe(value =>
-        sideEffect.effect(value, dispatch),
-      )
-    }
-    sideEffect.semaphore += 1
-    return () => {
-      sideEffect.semaphore -= 1
-      if (sideEffect.semaphore === 0) {
-        const slice = getSlice(store, sideEffect.source)
-        slice.unsubscribe(sideEffect.subscription!)
-        sideEffect.subscription = null
-      }
-    }
-  }, [])
+  useEffect(
+    setup
+      ? () => {
+          if (sideEffect.semaphore === 0) {
+            const slice = getSlice(store, sideEffect.source)
+            sideEffect.subscription = slice.subscribe(value =>
+              sideEffect.effect(value, dispatch),
+            )
+          }
+          sideEffect.semaphore += 1
+          return () => {
+            sideEffect.semaphore -= 1
+            if (sideEffect.semaphore === 0) {
+              const slice = getSlice(store, sideEffect.source)
+              slice.unsubscribe(sideEffect.subscription!)
+              sideEffect.subscription = null
+            }
+          }
+        }
+      : noop,
+    constant,
+  )
 }

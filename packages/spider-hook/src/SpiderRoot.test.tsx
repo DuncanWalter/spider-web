@@ -5,10 +5,12 @@ import {
   waitForDomChange,
   fireEvent,
 } from 'react-testing-library'
+
 import { Dispatch } from '@dwalter/spider-store'
+
 import { SpiderRoot } from './SpiderRoot'
-import { createSideEffect, useSideEffect } from './useSideEffect'
 import { useActions } from './useActions'
+import { createSideEffect, useSideEffect } from './useSideEffect'
 import { createSelector, useStoreState } from './useStoreState'
 
 afterEach(cleanup)

@@ -1,6 +1,9 @@
 import { useContext, useState } from 'react'
+
 import { Dispatch, Action } from '@dwalter/spider-store'
+
 import { DispatchContext } from './SpiderRoot'
+import { useIsFirstRender, noop } from './utils'
 
 interface ThunkAction<Result = unknown> {
   (dispatch: Dispatch): Result
@@ -39,15 +42,20 @@ export function useActions<Actions extends BindableActionMap>(
   actions: Actions,
 ): BoundActionMap<Actions> {
   const dispatch = useContext(DispatchContext)
-  const [boundActions] = useState(() => {
-    return Object.keys(actions).reduce(
-      (acc, key) => {
-        acc[key] = bindAction(dispatch, actions[key] as BindableAction)
-        return acc
-      },
-      {} as BoundActionMap<Actions>,
-    )
-  })
+  const setup = useIsFirstRender()
+  const [boundActions] = useState(
+    setup
+      ? () => {
+          return Object.keys(actions).reduce(
+            (acc, key) => {
+              acc[key] = bindAction(dispatch, actions[key] as BindableAction)
+              return acc
+            },
+            {} as BoundActionMap<Actions>,
+          )
+        }
+      : (noop as (() => BoundActionMap<Actions>)),
+  )
   return boundActions
 }
 
