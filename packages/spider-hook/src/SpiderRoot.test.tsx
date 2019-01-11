@@ -11,7 +11,7 @@ import { Dispatch } from '@dwalter/spider-store'
 import { SpiderRoot } from './SpiderRoot'
 import { useActions } from './useActions'
 import { createSideEffect, useSideEffect } from './useSideEffect'
-import { createSelector, useStoreState } from './useStoreState'
+import { createSelector, useSelector } from './useSelector'
 
 afterEach(cleanup)
 
@@ -40,7 +40,7 @@ test('Testing the useAction hook', async done => {
     useSideEffect(watchDoubleCounter)
 
     // get fragments of your store
-    const counter = useStoreState(getDoubleCounter)
+    const counter = useSelector(getDoubleCounter)
 
     // bind actions
     const actions = useActions({ increment })

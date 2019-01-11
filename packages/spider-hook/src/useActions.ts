@@ -43,7 +43,7 @@ export function useActions<Actions extends BindableActionMap>(
 ): BoundActionMap<Actions> {
   const dispatch = useContext(DispatchContext)
   const setup = useIsFirstRender()
-  const [boundActions] = useState(
+  const boundActions = useState(
     setup
       ? () => {
           return Object.keys(actions).reduce(
@@ -54,8 +54,8 @@ export function useActions<Actions extends BindableActionMap>(
             {} as BoundActionMap<Actions>,
           )
         }
-      : (noop as (() => BoundActionMap<Actions>)),
-  )
+      : noop,
+  )[0]
   return boundActions
 }
 

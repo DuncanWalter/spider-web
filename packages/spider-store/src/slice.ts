@@ -14,7 +14,8 @@ type SliceMixin<Slices extends Slice<any, any>[]> = Slices extends Array<
 
 export type Slice<Value = any, Ops = {}> = __Slice__<Value, any> & Ops
 
-let depth = Number.MIN_SAFE_INTEGER
+// MINSAFEINTEGER TODO: just use the parent nodes- it's slower, but so much cleaner
+let depth = -(2 ** 53) + 1
 
 export class __Slice__<V, Ds extends Slice[] = any> {
   depth: number
@@ -22,7 +23,7 @@ export class __Slice__<V, Ds extends Slice[] = any> {
   evaluate: (...dependencies: ValueMap<Ds>) => V | null
   dependencies: Ds
   value: V
-  shallow?: boolean
+  shallow?: boolean // TODO: make optionally an arbitrary comparator
   subscriptions: null | number[]
 
   constructor(

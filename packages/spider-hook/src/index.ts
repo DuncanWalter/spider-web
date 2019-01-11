@@ -1,5 +1,9 @@
 export { useActions } from './useActions'
 export { SpiderRoot } from './SpiderRoot'
-export { useStoreState, createSelector } from './useStoreState'
+export {
+  useSelector,
+  createSelector,
+  createCustomSelector,
+} from './useSelector'
 export { useSideEffect, createSideEffect } from './useSideEffect'
-export { useForkedStoreState } from './useForked'
+export { Fork } from './Fork'

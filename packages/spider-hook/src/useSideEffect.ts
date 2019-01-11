@@ -3,7 +3,7 @@ import { useContext, useEffect } from 'react'
 import { Dispatch } from '@dwalter/spider-store'
 
 import { StoreContext, DispatchContext } from './SpiderRoot'
-import { Source, getSlice } from './useStoreState'
+import { Source } from './useSelector'
 import { useIsFirstRender, noop, constant } from './utils'
 
 interface SideEffect<T = any> {
@@ -27,8 +27,8 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
   useEffect(
     setup
       ? () => {
+          const slice = store.checkoutSlice(sideEffect.source)
           if (sideEffect.semaphore === 0) {
-            const slice = getSlice(store, sideEffect.source)
             sideEffect.subscription = slice.subscribe(value =>
               sideEffect.effect(value, dispatch),
             )
@@ -36,8 +36,8 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
           sideEffect.semaphore += 1
           return () => {
             sideEffect.semaphore -= 1
+            store.returnSlice(sideEffect.source)
             if (sideEffect.semaphore === 0) {
-              const slice = getSlice(store, sideEffect.source)
               slice.unsubscribe(sideEffect.subscription!)
               sideEffect.subscription = null
             }

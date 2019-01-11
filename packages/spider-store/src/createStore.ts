@@ -16,13 +16,15 @@ export interface Dispatch<A = Action> {
 export interface Action {
   type: string
   reducer?: Reducer<any>
+  // TODO: hook in this API
+  action?: Action | ((dispatch: Dispatch) => unknown)
 }
 
 export interface Reducer<State, A extends Action = Action> {
   (state: State | undefined, action: A): State
 }
 
-export interface Store<A extends Action> {
+export interface Store<A extends Action = Action> {
   dispatch: Dispatch<A>
   wrapReducer: <S>(
     reducer: Reducer<S, any>,
@@ -30,33 +32,23 @@ export interface Store<A extends Action> {
     shallow?: boolean,
   ) => Slice<S>
   slices: Map<unknown, StateSlice<A>>
-  master: Store<Action> | null
-}
-
-// TODO: on the chopping block
-export function getMaster(store: Store<any>) {
-  let s = store
-  while (s.master !== null) {
-    s = s.master
-  }
-  if (s !== store) {
-    store.master = s
-  }
-  return s
 }
 
 export function createStore<A extends Action>(): Store<A> {
   const store = {
     slices: new Map(),
-    master: null,
   } as Store<A>
 
-  const scheduleUpdate = createScheduler<A, void>(actions => {
+  const slices = store.slices
+
+  const scheduleUpdate = createScheduler<[A], void>(actions => {
     const marks = new SliceSet()
-    for (let action of actions) {
-      const slices = getMaster(store).slices
+    for (let [action] of actions) {
       if (action.reducer) {
-        slices.get(action.reducer)!(action, marks)
+        const slice = slices.get(action.reducer)
+        if (slice) {
+          slice(action, marks)
+        }
       } else {
         slices.forEach(slice => slice(action, marks))
       }
@@ -64,6 +56,7 @@ export function createStore<A extends Action>(): Store<A> {
     propagateSlice(marks)
   })
 
+  let actionDepth = 0
   const dispatch: Dispatch<A> = <R>(
     action: A | Promise<A> | ((dispatch: Dispatch<A>) => R),
   ) => {
@@ -85,7 +78,7 @@ export function createStore<A extends Action>(): Store<A> {
 
     const resource = createSlice([] as Slice[], _ => state, state, shallow)
 
-    getMaster(store).slices.set(reducer, (action, marks) => {
+    slices.set(reducer, (action, marks) => {
       const oldState = state
       const newState = (state = reducer(state, action))
       if (newState === undefined) {

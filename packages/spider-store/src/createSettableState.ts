@@ -10,6 +10,7 @@ interface Setter<State> {
   ): Action
 }
 
+// TODO: don't assume partial setting is desired?
 export function createSettableState<State>(
   initialState: State,
 ): [Reducer<State>, Setter<State>] {

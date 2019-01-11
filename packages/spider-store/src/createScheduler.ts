@@ -1,7 +1,13 @@
-export function createScheduler<Task, Result>(
-  policy: (tasks: Task[]) => Result,
-): (task: Task) => Promise<Result> {
-  let scheduled: Task[] | null = null
+function toArray<AL extends ArrayLike<any[]>>(
+  arrayLike: AL,
+): AL extends ArrayLike<infer Ts> ? Ts : never {
+  return Array.prototype.slice.call(arrayLike) as any
+}
+
+export function createScheduler<TaskArgs extends any[], Result>(
+  policy: (tasks: TaskArgs[]) => Result,
+): (...taskArgs: TaskArgs) => Promise<Result> {
+  let scheduled: TaskArgs[] | null = null
   let promise: Promise<Result> | null = null
   let resolve: ((result: Result) => void) | null = null
 
@@ -14,13 +20,13 @@ export function createScheduler<Task, Result>(
     cleanup(policy(running))
   }
 
-  return function requestCall(callback) {
+  return function requestCall() {
     if (!scheduled) {
-      scheduled = [callback]
+      scheduled = [toArray(arguments)]
       setTimeout(execTasks, 0)
       return (promise = new Promise(r => (resolve = r)))
     } else {
-      scheduled.push(callback)
+      scheduled.push(toArray(arguments))
       return promise!
     }
   }

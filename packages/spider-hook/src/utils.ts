@@ -2,8 +2,14 @@ import { useState } from 'react'
 
 import { utils } from '@dwalter/spider-store'
 
-export const scheduleUpdate = utils.createScheduler<() => unknown, void>(
-  tasks => tasks.forEach(task => task()),
+type UpdatePair<T> = [(t: T) => unknown, T]
+
+export const scheduleUpdate = utils.createScheduler<UpdatePair<unknown>, void>(
+  tasks => {
+    for (let [setState, value] of tasks) {
+      setState(value)
+    }
+  },
 )
 
 let hash = -(2 ** 53) + 1
