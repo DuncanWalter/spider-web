@@ -1,10 +1,10 @@
-import { Slice, createSlice } from './slice'
+import { Slice, createSlice, Shallow, didUpdate } from './slice'
 import { propagateSlice } from './propagateSlice'
 import { createScheduler } from './createScheduler'
 import { SliceSet } from './SliceSet'
 
-export interface StateSlice<A> {
-  (action: A, marks: SliceSet): void
+export interface StateSlice<V> extends Slice<V> {
+  updateState(action: Action, marks: SliceSet): void
 }
 
 export interface Dispatch<A = Action> {
@@ -31,7 +31,8 @@ export interface Store<A extends Action = Action> {
     initialState?: S,
     shallow?: boolean,
   ) => Slice<S>
-  slices: Map<unknown, StateSlice<A>>
+  slices: Map<Reducer<any>, StateSlice<any>>
+  getState: () => unknown
 }
 
 export function createStore<A extends Action>(): Store<A> {
@@ -46,17 +47,15 @@ export function createStore<A extends Action>(): Store<A> {
     for (let [action] of actions) {
       if (action.reducer) {
         const slice = slices.get(action.reducer)
-        if (slice) {
-          slice(action, marks)
-        }
+        if (slice) slice.updateState(action, marks)
       } else {
-        slices.forEach(slice => slice(action, marks))
+        slices.forEach(slice => slice.updateState(action, marks))
       }
     }
     propagateSlice(marks)
   })
 
-  let actionDepth = 0
+  // TODO: let actionDepth = 0
   const dispatch: Dispatch<A> = <R>(
     action: A | Promise<A> | ((dispatch: Dispatch<A>) => R),
   ) => {
@@ -69,33 +68,48 @@ export function createStore<A extends Action>(): Store<A> {
     return scheduleUpdate(action)
   }
 
+  // TODO: return to a configuration object
+  // and add slice name field
   function wrapReducer<State>(
     reducer: Reducer<State>,
     initialState?: State,
-    shallow: boolean = true,
+    shallow: Shallow<State> = true,
   ) {
-    let state = initialState || reducer(undefined, { type: '@store/init' } as A)
+    let state = initialState || reducer(undefined, { type: '@store/init' })
 
-    const resource = createSlice([] as Slice[], _ => state, state, shallow)
+    const slice = createSlice(
+      [] as Slice[],
+      _ => state,
+      state,
+      shallow,
+    ) as StateSlice<State>
 
-    slices.set(reducer, (action, marks) => {
+    function updateState(action: Action, marks: SliceSet) {
       const oldState = state
       const newState = (state = reducer(state, action))
-      if (newState === undefined) {
-        throw new Error('Reducer returned undefined')
+      if (didUpdate(shallow, oldState, newState)) {
+        marks.add(slice)
       }
-      if (newState === null) {
-        throw new Error('Reducer returned null')
-      }
-      if (!shallow || newState !== oldState) {
-        marks.add(resource)
-      }
-    })
+    }
 
-    return resource
+    slice.updateState = updateState
+
+    slices.set(reducer, slice)
+
+    return slice
+  }
+
+  // TODO: pretty this up; make it actually useful
+  function getState() {
+    const state: { [key: string]: unknown } = {}
+    slices.forEach((slice, reducer) => {
+      state[reducer.name] = slice.value
+    })
+    return state
   }
 
   store.dispatch = dispatch
   store.wrapReducer = wrapReducer
+  store.getState = getState
   return store
 }

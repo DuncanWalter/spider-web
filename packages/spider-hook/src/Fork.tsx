@@ -13,10 +13,10 @@ import {
 } from './useSelector'
 
 interface ForkProps<K extends string | number, V> {
-  selector: Selector<any, V[]>
+  selector: Selector<V[]>
   getKey?: (value: V, index: number) => K
   Component: (
-    props: { key: K; selector: Selector<any, V> },
+    props: { key: K; selector: Selector<V> },
   ) => React.ReactElement<any>
 }
 
@@ -28,14 +28,14 @@ interface MemoComponentProps<K extends string | number, V> {
 function forkSelector<K, V>(
   selector: Source<V[]>,
   getKey: (t: V, i: number) => K,
-): Selector<any, { key: K; value: Slice<V> }[]> {
+): Selector<{ key: K; value: Slice<V> }[]> {
   return createCustomSelector([selector], slice =>
     slice.use(keyFork).keyFork(getKey),
   )
 }
 
-function sliceSelector<V>(slice: Slice<V>): Selector<any, V> {
-  return createCustomSelector([], () => slice)
+function sliceSelector<V>(slice: Slice<V>): Selector<V> {
+  return createCustomSelector([] as Source<any>[], () => slice)
 }
 
 function Fork<K extends string | number, V>({

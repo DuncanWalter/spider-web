@@ -14,6 +14,17 @@ type SliceMixin<Slices extends Slice<any, any>[]> = Slices extends Array<
 
 export type Slice<Value = any, Ops = {}> = __Slice__<Value, any> & Ops
 
+export type Shallow<V = unknown> = boolean | ((a: V, b: V) => boolean)
+
+export function didUpdate<V>(shallow: Shallow<V>, a: V, b: V) {
+  if (typeof shallow === 'function') {
+    return !shallow(a, b)
+  } else if (shallow) {
+    return a !== b
+  }
+  return true
+}
+
 // MINSAFEINTEGER TODO: just use the parent nodes- it's slower, but so much cleaner
 let depth = -(2 ** 53) + 1
 
@@ -23,18 +34,18 @@ export class __Slice__<V, Ds extends Slice[] = any> {
   evaluate: (...dependencies: ValueMap<Ds>) => V | null
   dependencies: Ds
   value: V
-  shallow?: boolean // TODO: make optionally an arbitrary comparator
+  shallow: Shallow<V>
   subscriptions: null | number[]
 
   constructor(
     dependencies: Ds,
     evaluate: (...inputs: ValueMap<Ds>) => V | null,
     initialValue?: V,
-    shallow: boolean = true,
+    shallow: Shallow<V> = true,
   ) {
     this.depth = ++depth
     this.shallow = shallow
-    this.value = initialValue || ('@slice/invalid-cache' as any)
+    this.value = initialValue || (null as any)
     this.evaluate = evaluate
     this.children = new SliceSet()
     this.dependencies = dependencies
@@ -72,11 +83,11 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     if (newValue === undefined) {
       return false
     }
-    if (this.shallow && newValue === oldValue) {
-      return false
+    if (didUpdate(this.shallow, oldValue, newValue)) {
+      this.value = newValue!
+      return true
     }
-    this.value = newValue!
-    return true
+    return false
   }
 
   subscribe(newChild: Slice | ((v: V) => unknown)): number {
@@ -125,21 +136,21 @@ export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   evaluate: (...inputs: ValueMap<Ds>) => V,
   initialValue?: V,
-  shallow?: boolean,
+  shallow?: Shallow<V>,
 ): Slice<V, SliceMixin<Ds>>
 
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   evaluate: (...inputs: ValueMap<Ds>) => V | null,
   initialValue: V,
-  shallow?: boolean,
+  shallow?: Shallow<V>,
 ): Slice<V, SliceMixin<Ds>>
 
 export function createSlice<Ds extends Slice[], V>(
   dependencies: Ds,
   evaluate: (...inputs: ValueMap<Ds>) => V | null,
   initialValue?: V,
-  shallow: boolean = true,
+  shallow: Shallow<V> = true,
 ) {
   return new __Slice__(dependencies, evaluate, initialValue, shallow)
 }

@@ -2,7 +2,7 @@ import { useContext, useState } from 'react'
 
 import { Dispatch, Action } from '@dwalter/spider-store'
 
-import { DispatchContext } from './SpiderRoot'
+import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop } from './utils'
 
 interface ThunkAction<Result = unknown> {
@@ -41,7 +41,7 @@ type BoundActionMap<Actions extends BindableActionMap> = {
 export function useActions<Actions extends BindableActionMap>(
   actions: Actions,
 ): BoundActionMap<Actions> {
-  const dispatch = useContext(DispatchContext)
+  const { dispatch } = useContext(StoreContext)
   const setup = useIsFirstRender()
   const boundActions = useState(
     setup
