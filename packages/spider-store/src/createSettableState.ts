@@ -1,63 +1,40 @@
 import { Reducer, Action } from './createStore'
 
-type StateUpdate<State> = null | (State extends Object ? Partial<State> : State)
-
-const foo: StateUpdate<number[]> = null
-
 interface Setter<State> {
-  (
-    newState: StateUpdate<State> | ((state: State) => StateUpdate<State>),
-  ): Action
+  (newState: State | ((state: State) => State)): Action
 }
 
-// TODO: don't assume partial setting is desired?
+const setStateType = '@store/set-state'
+
 export function createSettableState<State>(
   initialState: State,
 ): [Reducer<State>, Setter<State>] {
-  let keys: (keyof State)[] | null = null
-
-  if (typeof initialState === 'object' && !Array.isArray(initialState)) {
-    keys = Object.keys(initialState) as (keyof State)[]
-  }
-
   function reducer(state = initialState, action: Action & { newState?: any }) {
     const { type, newState } = action
-    if (type === '@store/set-state') {
+    if (type === setStateType) {
       if (action.reducer === reducer) {
         if (typeof newState === 'function') {
-          return writeState(state, newState(state), keys)
+          return newState(state)
         } else {
-          return writeState(state, newState, keys)
+          return newState
         }
       }
     }
     return state
   }
 
-  function setState(
-    newState: StateUpdate<State> | ((state: State) => StateUpdate<State>),
-  ) {
-    return { type: '@store/set-state', reducer, newState }
+  function setState(newState: State | ((state: State) => State)) {
+    return { type: setStateType, reducer, newState }
   }
 
   return [reducer, setState]
 }
 
-function writeState<S extends { [key: string]: any }>(
-  state: S,
-  newState: S | null,
-  keys: null | (keyof S)[],
+export function partialUpdate<StateFragment extends {}>(
+  stateFragment: StateFragment | null,
 ) {
-  if (newState === null) {
-    return state
-  }
-  if (keys) {
-    const result: S = {} as S
-    for (let key of keys) {
-      result[key] = newState.hasOwnProperty(key) ? newState[key] : state[key]
-    }
-    return result
-  } else {
-    return newState
-  }
+  return <State extends StateFragment>(oldState: State): State =>
+    stateFragment === null
+      ? oldState
+      : Object.assign({}, oldState, stateFragment)
 }

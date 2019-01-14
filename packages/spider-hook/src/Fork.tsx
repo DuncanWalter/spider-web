@@ -13,7 +13,7 @@ import {
 } from './useSelector'
 
 interface ForkProps<K extends string | number, V> {
-  selector: Selector<V[]>
+  selector: Source<V[]>
   getKey?: (value: V, index: number) => K
   Component: (
     props: { key: K; selector: Selector<V> },
@@ -48,6 +48,8 @@ function Fork<K extends string | number, V>({
   const getSlices = useState(setup ? forkSelector(selector, getKey) : noop)[0]
   const slices = useSelector(getSlices)
 
+  console.log(slices)
+
   const MemoComponent = useState(
     setup
       ? () =>
@@ -67,6 +69,12 @@ function Fork<K extends string | number, V>({
   )
 }
 
+/**
+ * `Fork` is a heavily optimized component for rendering
+ * collections. When the content of `Fork` update, the
+ * component will usually not need to rerender, and all
+ * unchanged children will not rerender.
+ */
 const MemoFork = memo(Fork)
 
 export { MemoFork as Fork }

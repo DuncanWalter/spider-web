@@ -1,5 +1,6 @@
 import { createOperation } from './createOperation'
-import { Slice, utils } from '@dwalter/spider-store'
+import { Slice, utils, Shallow } from '@dwalter/spider-store'
+import { withOperations } from './utils'
 
 const { createSlice } = utils
 
@@ -7,7 +8,7 @@ interface KeyFork {
   keyFork<K, V>(
     this: Slice<V[]>,
     getKey: (value: V, index: number) => K,
-    shallow?: boolean,
+    shallow?: Shallow<V>,
   ): Slice<{ key: K; value: Slice<V> }[]>
   [ops: string]: Function
 }
@@ -16,10 +17,11 @@ export const keyFork = createOperation<KeyFork>({
   keyFork<K, V>(
     this: Slice<V[]>,
     getKey: (value: V, index: number) => K,
-    shallow: boolean = true,
+    shallow: Shallow<V> = true,
   ): Slice<{ key: K; value: Slice<V> }[]> {
     const sliceMap = new Map<K, Slice<V>>()
     const indexMap = new Map<K, number>()
+    let lastValue: { key: K; value: Slice<V> }[] = []
 
     const root = createSlice([this], values => {
       if (sliceMap.size > 2 * values.length) {
@@ -32,23 +34,36 @@ export const keyFork = createOperation<KeyFork>({
           }
         })
       }
-      return values.map((value, index) => {
+
+      let mutated = values.length === lastValue.length ? false : true
+      let result = mutated ? [] : lastValue
+
+      values.forEach((value, index) => {
         const key = getKey(value, index)
-        indexMap.set(key, index)
-        sliceMap.set(
-          key,
+        const slice =
           sliceMap.get(key) ||
-            createSlice(
-              [this, root],
-              values => {
-                return values[indexMap.get(key)!]
-              },
-              undefined,
-              shallow,
-            ),
-        )
-        return { key, value: sliceMap.get(key)! }
+          createSlice(
+            [this, root],
+            values => values[indexMap.get(key)!] as V,
+            undefined,
+            shallow,
+          )
+        if (mutated) {
+          indexMap.set(key, index)
+          sliceMap.set(key, slice)
+          result.push({ key, value: slice })
+        } else {
+          let pair = result[index]
+          if (pair.key !== key || pair.value !== slice) {
+            mutated = true
+            result = result.slice(0, index)
+            result.push({ key, value: slice })
+          }
+        }
       })
+
+      lastValue = result
+      return result
     })
     return root
   },

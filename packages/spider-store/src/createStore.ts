@@ -13,11 +13,19 @@ export interface Dispatch<A = Action> {
   <R>(a: (d: Dispatch<A>) => R): R
 }
 
+interface ListLink<T> {
+  next: List<T>
+  value: T
+}
+
+type List<T> = { next: null; value: null } | ListLink<T>
+
+type ActionLike = Action | Promise<Action> | ((dispatch: Dispatch) => any)
+
 export interface Action {
   type: string
   reducer?: Reducer<any>
-  // TODO: hook in this API
-  action?: Action | ((dispatch: Dispatch) => unknown)
+  action?: ActionLike
 }
 
 export interface Reducer<State, A extends Action = Action> {
@@ -42,8 +50,9 @@ export function createStore<A extends Action>(): Store<A> {
 
   const slices = store.slices
 
-  const scheduleUpdate = createScheduler<[A], void>(actions => {
+  const scheduleUpdate = createScheduler<[Action], void>(actions => {
     const marks = new SliceSet()
+    // TODO: use the action stack for some purpose
     for (let [action] of actions) {
       if (action.reducer) {
         const slice = slices.get(action.reducer)
@@ -55,15 +64,19 @@ export function createStore<A extends Action>(): Store<A> {
     propagateSlice(marks)
   })
 
-  // TODO: let actionDepth = 0
-  const dispatch: Dispatch<A> = <R>(
-    action: A | Promise<A> | ((dispatch: Dispatch<A>) => R),
-  ) => {
+  function dispatch(
+    action: ActionLike,
+    // TODO: use in some real way
+    stack: List<Action> = { next: null, value: null },
+  ): unknown {
     if (action instanceof Promise) {
-      return action.then(action => dispatch(action))
+      return action.then(action => dispatch(action, stack))
     }
     if (typeof action === 'function') {
-      return action(dispatch)
+      return action(((a: ActionLike) => dispatch(a, stack)) as Dispatch)
+    }
+    if (action.action) {
+      return dispatch(action.action, { next: stack, value: action })
     }
     return scheduleUpdate(action)
   }
@@ -108,7 +121,7 @@ export function createStore<A extends Action>(): Store<A> {
     return state
   }
 
-  store.dispatch = dispatch
+  store.dispatch = dispatch as Dispatch
   store.wrapReducer = wrapReducer
   store.getState = getState
   return store
