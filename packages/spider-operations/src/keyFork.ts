@@ -1,6 +1,5 @@
 import { createOperation } from './createOperation'
 import { Slice, utils, Shallow } from '@dwalter/spider-store'
-import { withOperations } from './utils'
 
 const { createSlice } = utils
 
@@ -10,7 +9,6 @@ interface KeyFork {
     getKey: (value: V, index: number) => K,
     shallow?: Shallow<V>,
   ): Slice<{ key: K; value: Slice<V> }[]>
-  [ops: string]: Function
 }
 
 export const keyFork = createOperation<KeyFork>({

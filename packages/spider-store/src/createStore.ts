@@ -1,5 +1,5 @@
 import { Slice, createSlice, Shallow, didUpdate } from './slice'
-import { propagateSlice } from './propagateSlice'
+import { propagateSlices } from './propagateSlices'
 import { createScheduler } from './createScheduler'
 import { SliceSet } from './SliceSet'
 
@@ -61,7 +61,7 @@ export function createStore<A extends Action>(): Store<A> {
         slices.forEach(slice => slice.updateState(action, marks))
       }
     }
-    propagateSlice(marks)
+    propagateSlices(marks)
   })
 
   function dispatch(

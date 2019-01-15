@@ -1,10 +1,5 @@
 import * as React from 'react'
-import {
-  render,
-  cleanup,
-  waitForDomChange,
-  fireEvent,
-} from 'react-testing-library'
+import { render, cleanup, waitForDomChange } from 'react-testing-library'
 
 import { createSettableState } from '@dwalter/spider-store'
 
@@ -27,7 +22,7 @@ test('Testing the Fork component', async done => {
     actions = useActions({ setNumbers })
     return (
       <div data-testid="collection">
-        <Fork selector={numbers as any} Component={Item as any} />
+        <Fork selector={numbers} Component={Item} />
       </div>
     )
   }

@@ -6,8 +6,7 @@ import { withOperations } from './utils'
 const { createSlice } = utils
 
 interface Dedup {
-  dedup<U, O extends Dedup>(this: Slice<U, O>): Slice<U, O>
-  [ops: string]: Function
+  dedup<This extends Slice>(this: This): This
 }
 
 function id<T>(t: T) {

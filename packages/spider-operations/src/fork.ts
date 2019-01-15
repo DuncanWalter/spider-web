@@ -11,10 +11,8 @@ interface Fork {
     this: U,
     builder: (prong: Prong<U>) => V,
   ): Slice<V[], O>
-  [ops: string]: Function
 }
 
-// TODO: keyed forking
 export const fork = createOperation({
   fork<U, V, O>(
     this: Slice<U[], O>,

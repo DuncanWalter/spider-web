@@ -1,4 +1,4 @@
-export interface Operation<Mixin extends { [operation: string]: Function }> {
+export interface Operation<Mixin extends {}> {
   type: '@slice/operation'
   operation: Mixin
   applied: boolean

@@ -14,10 +14,10 @@ import {
 
 interface ForkProps<K extends string | number, V> {
   selector: Source<V[]>
-  getKey?: (value: V, index: number) => K
   Component: (
     props: { key: K; selector: Selector<V> },
   ) => React.ReactElement<any>
+  getKey?: (value: V, index: number) => K
 }
 
 interface MemoComponentProps<K extends string | number, V> {
@@ -48,8 +48,6 @@ function Fork<K extends string | number, V>({
   const getSlices = useState(setup ? forkSelector(selector, getKey) : noop)[0]
   const slices = useSelector(getSlices)
 
-  console.log(slices)
-
   const MemoComponent = useState(
     setup
       ? () =>
@@ -75,6 +73,6 @@ function Fork<K extends string | number, V>({
  * component will usually not need to rerender, and all
  * unchanged children will not rerender.
  */
-const MemoFork = memo(Fork)
+const MemoFork = memo(Fork) as typeof Fork
 
 export { MemoFork as Fork }

@@ -10,7 +10,6 @@ interface Map {
     mapping: (u: U) => V,
     shallow?: Shallow<V>,
   ): Slice<V, O>
-  [ops: string]: Function
 }
 
 export const map = createOperation<Map>({

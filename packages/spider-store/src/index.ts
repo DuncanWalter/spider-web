@@ -1,11 +1,13 @@
 import { createScheduler } from './createScheduler'
 import { createSlice } from './slice'
 import { resolveSlice } from './resolveSlice'
+import { propagateSlices } from './propagateSlices'
 
 export const utils = {
   createScheduler,
   createSlice,
   resolveSlice,
+  propagateSlices,
 }
 
 export { Slice, Shallow } from './slice'

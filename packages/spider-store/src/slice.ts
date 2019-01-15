@@ -6,8 +6,29 @@ export type ValueMap<Slices extends Slice[]> = {
   [K in keyof Slices]: Slices[K] extends Slice<infer Value> ? Value : never
 }
 
+/**
+ * A `Slice` is similar to an observable with a few key differences.
+ * `Slice`s cannot complete, are guaranteed to have exactly one
+ * valid state at all times, and have built in support for
+ * de-duplicating equivalent states if desired. A `Slice` should
+ * be thought of as a wrapper around some piece of state which
+ * can be accessed by subscribing to the `Slice`. `Slices` also
+ * support an operator API similar to that of `rxjs` (but not the same).
+ */
 export type Slice<Value = any, Ops = {}> = __Slice__<Value, any> & Ops
 
+/**
+ * `Shallow` is a type which represents the policy followed by
+ * a `Slice` when determining whether an update should be pushed
+ * to subscribers. If `true`, the `Slice` will perform a shallow
+ * equality check and only push changes if the old and new values
+ * of the `Slice` are not equal. If `false`, the `Slice` will push
+ * all updates regardless of whether the value appears to have
+ * changed. For cases where `false` is not fine grained enough,
+ * a function comparing the old and new values can be passed. If the
+ * comparing function returns true, the values are considered equal and
+ * the update is not pushed to subscribers.
+ */
 export type Shallow<V = unknown> = boolean | ((a: V, b: V) => boolean)
 
 export function didUpdate<V>(shallow: Shallow<V>, a: V, b: V) {
