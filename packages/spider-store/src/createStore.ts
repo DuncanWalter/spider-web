@@ -40,7 +40,7 @@ export interface Store<A extends Action = Action> {
     shallow?: boolean,
   ) => Slice<S>
   slices: Map<Reducer<any>, StateSlice<any>>
-  getState: () => unknown
+  // getState: () => unknown
 }
 
 export function createStore<A extends Action>(): Store<A> {
@@ -75,9 +75,9 @@ export function createStore<A extends Action>(): Store<A> {
     if (typeof action === 'function') {
       return action(((a: ActionLike) => dispatch(a, stack)) as Dispatch)
     }
-    if (action.action) {
-      return dispatch(action.action, { next: stack, value: action })
-    }
+    // if (action.action) {
+    //   return dispatch(action.action, { next: stack, value: action })
+    // }
     return scheduleUpdate(action)
   }
 
@@ -113,16 +113,16 @@ export function createStore<A extends Action>(): Store<A> {
   }
 
   // TODO: pretty this up; make it actually useful
-  function getState() {
-    const state: { [key: string]: unknown } = {}
-    slices.forEach((slice, reducer) => {
-      state[reducer.name] = slice.value
-    })
-    return state
-  }
+  // function getState() {
+  //   const state: { [key: string]: unknown } = {}
+  //   slices.forEach((slice, reducer) => {
+  //     state[reducer.name] = slice.value
+  //   })
+  //   return state
+  // }
 
   store.dispatch = dispatch as Dispatch
   store.wrapReducer = wrapReducer
-  store.getState = getState
+  // store.getState = getState
   return store
 }
