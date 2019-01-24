@@ -7,22 +7,20 @@ import { useIsFirstRender, noop, scheduleUpdate, constant } from './utils'
 
 const { createSlice } = utils
 
-export type Source<T> = Reducer<T, any> | Selector<T, any[]>
-
-type SourceList = Source<any>[]
-
-type InputList<Sources extends SourceList> = {
-  [K in keyof Sources]: Sources[K] extends Source<infer T> ? T : never
-}
-
-type SliceList<Sources extends SourceList> = {
-  [K in keyof Sources]: Sources[K] extends Source<infer T> ? Slice<T> : never
-}
-
-export interface Selector<T, Sources extends SourceList = SourceList> {
-  sources: Sources
-  mapping: (...args: SliceList<Sources>) => Slice<T>
+export interface Selector<T, Slices extends Slice<any>[] = Slice<any>[]> {
+  sources: Source<any>[]
+  mapping: (...slices: Slices) => Slice<T>
   slices: Map<unknown, Slice<T>>
+}
+
+export type Source<T> = Reducer<T> | Selector<T>
+
+type InputSources<Inputs extends any[]> = {
+  [K in keyof Inputs]: Source<Inputs[K]>
+}
+
+type SliceInputs<Slices extends Slice<any>[]> = {
+  [K in keyof Slices]: Slices[K] extends Slice<infer T> ? T : never
 }
 
 export const getSlice = (store: Store) =>
@@ -46,27 +44,34 @@ export const getSlice = (store: Store) =>
     }
   }
 
-export function createCustomSelector<Sources extends SourceList, Result>(
-  sources: Sources,
-  mapping: (...slices: SliceList<Sources>) => Slice<Result>,
-): Selector<Result, Sources> {
+export function createCustomSelector<Slices extends Slice<any>[], Result>(
+  sources: InputSources<SliceInputs<Slices>>,
+  mapping: (...slices: Slices) => Slice<Result>,
+): Selector<Result, Slices> {
   return { sources, mapping, slices: new Map() }
 }
 
-export function createSelector<Sources extends SourceList, Result>(
-  sources: Sources,
-  mapping: (...args: InputList<Sources>) => Result,
+export function createSelector<Inputs extends any[], Result>(
+  sources: InputSources<Inputs>,
+  mapping: (...args: Inputs) => Result,
   shallow: Shallow<Result> = true,
-): Selector<Result, Sources> {
-  return createCustomSelector(sources, (...slices) => {
+): Selector<Result> {
+  return createCustomSelector(sources as any, (...slices) => {
     return createSlice(slices, mapping as any, undefined, shallow)
   })
 }
 
-export function useSelector<T>(source: Source<T>): T {
-  const store = useContext(StoreContext)
+/**
+ * A React hook which reads state from a `Selector` or `Reducer` and
+ * rerenders the component when state updates. Automatically handles
+ * wrapping `Reducer`s, subscription logic, and retrieving the
+ * correct store using the context api.
+ * @param selector The `Selector` or `Reducer` to read state from.
+ */
+export function useSelector<T>(selector: Source<T>): T {
   const setup = useIsFirstRender()
-  const slice = useState(setup ? getSlice(store)(source) : noop)[0]
+  const store = useContext(StoreContext)
+  const slice = useState(setup ? getSlice(store)(selector) : noop)[0]
 
   let subscription: number = -1
   const [value, setState] = useState(

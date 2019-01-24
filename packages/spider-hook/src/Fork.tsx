@@ -35,7 +35,7 @@ function forkSelector<K, V>(
 }
 
 function sliceSelector<V>(slice: Slice<V>): Selector<V> {
-  return createCustomSelector([] as Source<any>[], () => slice)
+  return createCustomSelector<any[], V>([], () => slice)
 }
 
 function Fork<K extends string | number, V>({

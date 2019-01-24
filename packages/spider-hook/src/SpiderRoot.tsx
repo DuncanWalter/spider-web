@@ -10,7 +10,6 @@ function contextError(): any {
 
 export const StoreContext = React.createContext<Store>({
   wrapReducer: contextError,
-  getState: contextError,
   dispatch: contextError,
   slices: new Map(),
 })

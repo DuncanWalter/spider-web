@@ -7,53 +7,42 @@ export interface StateSlice<V> extends Slice<V> {
   updateState(action: Action, marks: SliceSet): void
 }
 
-export interface Dispatch<A = Action> {
-  (a: A): Promise<undefined>
-  (a: Promise<A>): Promise<undefined>
-  <R>(a: (d: Dispatch<A>) => R): R
+export interface Dispatch {
+  (a: Action): Promise<undefined>
+  <R>(a: (d: Dispatch) => R): R
 }
 
-interface ListLink<T> {
-  next: List<T>
-  value: T
-}
-
-type List<T> = { next: null; value: null } | ListLink<T>
-
-type ActionLike = Action | Promise<Action> | ((dispatch: Dispatch) => any)
+type ActionLike = Action | ((dispatch: Dispatch) => any)
 
 export interface Action {
   type: string
   reducer?: Reducer<any>
-  action?: ActionLike
+  schedule?(dispatch: Dispatch): any
 }
 
 export interface Reducer<State, A extends Action = Action> {
   (state: State | undefined, action: A): State
 }
 
-export interface Store<A extends Action = Action> {
-  dispatch: Dispatch<A>
+export interface Store {
+  dispatch: Dispatch
   wrapReducer: <S>(
     reducer: Reducer<S, any>,
     initialState?: S,
     shallow?: boolean,
   ) => Slice<S>
   slices: Map<Reducer<any>, StateSlice<any>>
-  // getState: () => unknown
 }
 
-export function createStore<A extends Action>(): Store<A> {
-  const store = {
-    slices: new Map(),
-  } as Store<A>
+export function createStore(): Store {
+  const slices = new Map<unknown, StateSlice<any>>()
 
-  const slices = store.slices
+  const store = { slices } as Store
 
-  const scheduleUpdate = createScheduler<[Action], void>(actions => {
+  const scheduleUpdate = createScheduler<[Action, string], void>(actions => {
     const marks = new SliceSet()
     // TODO: use the action stack for some purpose
-    for (let [action] of actions) {
+    for (let [action, type] of actions) {
       if (action.reducer) {
         const slice = slices.get(action.reducer)
         if (slice) slice.updateState(action, marks)
@@ -66,19 +55,12 @@ export function createStore<A extends Action>(): Store<A> {
 
   function dispatch(
     action: ActionLike,
-    // TODO: use in some real way
-    stack: List<Action> = { next: null, value: null },
+    name: string = typeof action === 'function' ? action.name : action.type,
   ): unknown {
-    if (action instanceof Promise) {
-      return action.then(action => dispatch(action, stack))
-    }
     if (typeof action === 'function') {
-      return action(((a: ActionLike) => dispatch(a, stack)) as Dispatch)
+      return action(((a: Action) => dispatch(a, name)) as Dispatch)
     }
-    // if (action.action) {
-    //   return dispatch(action.action, { next: stack, value: action })
-    // }
-    return scheduleUpdate(action)
+    return scheduleUpdate(action, name)
   }
 
   // TODO: return to a configuration object
@@ -112,17 +94,7 @@ export function createStore<A extends Action>(): Store<A> {
     return slice
   }
 
-  // TODO: pretty this up; make it actually useful
-  // function getState() {
-  //   const state: { [key: string]: unknown } = {}
-  //   slices.forEach((slice, reducer) => {
-  //     state[reducer.name] = slice.value
-  //   })
-  //   return state
-  // }
-
   store.dispatch = dispatch as Dispatch
   store.wrapReducer = wrapReducer
-  // store.getState = getState
   return store
 }

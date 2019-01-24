@@ -1,10 +1,8 @@
 # TODO
 
 - Demo app
-- refine hooks api
-- look into keyed-fork
-- fix types for verbose reducers
-- MIN_SAFE_INTEGER is not in IE- shim it in as (Math.pow(2, 53) - 1)
+- Consider making actions run synchronously but propagate state asynchronously
+- Be careful in the above to not allow subscription time to matter
 
 # Redux
 
