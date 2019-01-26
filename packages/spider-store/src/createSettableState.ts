@@ -1,4 +1,5 @@
 import { Reducer, Action } from './createStore'
+import { Shallow } from '../lib'
 
 interface Setter<State> {
   (newState: State | ((state: State) => State)): Action
@@ -7,27 +8,31 @@ interface Setter<State> {
 const setStateType = '@store/set-state'
 
 export function createSettableState<State>(
+  name: string,
   initialState: State,
+  shallow = true as Shallow<State>,
 ): [Reducer<State>, Setter<State>] {
-  function reducer(state = initialState, action: Action & { newState?: any }) {
-    const { type, newState } = action
-    if (type === setStateType) {
-      if (action.reducer === reducer) {
-        if (typeof newState === 'function') {
-          return newState(state)
-        } else {
-          return newState
+  const reducer = {
+    [name](state = initialState, action: Action & { newState?: any }) {
+      const { type, newState } = action
+      if (type === setStateType) {
+        if (action.reducer === reducer) {
+          if (typeof newState === 'function') {
+            return newState(state)
+          } else {
+            return newState
+          }
         }
       }
-    }
-    return state
-  }
+      return state
+    },
+  }[name]
 
   function setState(newState: State | ((state: State) => State)) {
     return { type: setStateType, reducer, newState }
   }
 
-  return [reducer, setState]
+  return [Object.assign(reducer, { shallow }), setState]
 }
 
 export function partialUpdate<StateFragment extends {}>(

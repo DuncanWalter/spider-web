@@ -7,3 +7,4 @@ export {
 } from './useSelector'
 export { useSideEffect, createSideEffect } from './useSideEffect'
 export { Fork } from './Fork'
+export { tuple } from './utils'

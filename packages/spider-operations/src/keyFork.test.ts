@@ -1,35 +1,39 @@
-import { createStore, utils, createSettableState } from '@dwalter/spider-store'
-import { map, keyFork } from '.'
-
-const { resolveSlice } = utils
+import { createStore, createSettableState } from '@dwalter/spider-store'
+import { keyFork } from '.'
 
 test('Keyed forking dedups and updates properly', async done => {
   const { dispatch, wrapReducer } = createStore()
 
-  const [collection, setCollection] = createSettableState([1])
+  const [collection, setCollection] = createSettableState('', [1])
 
   const slices = wrapReducer(collection)
     .use(keyFork)
     .keyFork((_, i) => i)
 
-  const initialContents = resolveSlice(slices)
-  expect(initialContents.length).toBe(1)
-  let [{ value: innerSlice }] = initialContents
-  expect(resolveSlice(innerSlice)).toBe(1)
+  let outerChanges = 0
+  let innerChanges = 0
 
-  await dispatch(setCollection([2]))
+  slices.subscribe(initialContents => {
+    outerChanges++
+    let [{ value: innerSlice }] = initialContents
+    innerSlice.subscribe(v => {
+      console.log(v)
+      innerChanges++
+    })
+  })
 
-  const secondContents = resolveSlice(slices)
-  expect(initialContents === secondContents).toBe(true)
-  ;[{ value: innerSlice }] = secondContents
-  expect(resolveSlice(innerSlice)).toBe(2)
+  expect(outerChanges).toBe(1)
+  expect(innerChanges).toBe(1)
 
-  await dispatch(setCollection([1, 3]))
+  dispatch(setCollection([2]))
 
-  const thirdContents = resolveSlice(slices)
-  expect(initialContents === thirdContents).toBe(false)
-  expect(thirdContents[0].value === innerSlice)
-  expect(resolveSlice(innerSlice)).toBe(1)
+  expect(outerChanges).toBe(1)
+  expect(innerChanges).toBe(2)
+
+  dispatch(setCollection([2, 3]))
+
+  expect(outerChanges).toBe(2)
+  expect(innerChanges).toBe(2)
 
   done()
 })

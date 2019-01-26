@@ -1,4 +1,3 @@
-import { resolveSlice } from './resolveSlice'
 import { SliceSet } from './SliceSet'
 import { OperationSet, OperationSetListMixin } from '@dwalter/spider-operations'
 
@@ -76,25 +75,7 @@ export class __Slice__<V, Ds extends Slice[] = any> {
 
   tryUpdate(): boolean {
     const oldValue = this.value
-    let newValue: V
-    switch (this.dependencies.length) {
-      case 0:
-        newValue = (this.evaluate as any)()
-        break
-      case 1:
-        newValue = (this.evaluate as any)(this.dep(0))
-        break
-      case 2:
-        newValue = (this.evaluate as any)(this.dep(0), this.dep(1))
-        break
-      case 3:
-        newValue = (this.evaluate as any)(this.dep(0), this.dep(1), this.dep(2))
-        break
-      default:
-        newValue = this.evaluate(
-          ...(this.dependencies.map(dep => dep.value) as any),
-        )
-    }
+    const newValue = this.resolveShallow()
     if (didUpdate(this.shallow, oldValue, newValue)) {
       this.value = newValue!
       return true
@@ -102,16 +83,36 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     return false
   }
 
+  resolveShallow() {
+    switch (this.dependencies.length) {
+      case 0:
+        return (this.evaluate as any)()
+      case 1:
+        return (this.evaluate as any)(this.dep(0))
+      case 2:
+        return (this.evaluate as any)(this.dep(0), this.dep(1))
+      case 3:
+        return (this.evaluate as any)(this.dep(0), this.dep(1), this.dep(2))
+      default:
+        return this.evaluate(
+          ...(this.dependencies.map(dep => dep.value) as any),
+        )
+    }
+  }
+
   subscribe(newChild: Slice | ((v: V) => unknown)): number {
     if (this.children.size === 0) {
       this.subscriptions = this.dependencies.map(d => d.subscribe(this))
+      this.tryUpdate()
     }
-    const content = resolveSlice(this)
     if (newChild instanceof __Slice__) {
       return this.children.add(newChild)
     } else {
-      newChild(content)
-      return this.children.add(createSlice([this], newChild as any))
+      const subscription = this.children.add(
+        createSlice([this], newChild as any),
+      )
+      newChild(this.value)
+      return subscription
     }
   }
 

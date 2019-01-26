@@ -12,6 +12,8 @@ export class SliceSet {
   }
 
   add(slice: Slice) {
+    const index = this.has(slice)
+    if (index !== false) return index
     this.size += 1
     if (this.next !== null) {
       const index = this.next
@@ -46,14 +48,6 @@ export class SliceSet {
     return min
   }
 
-  popAny() {
-    if (this.size === 0) {
-      return null
-    }
-    this.size -= 1
-    return this.cleaned().pop()
-  }
-
   cleaned(): Slice[] {
     if (this.next === null) {
       return this.slices as Slice[]
@@ -64,11 +58,11 @@ export class SliceSet {
     }
   }
 
-  has(slice: Slice): boolean {
+  has(slice: Slice): false | number {
     const slices = this.cleaned()
     for (let i = 0; i < slices.length; i++) {
       if (slices[i] === slice) {
-        return true
+        return i
       }
     }
     return false

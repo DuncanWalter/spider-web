@@ -1,18 +1,16 @@
 import { Slice, createSlice, Shallow, didUpdate } from './slice'
 import { propagateSlices } from './propagateSlices'
-import { createScheduler } from './createScheduler'
 import { SliceSet } from './SliceSet'
 
 export interface StateSlice<V> extends Slice<V> {
+  name: string
   updateState(action: Action, marks: SliceSet): void
 }
 
 export interface Dispatch {
-  (a: Action): Promise<undefined>
-  <R>(a: (d: Dispatch) => R): R
+  (action: Action | ActionList): void
+  <R>(thunk: (d: Dispatch) => R): R
 }
-
-type ActionLike = Action | ((dispatch: Dispatch) => any)
 
 export interface Action {
   type: string
@@ -20,8 +18,15 @@ export interface Action {
   schedule?(dispatch: Dispatch): any
 }
 
+export interface ActionList extends Array<ActionList | Action> {}
+
+type ActionLike = Action | ((dispatch: Dispatch) => any)
+
 export interface Reducer<State, A extends Action = Action> {
   (state: State | undefined, action: A): State
+  readonly shallow?: Shallow<State>
+  readonly initialState?: State
+  name: string
 }
 
 export interface Store {
@@ -30,7 +35,7 @@ export interface Store {
     reducer: Reducer<S, any>,
     initialState?: S,
     shallow?: boolean,
-  ) => Slice<S>
+  ) => StateSlice<S>
   slices: Map<Reducer<any>, StateSlice<any>>
 }
 
@@ -39,36 +44,46 @@ export function createStore(): Store {
 
   const store = { slices } as Store
 
-  const scheduleUpdate = createScheduler<[Action, string], void>(actions => {
-    const marks = new SliceSet()
-    // TODO: use the action stack for some purpose
-    for (let [action, type] of actions) {
-      if (action.reducer) {
-        const slice = slices.get(action.reducer)
-        if (slice) slice.updateState(action, marks)
+  function dispatch(
+    actionable: Action | ActionList,
+    marks = new SliceSet(),
+    root = true,
+  ) {
+    if (Array.isArray(actionable)) {
+      for (let a of actionable) {
+        dispatch(a, marks, false)
+      }
+    } else {
+      if (actionable.reducer) {
+        const slice =
+          slices.get(actionable.reducer) ||
+          store.wrapReducer(actionable.reducer)
+        slice.updateState(actionable, marks)
       } else {
-        slices.forEach(slice => slice.updateState(action, marks))
+        slices.forEach(slice => slice.updateState(actionable, marks))
       }
     }
-    propagateSlices(marks)
-  })
 
-  function dispatch(
-    action: ActionLike,
-    name: string = typeof action === 'function' ? action.name : action.type,
-  ): unknown {
-    if (typeof action === 'function') {
-      return action(((a: Action) => dispatch(a, name)) as Dispatch)
+    if (root) {
+      propagateSlices(marks)
     }
-    return scheduleUpdate(action, name)
   }
 
-  // TODO: return to a configuration object
-  // and add slice name field
+  function safeDispatch(actionable: ActionLike): unknown {
+    if (typeof actionable === 'function') {
+      return actionable(safeDispatch as Dispatch)
+    } else {
+      dispatch(actionable)
+    }
+  }
+
   function wrapReducer<State>(
     reducer: Reducer<State>,
-    initialState?: State,
-    shallow: Shallow<State> = true,
+    {
+      initialState = reducer.initialState || undefined,
+      shallow = reducer.shallow || true,
+      sliceName = reducer.name,
+    } = {},
   ) {
     let state = initialState || reducer(undefined, { type: '@store/init' })
 
@@ -87,6 +102,7 @@ export function createStore(): Store {
       }
     }
 
+    slice.name = sliceName
     slice.updateState = updateState
 
     slices.set(reducer, slice)
@@ -94,7 +110,7 @@ export function createStore(): Store {
     return slice
   }
 
-  store.dispatch = dispatch as Dispatch
+  store.dispatch = safeDispatch as Dispatch
   store.wrapReducer = wrapReducer
   return store
 }

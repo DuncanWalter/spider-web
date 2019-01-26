@@ -3,24 +3,26 @@ import { useContext, useState, useEffect } from 'react'
 import { Reducer, Slice, utils, Store, Shallow } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
-import { useIsFirstRender, noop, scheduleUpdate, constant } from './utils'
+import { useIsFirstRender, noop, constant } from './utils'
 
 const { createSlice } = utils
 
-export interface Selector<T, Slices extends Slice<any>[] = Slice<any>[]> {
+type SourceList = Source<any>[]
+
+export interface Selector<T> {
   sources: Source<any>[]
-  mapping: (...slices: Slices) => Slice<T>
+  mapping: (...slices: any) => Slice<T>
   slices: Map<unknown, Slice<T>>
 }
 
 export type Source<T> = Reducer<T> | Selector<T>
 
-type InputSources<Inputs extends any[]> = {
-  [K in keyof Inputs]: Source<Inputs[K]>
+type SourceSlices<Sources extends SourceList> = {
+  [K in keyof Sources]: Sources[K] extends Source<infer T> ? Slice<T> : never
 }
 
-type SliceInputs<Slices extends Slice<any>[]> = {
-  [K in keyof Slices]: Slices[K] extends Slice<infer T> ? T : never
+type SourceInputs<Sources extends SourceList> = {
+  [K in keyof Sources]: Sources[K] extends Source<infer T> ? T : never
 }
 
 export const getSlice = (store: Store) =>
@@ -44,19 +46,19 @@ export const getSlice = (store: Store) =>
     }
   }
 
-export function createCustomSelector<Slices extends Slice<any>[], Result>(
-  sources: InputSources<SliceInputs<Slices>>,
-  mapping: (...slices: Slices) => Slice<Result>,
-): Selector<Result, Slices> {
+export function createCustomSelector<Sources extends SourceList, Result>(
+  sources: Sources,
+  mapping: (...slices: SourceSlices<Sources>) => Slice<Result>,
+): Selector<Result> {
   return { sources, mapping, slices: new Map() }
 }
 
-export function createSelector<Inputs extends any[], Result>(
-  sources: InputSources<Inputs>,
-  mapping: (...args: Inputs) => Result,
+export function createSelector<Sources extends SourceList, Result>(
+  sources: Sources,
+  mapping: (...args: SourceInputs<Sources>) => Result,
   shallow: Shallow<Result> = true,
 ): Selector<Result> {
-  return createCustomSelector(sources as any, (...slices) => {
+  return createCustomSelector(sources, (...slices) => {
     return createSlice(slices, mapping as any, undefined, shallow)
   })
 }
@@ -79,7 +81,7 @@ export function useSelector<T>(selector: Source<T>): T {
       ? () => {
           subscription = slice.subscribe(v => {
             if (setState) {
-              scheduleUpdate(setState as any, v)
+              setState(v)
             }
           })
           return slice.value

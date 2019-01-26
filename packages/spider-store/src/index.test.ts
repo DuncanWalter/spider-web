@@ -1,5 +1,5 @@
-import { createStore, joinSlices, Action } from '../lib'
-import { resolveSlice } from './resolveSlice'
+import { createStore, Action } from './createStore'
+import { joinSlices } from './joinSlices'
 
 test('Diamond case handling is efficient and stable', async done => {
   const { dispatch, wrapReducer } = createStore()
@@ -32,19 +32,13 @@ test('Diamond case handling is efficient and stable', async done => {
   expect(reducerCalls).toBe(1)
   expect(subscriptionCalls).toBe(1)
 
-  await dispatch({ type: 'increment' })
+  dispatch({ type: 'increment' })
 
   expect(value).toBe(4)
   expect(reducerCalls).toBe(2)
   expect(subscriptionCalls).toBe(2)
 
-  const resolution = dispatch({ type: 'increment' })
-
-  expect(value).toBe(4)
-  expect(reducerCalls).toBe(2)
-  expect(subscriptionCalls).toBe(2)
-
-  await resolution
+  dispatch([{ type: 'increment' }])
 
   expect(value).toBe(6)
   expect(reducerCalls).toBe(3)
@@ -61,27 +55,12 @@ test('Calls to dispatch are flattened', done => {
     expect(i).toBe(count + 2)
     count = i
     if (i < 10) {
-      dispatch(d => {
-        d({ type: 'any' })
-        d({ type: 'any' })
-      })
+      dispatch([{ type: 'any' }, [{ type: 'any' }]])
     } else {
       expect(count).toBe(11)
       done()
     }
   })
-})
-
-test('Resolving works on complex structures', () => {
-  const { wrapReducer } = createStore()
-  const lCounter = wrapReducer<number>((i = 0) => i + 1)
-  const rCounter = wrapReducer<number>((i = 0) => i + 1)
-
-  const double = joinSlices(lCounter, rCounter, (a, b) => a + b)
-  const quadruple = joinSlices(double, double, (a, b) => a + b)
-  const octuple = joinSlices(quadruple, quadruple, (a, b) => a + b)
-
-  expect(resolveSlice(octuple)).toBe(8)
 })
 
 test('Arbitrary reducers with known action types can be used', () => {

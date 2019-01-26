@@ -1,6 +1,6 @@
 import { useContext, useState } from 'react'
 
-import { Dispatch, Action } from '@dwalter/spider-store'
+import { Dispatch, Action, ActionList } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop } from './utils'
@@ -10,7 +10,7 @@ interface ThunkAction<Result = unknown> {
 }
 
 interface ActionCreator<Args extends any[]> {
-  (...args: Args): Action
+  (...args: Args): Action | ActionList
 }
 
 interface ActionScheduler<Args extends any[], Result> {
@@ -19,13 +19,14 @@ interface ActionScheduler<Args extends any[], Result> {
 
 type BindableAction =
   | Action
+  | ActionList
   | ActionCreator<any[]>
   | ActionScheduler<any[], any>
 
 type BoundAction<A extends BindableAction> = A extends Action
-  ? () => Promise<void>
+  ? () => void
   : A extends ActionCreator<infer Args>
-  ? (...args: Args) => Promise<void>
+  ? (...args: Args) => void
   : A extends ActionScheduler<infer Args, infer Result>
   ? (...args: Args) => Result
   : never
@@ -64,7 +65,10 @@ function bindAction<Action extends BindableAction>(
   action: BindableAction,
 ): BoundAction<Action>
 
-function bindAction(dispatch: Dispatch, action: Action | Function) {
+function bindAction(
+  dispatch: Dispatch,
+  action: Action | ActionList | Function,
+) {
   if (typeof action === 'function') {
     return function() {
       return dispatch(action.apply(null, arguments))

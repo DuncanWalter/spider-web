@@ -6,13 +6,13 @@ type UpdatePair<T> = [(t: T) => unknown, T]
 
 // TODO: remove because there is really no point-
 // this is handled both above and below
-export const scheduleUpdate = utils.createScheduler<UpdatePair<unknown>, void>(
-  tasks => {
-    for (let [setState, value] of tasks) {
-      setState(value)
-    }
-  },
-)
+// export const scheduleUpdate = utils.createScheduler<UpdatePair<unknown>, void>(
+//   tasks => {
+//     for (let [setState, value] of tasks) {
+//       setState(value)
+//     }
+//   },
+// )
 
 let hash = -(2 ** 53) + 1
 export function useIsFirstRender() {
@@ -24,3 +24,12 @@ export const noop: never = (() => {
 }) as never
 
 export const constant: [] = []
+
+/**
+ * Used to construct selectors because the first argument is
+ * an array and will not be properly interpreted as a tuple
+ * by default.
+ */
+export function tuple<Args extends any[]>(...args: Args): Args {
+  return args
+}
