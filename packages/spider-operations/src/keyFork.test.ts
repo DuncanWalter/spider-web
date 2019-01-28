@@ -16,10 +16,12 @@ test('Keyed forking dedups and updates properly', async done => {
   slices.subscribe(initialContents => {
     outerChanges++
     let [{ value: innerSlice }] = initialContents
-    innerSlice.subscribe(v => {
-      console.log(v)
-      innerChanges++
-    })
+    if (outerChanges === 1) {
+      innerSlice.subscribe(v => {
+        console.log(v)
+        innerChanges++
+      })
+    }
   })
 
   expect(outerChanges).toBe(1)

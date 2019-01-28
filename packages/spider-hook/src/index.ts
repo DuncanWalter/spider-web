@@ -1,4 +1,4 @@
-export { useActions } from './useActions'
+export { useActions, createCustomAction } from './useActions'
 export { SpiderRoot } from './SpiderRoot'
 export {
   useSelector,
@@ -8,3 +8,4 @@ export {
 export { useSideEffect, createSideEffect } from './useSideEffect'
 export { Fork } from './Fork'
 export { tuple } from './utils'
+export { useStore } from './useStore'

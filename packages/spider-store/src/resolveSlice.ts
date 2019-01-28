@@ -1,21 +1,19 @@
-// import { Slice } from './slice'
-// import { SliceSet } from './SliceSet'
+import { Slice } from './slice'
 
-// function mark(v: Slice, marks: SliceSet) {
-//   if (v.children.size === 0 && !marks.has(v)) {
-//     marks.add(v)
-//     v.dependencies.forEach((dependency: Slice) => {
-//       mark(dependency, marks)
-//     })
-//   }
-// }
+function resolveSlice<V>(slice: Slice<V>, marks = [] as Slice[]): V {
+  if (slice.children.size > 0 || marks.indexOf(slice) < 0) {
+    return slice.value
+  }
+  marks.push(slice)
+  for (let dependency of slice.dependencies) {
+    resolveSlice(dependency, marks)
+  }
+  slice.tryUpdate()
+  return slice.value
+}
 
-// export function resolveSlice<V>(slice: Slice<V>): V {
-//   const marks = new SliceSet()
-//   mark(slice, marks)
-//   while (marks.size !== 0) {
-//     const node = marks.popLast()!
-//     node.tryUpdate()
-//   }
-//   return slice.value
-// }
+function safeResolveSlice<V>(slice: Slice<V>): V {
+  return resolveSlice(slice)
+}
+
+export { safeResolveSlice as resolveSlice }

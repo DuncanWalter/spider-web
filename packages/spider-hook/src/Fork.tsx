@@ -21,7 +21,7 @@ interface ForkProps<K extends string | number, V> {
 }
 
 interface MemoComponentProps<K extends string | number, V> {
-  key: K
+  ikey: K
   slice: Slice<V>
 }
 
@@ -51,9 +51,9 @@ function Fork<K extends string | number, V>({
   const MemoComponent = useState(
     setup
       ? () =>
-          memo(({ key, slice }: MemoComponentProps<K, V>) => {
+          memo(({ ikey, slice }: MemoComponentProps<K, V>) => {
             const getValue = useState(setup ? sliceSelector(slice) : noop)[0]
-            return <Component key={key} selector={getValue} />
+            return <Component key={ikey} selector={getValue} />
           })
       : noop,
   )[0]
@@ -61,7 +61,7 @@ function Fork<K extends string | number, V>({
   return (
     <React.Fragment>
       {slices.map(({ key, value }) => {
-        return <MemoComponent key={key} slice={value} />
+        return <MemoComponent key={key} ikey={key} slice={value} />
       })}
     </React.Fragment>
   )

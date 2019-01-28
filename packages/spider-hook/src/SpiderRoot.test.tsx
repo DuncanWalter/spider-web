@@ -74,10 +74,7 @@ test('Testing the useAction hook', async done => {
 
   fireEvent.click(component)
 
-  expect(component.textContent).toBe('2')
-  expect(lastValue).toBe(2)
-
-  await waitForDomChange({ container: component })
+  // await waitForDomChange({ container: component })
 
   expect(component.textContent).toBe('4')
   expect(lastValue).toBe(4)
@@ -85,7 +82,7 @@ test('Testing the useAction hook', async done => {
   fireEvent.click(component)
   fireEvent.click(component)
 
-  await waitForDomChange({ container: component })
+  // await waitForDomChange({ container: component })
 
   expect(component.textContent).toBe('8')
   expect(lastValue).toBe(8)

@@ -3,8 +3,9 @@ import { useContext, useEffect } from 'react'
 import { Dispatch, Slice } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
-import { Source, getSlice } from './useSelector'
+import { Source } from './useSelector'
 import { useIsFirstRender, noop, constant } from './utils'
+import { getSlice } from './getSlice'
 
 interface SideEffect<T = any> {
   source: Source<T>
@@ -51,7 +52,7 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
     setup
       ? () => {
           if (!sideEffect.locks.has(store)) {
-            const slice = getSlice(store)(sideEffect.source)
+            const slice = getSlice(store.dispatch, sideEffect.source)
             const lock = {
               subscription: slice.subscribe(value =>
                 sideEffect.effect(value, store.dispatch),

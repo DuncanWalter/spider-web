@@ -1,15 +1,23 @@
 import { Slice, createSlice, Shallow, didUpdate } from './slice'
 import { propagateSlices } from './propagateSlices'
 import { SliceSet } from './SliceSet'
+import { resolveSlice } from './resolveSlice'
 
 export interface StateSlice<V> extends Slice<V> {
   name: string
   updateState(action: Action, marks: SliceSet): void
 }
 
+type SliceValues<Slices extends Slice<any>[]> = {
+  [K in keyof Slices]: Slices[K] extends Slice<infer T> ? T : never
+}
+
 export interface Dispatch {
   (action: Action | ActionList): void
-  <R>(thunk: (d: Dispatch) => R): R
+  <Slices extends Slice<any>[], Result>(
+    thunk: (dispatch: Dispatch, ...state: SliceValues<Slices>) => Result,
+    ...slices: Slices
+  ): Result
 }
 
 export interface Action {
@@ -19,8 +27,6 @@ export interface Action {
 }
 
 export interface ActionList extends Array<ActionList | Action> {}
-
-type ActionLike = Action | ((dispatch: Dispatch) => any)
 
 export interface Reducer<State, A extends Action = Action> {
   (state: State | undefined, action: A): State
@@ -69,9 +75,25 @@ export function createStore(): Store {
     }
   }
 
-  function safeDispatch(actionable: ActionLike): unknown {
+  function safeDispatch<Slices extends Slice<any>[]>(
+    actionable: Action | ActionList | Function,
+    ...slices: Slices
+  ): unknown {
     if (typeof actionable === 'function') {
-      return actionable(safeDispatch as Dispatch)
+      switch (slices.length) {
+        case 0:
+          return actionable(safeDispatch)
+        case 1:
+          return actionable(safeDispatch, resolveSlice(slices[0]))
+        case 2:
+          return actionable(
+            safeDispatch,
+            resolveSlice(slices[0]),
+            resolveSlice(slices[1]),
+          )
+        default:
+          return actionable(safeDispatch, ...slices.map(resolveSlice))
+      }
     } else {
       dispatch(actionable)
     }

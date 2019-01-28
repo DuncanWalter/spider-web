@@ -1,9 +1,10 @@
 import { useContext, useState, useEffect } from 'react'
 
-import { Reducer, Slice, utils, Store, Shallow } from '@dwalter/spider-store'
+import { Reducer, Slice, utils, Shallow, Dispatch } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop, constant } from './utils'
+import { getSlice } from './getSlice'
 
 const { createSlice } = utils
 
@@ -12,10 +13,10 @@ type SourceList = Source<any>[]
 export interface Selector<T> {
   sources: Source<any>[]
   mapping: (...slices: any) => Slice<T>
-  slices: Map<unknown, Slice<T>>
+  slices: Map<Dispatch, Slice<T>>
 }
 
-export type Source<T> = Reducer<T> | Selector<T>
+export type Source<T = any> = Reducer<T> | Selector<T>
 
 type SourceSlices<Sources extends SourceList> = {
   [K in keyof Sources]: Sources[K] extends Source<infer T> ? Slice<T> : never
@@ -24,27 +25,6 @@ type SourceSlices<Sources extends SourceList> = {
 type SourceInputs<Sources extends SourceList> = {
   [K in keyof Sources]: Sources[K] extends Source<infer T> ? T : never
 }
-
-export const getSlice = (store: Store) =>
-  function getSlice<T>(source: Source<T>): Slice<T> {
-    if (typeof source === 'function') {
-      if (store.slices.has(source)) {
-        return store.slices.get(source)!
-      } else {
-        return store.wrapReducer(source)
-      }
-    } else {
-      const { sources, mapping, slices } = source as Selector<T>
-      if (slices.has(store)) {
-        return slices.get(store)!
-      } else {
-        const parents = sources.map(getSlice)
-        const slice = mapping.apply(null, parents)
-        slices.set(store, slice)
-        return slice
-      }
-    }
-  }
 
 export function createCustomSelector<Sources extends SourceList, Result>(
   sources: Sources,
@@ -73,7 +53,7 @@ export function createSelector<Sources extends SourceList, Result>(
 export function useSelector<T>(selector: Source<T>): T {
   const setup = useIsFirstRender()
   const store = useContext(StoreContext)
-  const slice = useState(setup ? getSlice(store)(selector) : noop)[0]
+  const slice = useState(setup ? getSlice(store.dispatch, selector) : noop)[0]
 
   let subscription: number = -1
   const [value, setState] = useState(
