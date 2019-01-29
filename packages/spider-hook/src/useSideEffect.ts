@@ -4,7 +4,7 @@ import { Dispatch } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { Source } from './useSelector'
-import { useIsFirstRender, noop, constant } from './utils'
+import { useIsFirstRender, noop, constant, semaphore } from './utils'
 import { getSlice } from './getSlice'
 
 export interface SideEffect<T = any> {
@@ -61,20 +61,4 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
       : noop,
     constant,
   )
-}
-
-function semaphore(fun: () => () => void): () => () => void {
-  let semaphore = 0
-  let callback: () => void = noop
-  return () => {
-    if (!semaphore++) {
-      callback = fun()
-    }
-    return () => {
-      if (--semaphore) {
-        callback()
-        callback = noop
-      }
-    }
-  }
 }
