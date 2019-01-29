@@ -14,7 +14,6 @@ function propagateUpdate(slice: Slice, marks: SliceSet) {
   }
 }
 
-// TODO: what if subscriptions are made to all run after the propagation finishes?
 export function propagateSlices(marks: SliceSet) {
   while (marks.size !== 0) {
     propagateUpdate(marks.popMin()!, marks)

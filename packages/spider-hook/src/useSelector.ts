@@ -13,7 +13,6 @@ type SourceList = Source<any>[]
 export interface Selector<T> {
   sources: Source<any>[]
   mapping: (...slices: any) => Slice<T>
-  slices: Map<Dispatch, Slice<T>>
 }
 
 export type Source<T = any> = Reducer<T> | Selector<T>
@@ -30,7 +29,7 @@ export function createCustomSelector<Sources extends SourceList, Result>(
   sources: Sources,
   mapping: (...slices: SourceSlices<Sources>) => Slice<Result>,
 ): Selector<Result> {
-  return { sources, mapping, slices: new Map() }
+  return { sources, mapping }
 }
 
 export function createSelector<Sources extends SourceList, Result>(

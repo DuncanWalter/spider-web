@@ -1,6 +1,6 @@
 import { Slice } from './slice'
 
-function resolveSlice<V>(slice: Slice<V>, marks = [] as Slice[]): V {
+function resolveSlice<V>(slice: Slice<V>, marks: Slice[]): V {
   if (slice.children.size > 0 || marks.indexOf(slice) < 0) {
     return slice.value
   }
@@ -13,7 +13,7 @@ function resolveSlice<V>(slice: Slice<V>, marks = [] as Slice[]): V {
 }
 
 function safeResolveSlice<V>(slice: Slice<V>): V {
-  return resolveSlice(slice)
+  return resolveSlice(slice, [])
 }
 
 export { safeResolveSlice as resolveSlice }

@@ -2,6 +2,7 @@ import { Slice, createSlice, Shallow, didUpdate } from './slice'
 import { propagateSlices } from './propagateSlices'
 import { SliceSet } from './SliceSet'
 import { resolveSlice } from './resolveSlice'
+import { unstack } from './unstack'
 
 export interface StateSlice<V> extends Slice<V> {
   name: string
@@ -45,35 +46,42 @@ export interface Store {
   slices: Map<Reducer<any>, StateSlice<any>>
 }
 
+type ListTail = null
+
+type ListLinkFragment<T, L> = [T, L | ListTail]
+
+interface ListLink<A> extends ListLinkFragment<A, ListLink<A>> {}
+
+type List<A> = ListTail | ListLink<A>
+
 export function createStore(): Store {
   const slices = new Map<unknown, StateSlice<any>>()
 
   const store = { slices } as Store
 
-  function dispatch(
-    actionable: Action | ActionList,
-    marks = new SliceSet(),
-    root = true,
-  ) {
-    if (Array.isArray(actionable)) {
-      for (let a of actionable) {
-        dispatch(a, marks, false)
+  function dispatch(actions: Action | ActionList, marks: SliceSet): void {
+    if (Array.isArray(actions)) {
+      for (let a of actions) {
+        dispatch(a, marks)
       }
     } else {
-      if (actionable.reducer) {
+      if (actions.reducer) {
         const slice =
-          slices.get(actionable.reducer) ||
-          store.wrapReducer(actionable.reducer)
-        slice.updateState(actionable, marks)
+          slices.get(actions.reducer) || store.wrapReducer(actions.reducer)
+        slice.updateState(actions, marks)
       } else {
-        slices.forEach(slice => slice.updateState(actionable, marks))
+        slices.forEach(slice => slice.updateState(actions, marks))
       }
     }
-
-    if (root) {
-      propagateSlices(marks)
-    }
   }
+
+  function rootDispatch(actions: Action | ActionList) {
+    const marks = new SliceSet()
+    dispatch(actions, marks)
+    propagateSlices(marks)
+  }
+
+  const unstackedDispatch = unstack(rootDispatch)
 
   function safeDispatch<Slices extends Slice<any>[]>(
     actionable: Action | ActionList | Function,
@@ -85,17 +93,11 @@ export function createStore(): Store {
           return actionable(safeDispatch)
         case 1:
           return actionable(safeDispatch, resolveSlice(slices[0]))
-        case 2:
-          return actionable(
-            safeDispatch,
-            resolveSlice(slices[0]),
-            resolveSlice(slices[1]),
-          )
         default:
           return actionable(safeDispatch, ...slices.map(resolveSlice))
       }
     } else {
-      dispatch(actionable)
+      unstackedDispatch(actionable)
     }
   }
 

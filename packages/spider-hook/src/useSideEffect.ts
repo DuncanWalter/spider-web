@@ -1,23 +1,16 @@
 import { useContext, useEffect } from 'react'
 
-import { Dispatch, Slice } from '@dwalter/spider-store'
+import { Dispatch } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { Source } from './useSelector'
 import { useIsFirstRender, noop, constant } from './utils'
 import { getSlice } from './getSlice'
 
-interface SideEffect<T = any> {
+export interface SideEffect<T = any> {
   source: Source<T>
   effect: (input: T, dispatch: Dispatch) => unknown
-  locks: Map<
-    unknown,
-    {
-      subscription: number
-      semaphore: number
-      slice: Slice<any>
-    }
-  >
+  locks: WeakMap<Dispatch, () => () => void>
 }
 
 /**
@@ -34,7 +27,7 @@ export function createSideEffect<T>(
   selector: Source<T>,
   effect: (input: T, dispatch: Dispatch) => unknown,
 ): SideEffect<T> {
-  return { source: selector, effect, locks: new Map() }
+  return { source: selector, effect, locks: new WeakMap() }
 }
 
 /**
@@ -46,34 +39,42 @@ export function createSideEffect<T>(
  * of the component calling `useSideEffect()`
  */
 export function useSideEffect<T>(sideEffect: SideEffect<T>) {
-  const store = useContext(StoreContext)
+  const { dispatch } = useContext(StoreContext)
   const setup = useIsFirstRender()
   useEffect(
     setup
       ? () => {
-          if (!sideEffect.locks.has(store)) {
-            const slice = getSlice(store.dispatch, sideEffect.source)
-            const lock = {
-              subscription: slice.subscribe(value =>
-                sideEffect.effect(value, store.dispatch),
-              ),
-              semaphore: 1,
-              slice,
-            }
-            sideEffect.locks.set(store, lock)
-          } else {
-            sideEffect.locks.get(store)!.semaphore += 1
+          if (!sideEffect.locks.has(dispatch)) {
+            const slice = getSlice(dispatch, sideEffect.source)
+            sideEffect.locks.set(
+              dispatch,
+              semaphore(() => {
+                const subscription = slice.subscribe(value => {
+                  sideEffect.effect(value, dispatch)
+                })
+                return () => slice.unsubscribe(subscription)
+              }),
+            )
           }
-          return () => {
-            const lock = sideEffect.locks.get(store)!
-            lock.semaphore -= 1
-            if (lock.semaphore === 0) {
-              lock.slice.unsubscribe(lock.subscription)
-              sideEffect.locks.delete(store)
-            }
-          }
+          return sideEffect.locks.get(dispatch)!()
         }
       : noop,
     constant,
   )
+}
+
+function semaphore(fun: () => () => void): () => () => void {
+  let semaphore = 0
+  let callback: () => void = noop
+  return () => {
+    if (!semaphore++) {
+      callback = fun()
+    }
+    return () => {
+      if (--semaphore) {
+        callback()
+        callback = noop
+      }
+    }
+  }
 }

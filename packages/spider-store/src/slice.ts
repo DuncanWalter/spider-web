@@ -108,9 +108,9 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     if (newChild instanceof __Slice__) {
       return this.children.add(newChild)
     } else {
-      const subscription = this.children.add(
-        createSlice([this], newChild as any),
-      )
+      const slice = createSlice([this], newChild as any)
+      slice.depth = Infinity
+      const subscription = this.children.add(slice)
       newChild(this.value)
       return subscription
     }

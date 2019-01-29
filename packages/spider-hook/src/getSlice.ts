@@ -1,10 +1,13 @@
 import { Store, Reducer, Slice, Dispatch } from '@dwalter/spider-store'
 import { Selector, Source } from './useSelector'
+import { SideEffect } from './useSideEffect'
 
 const sliceRetrievers = new WeakMap()
 
 export function registerStore({ dispatch, slices, wrapReducer }: Store) {
   if (sliceRetrievers.has(dispatch)) return
+
+  const selectorSlices = new WeakMap<Selector<any>, Slice>()
 
   function getReducerSlice<T>(reducer: Reducer<T>): Slice<T> {
     if (slices.has(reducer)) {
@@ -15,13 +18,13 @@ export function registerStore({ dispatch, slices, wrapReducer }: Store) {
   }
 
   function getSelectorSlice<T>(selector: Selector<T>): Slice<T> {
-    const { sources, mapping, slices } = selector
-    if (slices.has(dispatch)) {
-      return slices.get(dispatch)!
+    const { sources, mapping } = selector
+    if (selectorSlices.has(selector)) {
+      return selectorSlices.get(selector)!
     } else {
       const parents = sources.map(getSourceSlice)
       const slice = mapping.apply(null, parents)
-      slices.set(dispatch, slice)
+      selectorSlices.set(selector, slice)
       return slice
     }
   }
@@ -37,6 +40,9 @@ export function registerStore({ dispatch, slices, wrapReducer }: Store) {
   sliceRetrievers.set(dispatch, getSourceSlice)
 }
 
-export function getSlice<T>(dispatch: Dispatch, source: Source<T>): Slice<T> {
+export function getSlice<T>(
+  dispatch: Dispatch,
+  source: Source<T> | SideEffect<T>,
+): Slice<T> {
   return sliceRetrievers.get(dispatch)(source)
 }
