@@ -1,5 +1,6 @@
 import { SliceSet } from './SliceSet'
 import { OperationSet, OperationSetListMixin } from '@dwalter/spider-operations'
+import { isFunction } from './isFunction'
 
 export type ValueMap<Slices extends Slice[]> = {
   [K in keyof Slices]: Slices[K] extends Slice<infer Value> ? Value : never
@@ -31,11 +32,8 @@ export type Slice<Value = any, Ops = {}> = __Slice__<Value, any> & Ops
 export type Shallow<V = unknown> = boolean | ((a: V, b: V) => boolean)
 
 export function didUpdate<V>(shallow: Shallow<V>, a: V, b: V) {
-  if (typeof shallow === 'function') {
-    return !shallow(a, b)
-  } else if (shallow) {
-    return a !== b
-  }
+  if (isFunction(shallow)) return !shallow(a, b)
+  if (shallow) return a !== b
   return true
 }
 

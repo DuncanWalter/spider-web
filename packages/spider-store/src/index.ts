@@ -1,10 +1,6 @@
 import { createSlice } from './slice'
-import { propagateSlices } from './propagateSlices'
 
-export const utils = {
-  createSlice,
-  propagateSlices,
-}
+export const utils = { createSlice }
 
 export { Shallow, Slice } from './slice'
 
@@ -13,6 +9,7 @@ export {
   ActionList,
   createStore,
   Dispatch,
+  Resolve,
   Reducer,
   Store,
 } from './createStore'

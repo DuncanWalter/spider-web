@@ -1,38 +1,59 @@
-import { Reducer, Action } from './createStore'
-import { Shallow } from '../lib'
+import { Reducer, Action, Dispatch, Resolve } from './createStore'
+import { isFunction } from './isFunction'
+import { Shallow } from './slice'
+
+interface SetterAction<State> extends Action {
+  newState: State
+}
 
 interface Setter<State> {
-  (newState: State | ((state: State) => State)): Action
+  (newState: State): Action
+  (newState: ((state: State) => State)): (
+    dispatch: Dispatch,
+    resolve: Resolve,
+  ) => void
+  <R>(
+    newState: ((state: State) => State),
+    mapping: ((oldState: State, newState: State) => R),
+  ): (dispatch: Dispatch, resolve: Resolve) => R
 }
 
 const setStateType = '@store/set-state'
 
 export function createSettableState<State>(
-  name: string,
+  sliceName: string,
   initialState: State,
   shallow = true as Shallow<State>,
-): [Reducer<State>, Setter<State>] {
-  const reducer = {
-    [name](state = initialState, action: Action & { newState?: any }) {
-      const { type, newState } = action
-      if (type === setStateType) {
-        if (action.reducer === reducer) {
-          if (typeof newState === 'function') {
-            return newState(state)
-          } else {
-            return newState
-          }
-        }
+): [Reducer<State, any>, Setter<State>] {
+  function reducer(state = initialState, action: SetterAction<State>) {
+    const { type, newState } = action
+    if (type === setStateType) {
+      if (action.reducer === reducer) {
+        return newState
       }
-      return state
-    },
-  }[name]
+    }
+    return state
+  }
 
-  function setState(newState: State | ((state: State) => State)) {
+  function setState<R>(
+    newState: State | ((state: State) => State),
+    mapping?: (o: State, n: State) => R,
+  ) {
+    if (isFunction(newState)) {
+      return (dispatch: Dispatch, resolve: Resolve) => {
+        const oldState = resolve(reducer)
+        const state = newState(oldState)
+        dispatch(setState(state) as SetterAction<State>)
+        return mapping ? mapping(oldState, state) : undefined
+      }
+    }
     return { type: setStateType, reducer, newState }
   }
 
-  return [Object.assign(reducer, { shallow }), setState]
+  return [
+    Object.assign(reducer, { shallow, sliceName }),
+    setState as Setter<State>,
+  ]
 }
 
 export function partialUpdate<StateFragment extends {}>(

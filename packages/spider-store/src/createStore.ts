@@ -1,24 +1,22 @@
 import { Slice, createSlice, Shallow, didUpdate } from './slice'
 import { propagateSlices } from './propagateSlices'
 import { SliceSet } from './SliceSet'
-import { resolveSlice } from './resolveSlice'
 import { unstack } from './unstack'
+import { resolveSlice } from './resolveSlice'
+import { isFunction } from './isFunction'
 
 export interface StateSlice<V> extends Slice<V> {
   name: string
   updateState(action: Action, marks: SliceSet): void
 }
 
-type SliceValues<Slices extends Slice<any>[]> = {
-  [K in keyof Slices]: Slices[K] extends Slice<infer T> ? T : never
+export interface Resolve {
+  <V>(wrapper: Slice<V> | Reducer<V, any>): V
 }
 
 export interface Dispatch {
   (action: Action | ActionList): void
-  <Slices extends Slice<any>[], Result>(
-    thunk: (dispatch: Dispatch, ...state: SliceValues<Slices>) => Result,
-    ...slices: Slices
-  ): Result
+  <Result>(thunk: (dispatch: Dispatch, resolve: Resolve) => Result): Result
 }
 
 export interface Action {
@@ -33,26 +31,21 @@ export interface Reducer<State, A extends Action = Action> {
   (state: State | undefined, action: A): State
   readonly shallow?: Shallow<State>
   readonly initialState?: State
-  name: string
+  readonly sliceName?: string
 }
 
 export interface Store {
   dispatch: Dispatch
   wrapReducer: <S>(
     reducer: Reducer<S, any>,
-    initialState?: S,
-    shallow?: boolean,
+    config?: {
+      sliceName?: string
+      initialState?: S
+      shallow?: Shallow<S>
+    },
   ) => StateSlice<S>
   slices: Map<Reducer<any>, StateSlice<any>>
 }
-
-type ListTail = null
-
-type ListLinkFragment<T, L> = [T, L | ListTail]
-
-interface ListLink<A> extends ListLinkFragment<A, ListLink<A>> {}
-
-type List<A> = ListTail | ListLink<A>
 
 export function createStore(): Store {
   const slices = new Map<unknown, StateSlice<any>>()
@@ -61,8 +54,8 @@ export function createStore(): Store {
 
   function dispatch(actions: Action | ActionList, marks: SliceSet): void {
     if (Array.isArray(actions)) {
-      for (let a of actions) {
-        dispatch(a, marks)
+      for (let action of actions) {
+        dispatch(action, marks)
       }
     } else {
       if (actions.reducer) {
@@ -83,19 +76,22 @@ export function createStore(): Store {
 
   const unstackedDispatch = unstack(rootDispatch)
 
-  function safeDispatch<Slices extends Slice<any>[]>(
-    actionable: Action | ActionList | Function,
-    ...slices: Slices
-  ): unknown {
-    if (typeof actionable === 'function') {
-      switch (slices.length) {
-        case 0:
-          return actionable(safeDispatch)
-        case 1:
-          return actionable(safeDispatch, resolveSlice(slices[0]))
-        default:
-          return actionable(safeDispatch, ...slices.map(resolveSlice))
+  function resolve<V>(wrapper: Slice<V> | Reducer<V>) {
+    if (isFunction(wrapper)) {
+      const slice = slices.get(wrapper)
+      if (slice) {
+        return resolveSlice(slice)
+      } else {
+        return wrapper(undefined, { type: '@store/resolve' })
       }
+    } else {
+      return resolveSlice(wrapper)
+    }
+  }
+
+  function safeDispatch(actionable: Action | ActionList | Function): unknown {
+    if (isFunction(actionable)) {
+      return actionable(safeDispatch, resolve)
     } else {
       unstackedDispatch(actionable)
     }
@@ -106,7 +102,7 @@ export function createStore(): Store {
     {
       initialState = reducer.initialState || undefined,
       shallow = reducer.shallow || true,
-      sliceName = reducer.name,
+      sliceName = reducer.sliceName || reducer.name,
     } = {},
   ) {
     let state = initialState || reducer(undefined, { type: '@store/init' })

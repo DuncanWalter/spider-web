@@ -5,39 +5,36 @@ import {
   Action,
   ActionList,
   Store,
-  Slice,
+  Reducer,
+  Resolve as StoreResolve,
 } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop } from './utils'
-import { Source } from './useSelector'
+import { Selector } from './useSelector'
 import { getSlice } from './getSlice'
 
-type SourceValues<Sources extends Source<any>[]> = {
-  [K in keyof Sources]: Sources[K] extends Source<infer T> ? T : never
+interface Resolve {
+  <V>(wrapper: Reducer<V> | Selector<V>): V
 }
 
-type SourceSlices<Sources extends Source<any>[]> = {
-  [K in keyof Sources]: Sources[K] extends Source<infer T> ? Slice<T> : never
+export interface ThunkAction<Result = any> {
+  (dispatch: Dispatch, resolve: Resolve): Result
 }
 
-interface ThunkAction<Result = any> {
-  (dispatch: Dispatch): Result
-}
-
-interface ActionCreator<Args extends any[]> {
+export interface ActionCreator<Args extends any[] = any[]> {
   (...args: Args): Action | ActionList
 }
 
-interface ActionScheduler<Args extends any[], Result> {
+export interface ActionScheduler<Args extends any[] = any[], Result = any> {
   (...args: Args): ThunkAction<Result>
 }
 
-type BindableAction =
+export type BindableAction =
   | Action
   | ActionList
-  | ActionCreator<any[]>
-  | ActionScheduler<any[], any>
+  | ActionCreator
+  | ActionScheduler
 
 type BoundAction<A extends BindableAction> = A extends Action
   ? () => void
@@ -76,28 +73,31 @@ export function useActions<Actions extends BindableActionMap>(
   return boundActions
 }
 
+export function wrapThunk<Result>(thunk: ThunkAction<Result>) {
+  return (dispatch: Dispatch, resolve: StoreResolve) =>
+    thunk(dispatch, wrapper => resolve(getSlice(dispatch, wrapper)))
+}
+
 function bindAction<Action extends BindableAction>(
   store: Store,
   action: BindableAction,
 ): BoundAction<Action>
 
-function bindAction(store: Store, action: Action | ActionList | Function) {
+function bindAction(store: Store, actionable: Action | ActionList | Function) {
   const { dispatch } = store
-  if (typeof action === 'function') {
+  if (typeof actionable == 'function') {
     return function() {
-      return dispatch(action.apply(null, arguments))
+      const action: Action | ActionList | ThunkAction = actionable.apply(
+        null,
+        arguments,
+      )
+      if (typeof action == 'function') {
+        return dispatch(wrapThunk(action))
+      } else {
+        dispatch(action)
+      }
     }
   } else {
-    return () => dispatch(action)
-  }
-}
-
-export function createCustomAction<Sources extends Source[], Result>(
-  sources: Sources,
-  thunk: (dispatch: Dispatch, ...state: SourceValues<Sources>) => Result,
-): ThunkAction<Result> {
-  return function(dispatch) {
-    const slices = sources.map(source => getSlice(dispatch, source))
-    return dispatch(thunk as any, ...(slices as SourceSlices<Sources>))
+    return () => dispatch(actionable)
   }
 }
