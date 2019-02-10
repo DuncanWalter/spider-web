@@ -1,4 +1,4 @@
-import { SliceSet } from './SliceSet'
+import { SliceSet, Subscription } from './SliceSet'
 import { OperationSet, OperationSetListMixin } from '@dwalter/spider-operations'
 import { isFunction } from './isFunction'
 
@@ -44,7 +44,7 @@ export class __Slice__<V, Ds extends Slice[] = any> {
   dependencies: Ds
   value: V
   shallow: Shallow<V>
-  subscriptions: null | number[]
+  subscriptions: null | Subscription[]
 
   constructor(
     dependencies: Ds,
@@ -98,8 +98,8 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     }
   }
 
-  subscribe(newChild: Slice | ((v: V) => unknown)): number {
-    if (this.children.size === 0) {
+  subscribe(newChild: Slice | ((v: V) => unknown)) {
+    if (this.children.isEmpty()) {
       this.subscriptions = this.dependencies.map(d => d.subscribe(this))
       this.tryUpdate()
     }
@@ -114,9 +114,9 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     }
   }
 
-  unsubscribe(subscription: number) {
+  unsubscribe(subscription: Subscription) {
     this.children.remove(subscription)
-    if (this.children.size === 0) {
+    if (this.children.isEmpty()) {
       this.dependencies.forEach((d, i) => {
         d.unsubscribe(this.subscriptions![i])
       })

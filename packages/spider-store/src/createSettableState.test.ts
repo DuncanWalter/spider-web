@@ -2,11 +2,11 @@ import { createSettableState } from '.'
 import { partialUpdate } from './createSettableState'
 
 test('State setters work on a variety of types', () => {
-  const [number, setNumber] = createSettableState('number', 0)
+  const [number, setNumber] = createSettableState(0)
 
   expect(number(undefined, setNumber(1))).toBe(1)
 
-  const [array, setArray] = createSettableState('arr', [] as number[])
+  const [array, setArray] = createSettableState([] as number[])
 
   expect(array(undefined, setArray([1])).length).toBe(1)
 

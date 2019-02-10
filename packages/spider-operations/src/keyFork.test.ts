@@ -4,7 +4,7 @@ import { keyFork } from '.'
 test('Keyed forking dedups and updates properly', async done => {
   const { dispatch, wrapReducer } = createStore()
 
-  const [collection, setCollection] = createSettableState('', [1])
+  const [collection, setCollection] = createSettableState([1])
 
   const slices = wrapReducer(collection)
     .use(keyFork)

@@ -6,7 +6,6 @@ import { resolveSlice } from './resolveSlice'
 import { isFunction } from './isFunction'
 
 export interface StateSlice<V> extends Slice<V> {
-  name: string
   updateState(action: Action, marks: SliceSet): void
 }
 
@@ -29,9 +28,6 @@ export interface ActionList extends Array<ActionList | Action> {}
 
 export interface Reducer<State, A extends Action = Action> {
   (state: State | undefined, action: A): State
-  readonly shallow?: Shallow<State>
-  readonly initialState?: State
-  readonly sliceName?: string
 }
 
 export interface Store {
@@ -100,9 +96,8 @@ export function createStore(): Store {
   function wrapReducer<State>(
     reducer: Reducer<State>,
     {
-      initialState = reducer.initialState || undefined,
-      shallow = reducer.shallow || true,
-      sliceName = reducer.sliceName || reducer.name,
+      initialState = undefined as State | void,
+      shallow = true as Shallow<State>,
     } = {},
   ) {
     let state = initialState || reducer(undefined, { type: '@store/init' })
@@ -122,7 +117,6 @@ export function createStore(): Store {
       }
     }
 
-    slice.name = sliceName
     slice.updateState = updateState
 
     slices.set(reducer, slice)

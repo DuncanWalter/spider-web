@@ -8,20 +8,19 @@ interface SetterAction<State> extends Action {
 
 interface Setter<State> {
   (newState: State): Action
-  (newState: ((state: State) => State)): (
+  (newState: (state: State) => State): (
     dispatch: Dispatch,
     resolve: Resolve,
   ) => void
   <R>(
-    newState: ((state: State) => State),
-    mapping: ((oldState: State, newState: State) => R),
+    newState: (state: State) => State,
+    mapping: (oldState: State, newState: State) => R,
   ): (dispatch: Dispatch, resolve: Resolve) => R
 }
 
 const setStateType = '@store/set-state'
 
 export function createSettableState<State>(
-  sliceName: string,
   initialState: State,
   shallow = true as Shallow<State>,
 ): [Reducer<State, any>, Setter<State>] {
@@ -50,10 +49,7 @@ export function createSettableState<State>(
     return { type: setStateType, reducer, newState }
   }
 
-  return [
-    Object.assign(reducer, { shallow, sliceName }),
-    setState as Setter<State>,
-  ]
+  return [Object.assign(reducer, { shallow }), setState as Setter<State>]
 }
 
 export function partialUpdate<StateFragment extends {}>(

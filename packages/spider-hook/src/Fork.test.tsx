@@ -11,7 +11,7 @@ import { Fork } from './Fork'
 afterEach(cleanup)
 
 test('Testing the Fork component', async done => {
-  const [numbers, setNumbers] = createSettableState('numbers', [1, 2])
+  const [numbers, setNumbers] = createSettableState([1, 2])
 
   let collectionRenderCount = 0
   let itemRenderCount = 0

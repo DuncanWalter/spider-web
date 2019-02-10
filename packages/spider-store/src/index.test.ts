@@ -26,7 +26,7 @@ test('Diamond case handling is efficient and stable', async done => {
     value = u
   })
 
-  expect(counter.children.size).toBe(2)
+  expect(counter.children.slices.length).toBe(2)
 
   expect(value).toBe(2)
   expect(reducerCalls).toBe(1)
