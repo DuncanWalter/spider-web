@@ -1,9 +1,6 @@
 import { Slice, __Slice__ } from './slice'
 
-interface Subscription {
-  idx: number
-  readonly slice: Slice
-}
+type Subscription = [number, Slice]
 
 type ReadonlySubscription = Readonly<Subscription>
 
@@ -13,12 +10,7 @@ export class SliceSet {
   slices: Subscription[]
 
   constructor(slices?: Slice[]) {
-    this.slices = slices
-      ? slices.map((slice, idx) => ({
-          idx,
-          slice,
-        }))
-      : []
+    this.slices = slices ? slices.map((s, i): Subscription => [i, s]) : []
   }
 
   isEmpty(): boolean {
@@ -27,22 +19,19 @@ export class SliceSet {
 
   add(slice: Slice): Readonly<Subscription> {
     const slices = this.slices
-    const subscription = {
-      idx: slices.length,
-      slice,
-    }
+    const subscription: Subscription = [slices.length, slice]
     slices.push(subscription)
     return subscription
   }
 
   remove(subscription: Readonly<Subscription>): void {
     const slices = this.slices
-    const idx = subscription.idx
+    const [idx] = subscription
 
     if (slices[idx] !== subscription) return
 
     const tail = slices[slices.length - 1]
-    tail.idx = idx
+    tail[0] = idx
     slices[idx] = tail
 
     slices.pop()
@@ -55,13 +44,14 @@ export class SliceSet {
     }
     let min = slices[0]
     for (let i = 1; i < slices.length; i++) {
-      if (slices[i].slice == min.slice) {
+      const [, slice] = slices[i]
+      if (slice == min[1]) {
         this.remove(slices[i--])
-      } else if (slices[i].slice.depth < min.slice.depth) {
+      } else if (slice.depth < min[1].depth) {
         min = slices[i]
       }
     }
     this.remove(min)
-    return min.slice
+    return min[1]
   }
 }

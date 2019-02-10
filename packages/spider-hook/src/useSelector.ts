@@ -1,6 +1,12 @@
 import { useContext, useState, useEffect } from 'react'
 
-import { Reducer, Slice, utils, Shallow, Dispatch } from '@dwalter/spider-store'
+import {
+  Reducer,
+  Slice,
+  utils,
+  Shallow,
+  Subscription,
+} from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop, constant } from './utils'
@@ -15,7 +21,7 @@ export interface Selector<T> {
   mapping: (...slices: any) => Slice<T>
 }
 
-export type Source<T = any> = Reducer<T> | Selector<T>
+export type Source<T = any> = Reducer<T, any> | Selector<T>
 
 type SourceSlices<Sources extends SourceList> = {
   [K in keyof Sources]: Sources[K] extends Source<infer T> ? Slice<T> : never
@@ -54,7 +60,7 @@ export function useSelector<T>(selector: Source<T>): T {
   const store = useContext(StoreContext)
   const slice = useState(setup ? getSlice(store.dispatch, selector) : noop)[0]
 
-  let subscription: number = -1
+  let subscription: Subscription
   const [value, setState] = useState(
     setup
       ? () => {

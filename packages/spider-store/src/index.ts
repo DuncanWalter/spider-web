@@ -16,3 +16,5 @@ export {
 
 export { createSettableState } from './createSettableState'
 export { joinSlices } from './joinSlices'
+
+export { Subscription } from './SliceSet'

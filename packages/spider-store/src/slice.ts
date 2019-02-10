@@ -81,7 +81,7 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     return false
   }
 
-  resolveShallow() {
+  resolveShallow(): V {
     switch (this.dependencies.length) {
       case 0:
         return (this.evaluate as any)()

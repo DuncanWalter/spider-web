@@ -4,12 +4,11 @@ import { SliceSet } from './SliceSet'
 function propagateUpdate(slice: Slice, marks: SliceSet) {
   const updated = slice.tryUpdate()
   if (updated) {
-    for (let subscription of slice.children.slices) {
-      const slice = subscription.slice
-      if (slice.dependencies.length === 1) {
-        propagateUpdate(slice, marks)
+    for (let [, child] of slice.children.slices) {
+      if (child.dependencies.length === 1) {
+        propagateUpdate(child, marks)
       } else {
-        marks.add(slice)
+        marks.add(child)
       }
     }
   }

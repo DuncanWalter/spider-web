@@ -24,10 +24,12 @@ export function createSettableState<State>(
   initialState: State,
   shallow = true as Shallow<State>,
 ): [Reducer<State, any>, Setter<State>] {
+  const reducers = [reducer]
+
   function reducer(state = initialState, action: SetterAction<State>) {
     const { type, newState } = action
     if (type === setStateType) {
-      if (action.reducer === reducer) {
+      if (action.reducers == reducers) {
         return newState
       }
     }
@@ -46,7 +48,7 @@ export function createSettableState<State>(
         return mapping ? mapping(oldState, state) : undefined
       }
     }
-    return { type: setStateType, reducer, newState }
+    return { type: setStateType, reducers, newState }
   }
 
   return [Object.assign(reducer, { shallow }), setState as Setter<State>]

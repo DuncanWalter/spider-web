@@ -33,7 +33,8 @@ test('Testing the useAction hook', async done => {
 
   // create actions / actionCreators / actionSchedulers
   function increment() {
-    return (dispatch: Dispatch) => dispatch({ type: '@test' })
+    return (dispatch: Dispatch) =>
+      dispatch({ type: '@test', reducers: [counter] })
   }
 
   function Counter() {

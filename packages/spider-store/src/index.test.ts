@@ -8,10 +8,12 @@ test('Diamond case handling is efficient and stable', async done => {
   let subscriptionCalls = 0
   let value = 0
 
-  const counter = wrapReducer((i: number = 0) => {
+  function reducer(i: number = 0) {
     reducerCalls += 1
     return ++i
-  })
+  }
+
+  const counter = wrapReducer(reducer)
 
   expect(value).toBe(0)
   expect(reducerCalls).toBe(1)
@@ -32,13 +34,13 @@ test('Diamond case handling is efficient and stable', async done => {
   expect(reducerCalls).toBe(1)
   expect(subscriptionCalls).toBe(1)
 
-  dispatch({ type: 'increment' })
+  dispatch({ type: 'increment', reducers: [reducer] })
 
   expect(value).toBe(4)
   expect(reducerCalls).toBe(2)
   expect(subscriptionCalls).toBe(2)
 
-  dispatch([{ type: 'increment' }])
+  dispatch([{ type: 'increment', reducers: [reducer] }])
 
   expect(value).toBe(6)
   expect(reducerCalls).toBe(3)
@@ -49,13 +51,19 @@ test('Diamond case handling is efficient and stable', async done => {
 
 test('Calls to dispatch are flattened', done => {
   const { dispatch, wrapReducer } = createStore()
-  const counter = wrapReducer((i: number = 0) => i + 1)
+  function reducer(i: number = 0) {
+    return i + 1
+  }
+  const counter = wrapReducer(reducer)
   let count = -1
   counter.subscribe(i => {
     expect(i).toBe(count + 2)
     count = i
     if (i < 10) {
-      dispatch([{ type: 'any' }, [{ type: 'any' }]])
+      dispatch([
+        { type: 'any', reducers: [reducer] },
+        [{ type: 'any', reducers: [reducer] }],
+      ])
     } else {
       expect(count).toBe(11)
       done()

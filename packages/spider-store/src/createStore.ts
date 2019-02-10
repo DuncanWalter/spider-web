@@ -20,7 +20,7 @@ export interface Dispatch {
 
 export interface Action {
   type: string
-  reducer?: Reducer<any>
+  reducers: Reducer<any, any>[]
   schedule?(dispatch: Dispatch): any
 }
 
@@ -32,19 +32,12 @@ export interface Reducer<State, A extends Action = Action> {
 
 export interface Store {
   dispatch: Dispatch
-  wrapReducer: <S>(
-    reducer: Reducer<S, any>,
-    config?: {
-      sliceName?: string
-      initialState?: S
-      shallow?: Shallow<S>
-    },
-  ) => StateSlice<S>
+  wrapReducer: <S>(reducer: Reducer<S, any>) => StateSlice<S>
   slices: Map<Reducer<any>, StateSlice<any>>
 }
 
 export function createStore(): Store {
-  const slices = new Map<unknown, StateSlice<any>>()
+  const slices = new Map<Reducer<any>, StateSlice<any>>()
 
   const store = { slices } as Store
 
@@ -54,12 +47,9 @@ export function createStore(): Store {
         dispatch(action, marks)
       }
     } else {
-      if (actions.reducer) {
-        const slice =
-          slices.get(actions.reducer) || store.wrapReducer(actions.reducer)
+      for (let reducer of actions.reducers) {
+        const slice = slices.get(reducer) || store.wrapReducer(reducer)
         slice.updateState(actions, marks)
-      } else {
-        slices.forEach(slice => slice.updateState(actions, marks))
       }
     }
   }
@@ -78,7 +68,7 @@ export function createStore(): Store {
       if (slice) {
         return resolveSlice(slice)
       } else {
-        return wrapper(undefined, { type: '@store/resolve' })
+        return wrapper(undefined, { type: '@store/resolve', reducers: [] })
       }
     } else {
       return resolveSlice(wrapper)
@@ -93,26 +83,17 @@ export function createStore(): Store {
     }
   }
 
-  function wrapReducer<State>(
-    reducer: Reducer<State>,
-    {
-      initialState = undefined as State | void,
-      shallow = true as Shallow<State>,
-    } = {},
-  ) {
-    let state = initialState || reducer(undefined, { type: '@store/init' })
+  function wrapReducer<State>(reducer: Reducer<State>) {
+    let state = reducer(undefined, { type: '@store/init', reducers: [] })
 
-    const slice = createSlice(
-      [] as Slice[],
-      _ => state,
-      state,
-      shallow,
-    ) as StateSlice<State>
+    const slice = createSlice([] as Slice[], _ => state, state) as StateSlice<
+      State
+    >
 
     function updateState(action: Action, marks: SliceSet) {
       const oldState = state
       const newState = (state = reducer(state, action))
-      if (didUpdate(shallow, oldState, newState)) {
+      if (oldState !== newState) {
         marks.add(slice)
       }
     }
