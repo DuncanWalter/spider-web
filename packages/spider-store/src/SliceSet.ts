@@ -1,4 +1,4 @@
-import { Slice, __Slice__ } from './slice'
+import { Slice } from './slice'
 
 type Subscription = [number, Slice]
 
@@ -7,11 +7,7 @@ type ReadonlySubscription = Readonly<Subscription>
 export { ReadonlySubscription as Subscription }
 
 export class SliceSet {
-  slices: Subscription[]
-
-  constructor(slices?: Slice[]) {
-    this.slices = slices ? slices.map((s, i): Subscription => [i, s]) : []
-  }
+  slices: Subscription[] = []
 
   isEmpty(): boolean {
     return this.slices.length == 0

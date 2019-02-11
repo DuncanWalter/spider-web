@@ -1,4 +1,4 @@
-import { Slice, createSlice, Shallow, didUpdate } from './slice'
+import { Slice, createSlice } from './slice'
 import { propagateSlices } from './propagateSlices'
 import { SliceSet } from './SliceSet'
 import { unstack } from './unstack'

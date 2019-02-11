@@ -1,6 +1,6 @@
-import { createSlice } from './slice'
+import { createSlice, isSlice } from './slice'
 
-export const utils = { createSlice }
+export const utils = { createSlice, isSlice }
 
 export { Shallow, Slice } from './slice'
 

@@ -2,8 +2,8 @@ import { SliceSet, Subscription } from './SliceSet'
 import { OperationSet, OperationSetListMixin } from '@dwalter/spider-operations'
 import { isFunction } from './isFunction'
 
-export type ValueMap<Slices extends Slice[]> = {
-  [K in keyof Slices]: Slices[K] extends Slice<infer Value> ? Value : never
+export type ValueMap<Slices extends __Slice__[]> = {
+  [K in keyof Slices]: Slices[K] extends __Slice__<infer Value> ? Value : never
 }
 
 /**
@@ -15,7 +15,9 @@ export type ValueMap<Slices extends Slice[]> = {
  * can be accessed by subscribing to the `Slice`. `Slices` also
  * support an operator API similar to that of `rxjs` (but not the same).
  */
-export type Slice<Value = any, Ops = {}> = __Slice__<Value, any> & Ops
+type __Slice__<Value = any, Ops = {}> = Slice<Value, any> & Ops
+
+export { __Slice__ as Slice }
 
 /**
  * `Shallow` is a type which represents the policy followed by
@@ -31,13 +33,13 @@ export type Slice<Value = any, Ops = {}> = __Slice__<Value, any> & Ops
  */
 export type Shallow<V = unknown> = boolean | ((a: V, b: V) => boolean)
 
-export function didUpdate<V>(shallow: Shallow<V>, a: V, b: V) {
+function didUpdate<V>(shallow: Shallow<V>, a: V, b: V) {
   if (isFunction(shallow)) return !shallow(a, b)
   if (shallow) return a !== b
   return true
 }
 
-export class __Slice__<V, Ds extends Slice[] = any> {
+class Slice<V, Ds extends __Slice__[] = any> {
   depth: number
   children: SliceSet
   evaluate: (...dependencies: ValueMap<Ds>) => V
@@ -60,7 +62,7 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     }
     this.depth = depth + 1
     this.shallow = shallow
-    this.value = initialValue || (null as any)
+    this.value = initialValue as V
     this.evaluate = evaluate
     this.children = new SliceSet()
     this.dependencies = dependencies
@@ -98,12 +100,12 @@ export class __Slice__<V, Ds extends Slice[] = any> {
     }
   }
 
-  subscribe(newChild: Slice | ((v: V) => unknown)) {
+  subscribe(newChild: __Slice__ | ((v: V) => unknown)) {
     if (this.children.isEmpty()) {
       this.subscriptions = this.dependencies.map(d => d.subscribe(this))
       this.tryUpdate()
     }
-    if (newChild instanceof __Slice__) {
+    if (newChild instanceof Slice) {
       return this.children.add(newChild)
     } else {
       const slice = createSlice([this], newChild as any)
@@ -125,9 +127,9 @@ export class __Slice__<V, Ds extends Slice[] = any> {
   }
 
   use<Os extends OperationSet[]>(
-    this: __Slice__<V>,
+    this: Slice<V>,
     ...operations: Os
-  ): __Slice__<V> & OperationSetListMixin<Os> {
+  ): Slice<V> & OperationSetListMixin<Os> {
     for (let set of operations) {
       if (set.applied) {
         continue
@@ -136,18 +138,22 @@ export class __Slice__<V, Ds extends Slice[] = any> {
           this.use(operation)
         }
       } else {
-        Object.assign(__Slice__.prototype, set.operation)
+        Object.assign(Slice.prototype, set.operation)
       }
     }
     return this as any
   }
 }
 
-export function createSlice<Ds extends Slice[], V>(
+export function createSlice<Ds extends __Slice__[], V>(
   dependencies: Ds,
   evaluate: (...inputs: ValueMap<Ds>) => V,
   initialValue?: V,
   shallow: Shallow<V> = true,
-): Slice<V> {
-  return new __Slice__(dependencies, evaluate, initialValue, shallow)
+): __Slice__<V> {
+  return new Slice(dependencies, evaluate, initialValue, shallow)
+}
+
+export function isSlice(query: unknown): query is Slice<any> {
+  return query && query instanceof Slice
 }
