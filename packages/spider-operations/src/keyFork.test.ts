@@ -1,4 +1,5 @@
-import { createStore, createSettableState } from '@dwalter/spider-store'
+import { createStore } from '@dwalter/spider-store'
+import { createSettableState } from '@dwalter/spider-atom'
 import { keyFork } from '.'
 
 test('Keyed forking dedups and updates properly', async done => {

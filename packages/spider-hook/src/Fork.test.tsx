@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { render, cleanup, waitForDomChange } from 'react-testing-library'
 
-import { createSettableState } from '@dwalter/spider-store'
+import { createSettableState } from '@dwalter/spider-atom'
 
 import { SpiderRoot } from './SpiderRoot'
 import { useActions } from './useActions'

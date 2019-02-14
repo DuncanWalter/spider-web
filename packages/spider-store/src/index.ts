@@ -1,6 +1,7 @@
 import { createSlice, isSlice } from './slice'
+import { isFunction } from './isFunction'
 
-export const utils = { createSlice, isSlice }
+export const utils = { createSlice, isSlice, isFunction }
 
 export { Shallow, Slice } from './slice'
 
@@ -14,7 +15,6 @@ export {
   Store,
 } from './createStore'
 
-export { createSettableState } from './createSettableState'
 export { joinSlices } from './joinSlices'
 
 export { Subscription } from './SliceSet'

@@ -48,9 +48,10 @@
     "tabWidth": 2
   },
   "dependencies": {
-    "@dwalter/spider-store": "^1.1.1"
+    "@dwalter/spider-store": "^1.4.0"
   },
   "devDependencies": {
+    "@dwalter/spider-atom": "^1.4.0",
     "@types/jest": "^23.3.1",
     "jest": "^23.5.0",
     "rollup": "^0.67.3",

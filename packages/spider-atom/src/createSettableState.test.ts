@@ -1,4 +1,4 @@
-import { createSettableState } from '.'
+import { createSettableState } from './createSettableState'
 
 test('State setters work on a variety of types', () => {
   const [number, setNumber] = createSettableState(0)

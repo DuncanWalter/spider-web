@@ -1,10 +1,5 @@
 import * as React from 'react'
-import {
-  render,
-  cleanup,
-  waitForDomChange,
-  fireEvent,
-} from 'react-testing-library'
+import { render, cleanup, fireEvent } from 'react-testing-library'
 
 import { Dispatch } from '@dwalter/spider-store'
 

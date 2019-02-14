@@ -1,6 +1,11 @@
-import { Reducer, Action, Dispatch, Resolve } from './createStore'
-import { isFunction } from './isFunction'
-import { Shallow } from './slice'
+import {
+  Reducer,
+  Action,
+  Dispatch,
+  Resolve,
+  Shallow,
+  utils,
+} from '@dwalter/spider-store'
 
 interface SetterAction<State> extends Action {
   newState: State
@@ -40,7 +45,7 @@ export function createSettableState<State>(
     newState: State | ((state: State) => State),
     mapping?: (o: State, n: State) => R,
   ) {
-    if (isFunction(newState)) {
+    if (utils.isFunction(newState)) {
       return (dispatch: Dispatch, resolve: Resolve) => {
         const oldState = resolve(reducer)
         const state = newState(oldState)
