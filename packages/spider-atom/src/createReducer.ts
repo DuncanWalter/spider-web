@@ -1,4 +1,4 @@
-import { Reducer } from '@dwalter/spider-store'
+import { Reducer, Action } from '@dwalter/spider-store'
 
 interface ReducerConfig<State = any>
   extends Record<string, Handler<State, any[]>> {}
@@ -14,20 +14,26 @@ type ActionCreators<State, Config extends ReducerConfig<State>> = {
     state: State,
     ...payload: infer Payload
   ) => State
-    ? (
-        ...payload: Payload
-      ) => { type: K; reducers: Reducer<State, any>[]; payload: Payload }
+    ? (...payload: Payload) => Action
     : never
 }
 
+/**
+ * Function for declaring a reducer with behaviors for
+ * a number of known actions.
+ * @param name prefix for action types for logging purposes
+ * @param initialState starting state of the reducer
+ * @param config reducer behaviors for actions
+ */
 export function createReducer<State, Config extends ReducerConfig<State>>(
+  name: string,
   initialState: State,
   config: Config,
-): [Reducer<State, any>, ActionCreators<State, Config>] {
+): [Reducer<State>, ActionCreators<State, Config>] {
   const reducers = [reducer]
 
   function reducer(state = initialState, action: any) {
-    const handler = config[action.type]
+    const handler = action.key && config[action.key]
     if (!handler) {
       return state
     }
@@ -38,7 +44,7 @@ export function createReducer<State, Config extends ReducerConfig<State>>(
 
   for (let key of Object.keys(config)) {
     actions[key] = function(...payload: Payload<Config[typeof key]>) {
-      return { type: key, reducers, payload }
+      return { type: `@${name}/${key}`, key, reducers, payload }
     } as any
   }
 

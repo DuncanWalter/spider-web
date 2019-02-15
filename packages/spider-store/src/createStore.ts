@@ -21,7 +21,6 @@ export interface Dispatch {
 export interface Action {
   type: string
   reducers: Reducer<any, any>[]
-  schedule?(dispatch: Dispatch): any
 }
 
 export interface ActionList extends Array<ActionList | Action> {}

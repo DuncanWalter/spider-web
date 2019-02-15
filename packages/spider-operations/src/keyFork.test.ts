@@ -1,11 +1,13 @@
 import { createStore } from '@dwalter/spider-store'
-import { createSettableState } from '@dwalter/spider-atom'
+import { createReducer, settableReducerBehavior } from '@dwalter/spider-atom'
 import { keyFork } from '.'
 
 test('Keyed forking dedups and updates properly', async done => {
   const { dispatch, wrapReducer } = createStore()
 
-  const [collection, setCollection] = createSettableState([1])
+  const [collection, collectionActions] = createReducer('', [1], {
+    ...settableReducerBehavior<number[]>(),
+  })
 
   const slices = wrapReducer(collection)
     .use(keyFork)
@@ -28,12 +30,12 @@ test('Keyed forking dedups and updates properly', async done => {
   expect(outerChanges).toBe(1)
   expect(innerChanges).toBe(1)
 
-  dispatch(setCollection([2]))
+  dispatch(collectionActions.set([2]))
 
   expect(outerChanges).toBe(1)
   expect(innerChanges).toBe(2)
 
-  dispatch(setCollection([2, 3]))
+  dispatch(collectionActions.set([2, 3]))
 
   expect(outerChanges).toBe(2)
   expect(innerChanges).toBe(2)

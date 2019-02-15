@@ -2,14 +2,13 @@
 
 - Demo app
 
-- Should side effects be run async?
-- Make side effects run last in a propagation (depth = max int)
+- Make a slice of actions that propagates with state updates (propagates lists of actions)
 
 - laws of dispatch
   - when multiple actions are dispatched at once, all actions are run before propagating
   - propagation occurs after every dispatch of actions
-  - subscriptions are all run synchronously after propagation
-  - calls to dispatch are unstacked?
+  - subscriptions are all run synchronously after propagation (in an unknown order)
+  - calls to dispatch are unstacked
 
 # Redux
 
@@ -22,12 +21,14 @@
 
 # Spider
 
-- createSettableState
 - mergeSlices
 - joinSlices
 - createStore
   - wrapReducer
   - dispatch
 - Slice
+
   - use
   - subscribe
+
+- createSettableState
