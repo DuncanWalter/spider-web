@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { render, cleanup, waitForDomChange } from 'react-testing-library'
 
-import { createReducer, settableReducerBehavior } from '@dwalter/spider-atom'
+import { createReducer, settable } from '@dwalter/create-reducer'
 
 import { SpiderRoot } from './SpiderRoot'
 import { useActions } from './useActions'
@@ -12,7 +12,7 @@ afterEach(cleanup)
 
 test('Testing the Fork component', async done => {
   const [numbers, { set: setNumbers }] = createReducer('collection', [1, 2], {
-    ...settableReducerBehavior<number[]>(),
+    ...settable<number[]>(),
   })
 
   let collectionRenderCount = 0

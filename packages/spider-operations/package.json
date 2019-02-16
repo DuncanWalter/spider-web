@@ -51,7 +51,7 @@
     "@dwalter/spider-store": "^1.4.0"
   },
   "devDependencies": {
-    "@dwalter/spider-atom": "^1.4.0",
+    "@dwalter/create-reducer": "^1.0.1",
     "@types/jest": "^23.3.1",
     "jest": "^23.5.0",
     "rollup": "^0.67.3",
