@@ -1,4 +1,4 @@
-import { Operation } from '.'
+import { Operation } from '@dwalter/spider-store'
 
 export function createOperation<Mixin extends {}>(
   mixin: Mixin,

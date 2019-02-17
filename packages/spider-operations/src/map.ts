@@ -1,6 +1,6 @@
 import { Slice, utils, Shallow } from '@dwalter/spider-store'
 import { createOperation } from './createOperation'
-import { withOperations } from './utils'
+import { withOperations } from './withOperations'
 
 const { createSlice } = utils
 
@@ -16,7 +16,7 @@ export const map = createOperation<Map>({
   map(mapping, shallow = true) {
     return withOperations(
       createSlice(
-        [this],
+        [this as Slice],
         u => mapping(u),
         undefined,
         this.shallow === false ? false : shallow,

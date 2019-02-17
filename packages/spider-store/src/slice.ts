@@ -1,10 +1,39 @@
 import { SliceSet, Subscription } from './SliceSet'
-import { OperationSet, OperationSetListMixin } from '@dwalter/spider-operations'
 import { isFunction } from './isFunction'
 
 export type ValueMap<Slices extends __Slice__[]> = {
   [K in keyof Slices]: Slices[K] extends __Slice__<infer Value> ? Value : never
 }
+
+export interface Operation<Mixin extends {}> {
+  type: '@slice/operation'
+  operation: Mixin
+  applied: boolean
+}
+
+export interface OperationCluster<Children extends (Operation<any>)[]> {
+  type: '@slice/operation-cluster'
+  operations: Children
+  applied: boolean
+}
+
+export type OperationSet = Operation<any> | OperationCluster<any>
+
+type Intersection<Union> = (Union extends infer U
+  ? (u: U) => any
+  : never) extends (i: infer I) => any
+  ? I
+  : never
+
+type OperationSetMixin<O extends OperationSet> = O extends Operation<infer M>
+  ? M
+  : O extends OperationCluster<infer C>
+  ? Intersection<C[number] extends Operation<infer M> ? M : never>
+  : never
+
+export type OperationSetListMixin<Os extends OperationSet[]> = Intersection<
+  OperationSetMixin<Os[number]>
+>
 
 /**
  * A `Slice` is similar to an observable with a few key differences.

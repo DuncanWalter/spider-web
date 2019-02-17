@@ -31,6 +31,7 @@ export interface Reducer<State, A extends Action = Action> {
 
 export interface Store {
   dispatch: Dispatch
+  resolve: Resolve
   wrapReducer: <S>(reducer: Reducer<S, any>) => StateSlice<S>
   slices: Map<Reducer<any>, StateSlice<any>>
 }
@@ -83,6 +84,8 @@ export function createStore(): Store {
   }
 
   function wrapReducer<State>(reducer: Reducer<State>) {
+    if (slices.get(reducer)) return slices.get(reducer)!
+
     let state = reducer(undefined, { type: '@store/init', reducers: [] })
 
     const slice = createSlice([] as Slice[], _ => state, state) as StateSlice<
@@ -105,6 +108,7 @@ export function createStore(): Store {
   }
 
   store.dispatch = safeDispatch as Dispatch
+  store.resolve = resolve
   store.wrapReducer = wrapReducer
   return store
 }

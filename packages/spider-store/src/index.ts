@@ -3,7 +3,13 @@ import { isFunction } from './isFunction'
 
 export const utils = { createSlice, isSlice, isFunction }
 
-export { Shallow, Slice } from './slice'
+export {
+  Shallow,
+  Slice,
+  Operation,
+  OperationCluster,
+  OperationSet,
+} from './slice'
 
 export {
   Action,

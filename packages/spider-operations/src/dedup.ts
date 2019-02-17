@@ -1,7 +1,7 @@
 import { Slice, utils } from '@dwalter/spider-store'
 
 import { createOperation } from './createOperation'
-import { withOperations } from './utils'
+import { withOperations } from './withOperations'
 
 const { createSlice } = utils
 

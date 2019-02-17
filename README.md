@@ -2,8 +2,6 @@
 
 - Demo app
 
-- Make a slice of actions that propagates with state updates (propagates lists of actions)
-
 - laws of dispatch
   - when multiple actions are dispatched at once, all actions are run before propagating
   - propagation occurs after every dispatch of actions
@@ -21,14 +19,11 @@
 
 # Spider
 
-- mergeSlices
 - joinSlices
 - createStore
   - wrapReducer
   - dispatch
+    - resolve
 - Slice
-
   - use
   - subscribe
-
-- createSettableState
