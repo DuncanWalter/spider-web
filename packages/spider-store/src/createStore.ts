@@ -62,6 +62,14 @@ export function createStore(): Store {
 
   const unstackedDispatch = unstack(rootDispatch)
 
+  function safeDispatch(actionable: Action | ActionList | Function): unknown {
+    if (isFunction(actionable)) {
+      return actionable(safeDispatch, resolve)
+    } else {
+      unstackedDispatch(actionable)
+    }
+  }
+
   function resolve<V>(wrapper: Slice<V> | Reducer<V>) {
     if (isFunction(wrapper)) {
       const slice = slices.get(wrapper)
@@ -72,14 +80,6 @@ export function createStore(): Store {
       }
     } else {
       return resolveSlice(wrapper)
-    }
-  }
-
-  function safeDispatch(actionable: Action | ActionList | Function): unknown {
-    if (isFunction(actionable)) {
-      return actionable(safeDispatch, resolve)
-    } else {
-      unstackedDispatch(actionable)
     }
   }
 
@@ -111,4 +111,42 @@ export function createStore(): Store {
   store.resolve = resolve
   store.wrapReducer = wrapReducer
   return store
+}
+
+function applyMiddleWare<T, R>(
+  middleware: ((t: T, next: (t: T) => R) => R)[],
+  baseFunction: (t: T) => R,
+) {
+  return (t: T) => {
+    let i = 0
+    let res: R
+
+    function next(t: T): R {
+      for (; i <= middleware.length; ) {
+        i += 1
+        if (i < middleware.length) {
+          res = middleware[i](t, next)
+        } else {
+          res = baseFunction(t)
+        }
+      }
+      return res
+    }
+
+    return next(t)
+  }
+}
+
+interface GeneralizedList<T> extends Array<GeneralizedListNode<T>> {}
+
+type GeneralizedListNode<T> = T | GeneralizedList<T>
+
+function walkGeneralizedList<T>(ts: GeneralizedListNode<T>, f: (t: T) => void) {
+  if (Array.isArray(ts)) {
+    for (let t of ts) {
+      walkGeneralizedList(t, f)
+    }
+  } else {
+    f(ts)
+  }
 }

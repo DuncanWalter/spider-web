@@ -28,7 +28,7 @@ export function semaphore(fun: () => () => void): () => () => void {
       callback = fun()
     }
     return () => {
-      if (--semaphore) {
+      if (!--semaphore) {
         callback()
         callback = noop
       }

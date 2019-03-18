@@ -106,7 +106,7 @@ class Slice<V, Ds extends __Slice__[] = any> {
     const oldValue = this.value
     const newValue = this.resolveShallow()
     if (didUpdate(this.shallow, oldValue, newValue)) {
-      this.value = newValue!
+      this.value = newValue
       return true
     }
     return false

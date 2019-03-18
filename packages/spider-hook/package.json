@@ -1,6 +1,7 @@
 {
   "name": "@dwalter/spider-hook",
   "version": "1.4.1",
+  "sideEffects": false,
   "description": "waste free state management",
   "keywords": [
     "state",
@@ -48,12 +49,14 @@
     "arrowParens": "avoid",
     "tabWidth": 2
   },
-  "dependencies": {
+  "peerDependencies": {
     "@dwalter/spider-operations": "^1.3.4",
     "@dwalter/spider-store": "^1.3.4"
   },
   "devDependencies": {
     "@dwalter/create-reducer": "^1.0.1",
+    "@dwalter/spider-operations": "^1.3.4",
+    "@dwalter/spider-store": "^1.3.4",
     "@types/jest": "^23.3.1",
     "@types/react": "^16.7.7",
     "husky": "^1.2.0",
