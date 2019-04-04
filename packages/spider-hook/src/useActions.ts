@@ -5,17 +5,16 @@ import {
   Action,
   ActionList,
   Store,
-  Reducer,
   Resolve as StoreResolve,
 } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop } from './utils'
-import { Selector } from './useSelector'
+import { Source } from './useSelector'
 import { getSlice } from './getSlice'
 
 interface Resolve {
-  <V>(wrapper: Reducer<V> | Selector<V>): V
+  <V>(wrapper: Source<V>): V
 }
 
 export interface ThunkAction<Result = any> {

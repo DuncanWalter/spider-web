@@ -24,6 +24,7 @@ export class SliceSet {
     const slices = this.slices
     const [idx] = subscription
 
+    if (slices.length <= idx) return
     if (slices[idx] !== subscription) return
 
     const tail = slices[slices.length - 1]
