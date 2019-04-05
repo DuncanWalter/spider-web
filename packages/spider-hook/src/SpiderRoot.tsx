@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { useState, ReactChild } from 'react'
 
 import { createStore, Store } from '@dwalter/spider-store'
 import { registerStore } from './getSlice'
@@ -17,7 +17,7 @@ export const StoreContext = React.createContext<Store>({
 })
 
 export interface SpiderRootProps {
-  children: any
+  children: ReactChild
   configureStore?: () => Store
 }
 
@@ -25,7 +25,7 @@ export function SpiderRoot({
   children,
   configureStore = createStore,
 }: SpiderRootProps) {
-  const store = configureStore()
+  const [store] = useState(configureStore())
   registerStore(store)
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }

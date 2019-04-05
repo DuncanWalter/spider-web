@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React from 'react'
 import { useState, memo } from 'react'
 
 import { Slice } from '@dwalter/spider-store'
@@ -14,9 +14,10 @@ import {
 
 interface ForkProps<K extends string | number, V> {
   selector: Source<V[]>
-  Component: (
-    props: { key: K; selector: Selector<V> },
-  ) => React.ReactElement<any>
+  Component: (props: {
+    key: K
+    selector: Selector<V>
+  }) => React.ReactElement<any>
   getKey?: (value: V, index: number) => K
 }
 

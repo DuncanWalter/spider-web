@@ -2,6 +2,7 @@
   "include": ["src/**/*"],
   "compilerOptions": {
     "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "strict": true,
     "lib": ["es2015", "dom"],
     "target": "es5",

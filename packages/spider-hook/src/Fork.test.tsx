@@ -60,26 +60,21 @@ test('Testing the Fork component', async done => {
 
   expect(component.children.length).toBe(2)
   expect(collectionRenderCount).toBe(2)
-  expect(itemRenderCount).toBe(4)
+  expect(itemRenderCount).toBe(2)
 
   actions.setNumbers([1, 3])
-
-  // expect(component.children.length).toBe(2)
-  // expect(collectionRenderCount).toBe(2)
-  // expect(itemRenderCount).toBe(4)
 
   waitForDomChange({ container: component })
 
   expect(component.children.length).toBe(2)
   expect(collectionRenderCount).toBe(2)
-  expect(itemRenderCount).toBe(5)
+  expect(itemRenderCount).toBe(3)
 
   actions.setNumbers([1, 3, 2])
-  // await waitForDomChange({ container: component })
 
   expect(component.children.length).toBe(3)
   expect(collectionRenderCount).toBe(2)
-  expect(itemRenderCount).toBe(6)
+  expect(itemRenderCount).toBe(4)
 
   done()
 })
