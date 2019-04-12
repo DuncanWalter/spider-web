@@ -21,6 +21,19 @@ export interface SpiderRootProps {
   configureStore?: () => Store
 }
 
+/**
+ * `SpiderRoot` provides state store access to its children via the
+ * context API. Any app made using `spider-hook` will need to render
+ * `SpiderRoot` as ancestor to all components using a state store.
+ * A one-to-one mapping between instances of `SpiderRoot` in the React
+ * component tree and state stores. `SpiderRoot` will never cause a
+ * rerender of itself, but it is still safe to rerender an instance of
+ * `SpiderRoot`.
+ *
+ * `SpiderRoot` accepts a single optional prop: `configureStore`.
+ * `configureStore` is a function which takes no parameters and
+ * returns a `Store`.
+ */
 export function SpiderRoot({
   children,
   configureStore = createStore,

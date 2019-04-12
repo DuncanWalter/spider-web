@@ -13,7 +13,7 @@ import { useIsFirstRender, noop } from './utils'
 import { Source } from './useSelector'
 import { getSlice } from './getSlice'
 
-interface Resolve {
+export interface Resolve {
   <V>(wrapper: Source<V>): V
 }
 
@@ -51,6 +51,12 @@ type BoundActionMap<Actions extends BindableActionMap> = {
   [K in keyof Actions]: BoundAction<Actions[K]>
 }
 
+/**
+ * `useActions()` is a hook which binds actions to the store dispatch function.
+ * The actions are passed as a map from action name to action, and
+ * `useActions()` returns a map from action name to bound action. A bound action
+ * is dispatched when called.
+ */
 export function useActions<Actions extends BindableActionMap>(
   actions: Actions,
 ): BoundActionMap<Actions> {
@@ -72,6 +78,10 @@ export function useActions<Actions extends BindableActionMap>(
   return boundActions
 }
 
+/**
+ * `wrapThunk` is an escape hatch that should not be used.
+ * @param thunk
+ */
 export function wrapThunk<Result>(thunk: ThunkAction<Result>) {
   return (dispatch: Dispatch, resolve: StoreResolve) =>
     thunk(dispatch, wrapper => resolve(getSlice(dispatch, wrapper)))

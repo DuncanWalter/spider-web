@@ -14,15 +14,12 @@ import {
 
 interface ForkProps<K extends string | number, V> {
   selector: Source<V[]>
-  Component: (props: {
-    key: K
-    selector: Selector<V>
-  }) => React.ReactElement<any>
+  render: (selector: Selector<V>, key: K) => React.ReactNode
   getKey?: (value: V, index: number) => K
 }
 
 interface MemoComponentProps<K extends string | number, V> {
-  ikey: K
+  reactKey: K
   slice: Slice<V>
 }
 
@@ -42,7 +39,7 @@ function sliceSelector<V>(slice: Slice<V>): Selector<V> {
 function Fork<K extends string | number, V>({
   selector,
   getKey = (_, i) => i as K,
-  Component,
+  render,
 }: ForkProps<K, V>) {
   const setup = useIsFirstRender()
 
@@ -52,9 +49,9 @@ function Fork<K extends string | number, V>({
   const MemoComponent = useState(
     setup
       ? () =>
-          memo(({ ikey, slice }: MemoComponentProps<K, V>) => {
+          memo(({ reactKey, slice }: MemoComponentProps<K, V>) => {
             const getValue = useState(setup ? sliceSelector(slice) : noop)[0]
-            return <Component key={ikey} selector={getValue} />
+            return <React.Fragment>{render(getValue, reactKey)}</React.Fragment>
           })
       : noop,
   )[0]
@@ -62,7 +59,7 @@ function Fork<K extends string | number, V>({
   return (
     <React.Fragment>
       {slices.map(({ key, value }) => {
-        return <MemoComponent key={key} ikey={key} slice={value} />
+        return <MemoComponent key={key} reactKey={key} slice={value} />
       })}
     </React.Fragment>
   )
@@ -70,9 +67,24 @@ function Fork<K extends string | number, V>({
 
 /**
  * `Fork` is a heavily optimized component for rendering
- * collections. When the content of `Fork` update, the
- * component will usually not need to rerender, and all
- * unchanged children will not rerender.
+ * collections. When the contents of `Fork` update, the
+ * component will usually not need to rerender, and any
+ * unchanged children will never rerender. `Fork` does not
+ * produce any container element, as it makes use of
+ * `React.Fragment`.
+ *
+ * `Fork` accepts 3 props. The first is called `selector`.
+ * Unsurprisingly, this prop accepts the selector of a
+ * 'collection' (where 'collection' means any javascript array).
+ * The second prop is called `render`. This prop accepts
+ * a function which will render members of the collection. When
+ * rendered, `Fork` passes a selector and key to `render` for
+ * each member of the collection. Both of these arguments are mandatory,
+ * as `Fork` would be unable to render anything without either of
+ * them. The last prop, `getKey`, is optional. `getKey` is a
+ * function which accepts a collection member and an index and
+ * returns a valid React key. This allows for even further
+ * optimization.
  */
 const MemoFork = memo(Fork) as typeof Fork
 

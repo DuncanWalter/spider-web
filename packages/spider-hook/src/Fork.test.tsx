@@ -24,20 +24,14 @@ test('Testing the Fork component', async done => {
     actions = useActions({ setNumbers })
     return (
       <div data-testid="collection">
-        <Fork selector={numbers} Component={Item} />
+        <Fork selector={numbers} render={Item} />
       </div>
     )
   }
 
-  function Item({
-    selector: getItem,
-  }: {
-    key: any
-    selector: Selector<number>
-  }) {
+  function Item(getItem: Selector<number>) {
     itemRenderCount += 1
     const item = useSelector(getItem)
-
     return <div>{item}</div>
   }
 
