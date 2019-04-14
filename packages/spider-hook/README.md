@@ -1,32 +1,63 @@
-# spider-hook
+# @dwalter/spider-hook
 
-`spider-hook` is a library which integrates `@dwalter/spider-store` and `react` via the hooks API.
+State management for React that just works.
 
-While `spider-hook` is in many ways analogous to `react-redux`, it has a few differences. For starters, `spider-hook` is less than half the size of `react-redux`. Next, projects should not depend separately on `spider-store` and `spider-hook`; `spider-hook` already depends on `spider-hook` and reexports anything that you might need.
+`spider-hook` replaces `redux`, `redux-react`, `redux-thunk`, and `redux-select` without all the bloat.
 
-## Store Injection
+- `spider-hook` and its 2 dependencies are smaller than `react-redux` is alone.
+- `spider-hook` exports only 8 members, and only half of those are frequently used.
+- `spider-hook` is made to play nice with all your favorite tools including `typescript`, `prettier`, `eslint`/`tslint`, `vscode`, and `webpack`/`rollup`.
+- `spider-hook` performs similarly to aggressively used `reselect`.
 
-`spider-hook` exports an app root component `SpiderRoot` which provides a configurable state store to the application in a safe and controlled manner.
+Under the hood, `spider-hook` uses `@dwalter/spider-store` to do the heavy lifting. This has one extra benefit: `spider-hook` automatically and safely handles state stores split up across multiple bundles. Your state will be unaffected by load order and even duplicated modules.
 
-## Creating Selectors
+```javascript
+// state reducer function
+function counterReducer(state = 0, action) {
+  switch (action.type) {
+    case 'increment': {
+      return state + 1
+    }
+    default: {
+      return state
+    }
+  }
+}
 
-Selectors are a familiar idea in `react`.
+// action creator
+// (note the reducers prop on the action)
+function increment() {
+  return {
+    type: 'increment',
+    reducers: [counterReducer],
+  }
+}
 
-`createSelector()`
+// boilerplate in App component
+function App() {
+  return (
+    <SpiderRoot>
+      <Counter />
+    </SpiderRoot>
+  )
+}
 
-## Subscribing to State
+// component consuming state
+function Counter() {
+  const count = useSelector(counterReducer)
+  const actions = useActions({ increment })
 
-`useSelector()`
+  return <div onClick={() => actions.increment()}>{count}</div>
+}
+```
 
-## Action Binding
+## Exports
 
-`useActions()`
-
-## Side Effects
-
-`createSideEffect()`
-`useSideEffect()`
-
-## Boosting Performance
-
-`Fork` component
+- [createSelector()](./docs/create-selector.md)
+- [createSideEffect()](./docs/create-side-effect.md)
+- [Fork](#fork)
+- [SpiderRoot](#spider-root)
+- [tuple()](#tuple)
+- [useActions()](#use-action)
+- [useSelector()](#use-selector)
+- [useSideEffect()](#use-side-effect)
