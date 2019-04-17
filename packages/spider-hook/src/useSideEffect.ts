@@ -6,10 +6,11 @@ import { StoreContext } from './SpiderRoot'
 import { Source } from './useSelector'
 import { useIsFirstRender, noop, constant, semaphore } from './utils'
 import { getSlice } from './getSlice'
+import { Resolve } from './useActions'
 
 export interface SideEffect<T = any> {
   source: Source<T>
-  effect: (input: T, dispatch: Dispatch) => unknown
+  effect: (input: T, dispatch: Dispatch, resolve: Resolve) => unknown
   locks: WeakMap<Dispatch, () => () => void>
 }
 
@@ -25,7 +26,7 @@ export interface SideEffect<T = any> {
  */
 export function createSideEffect<T>(
   selector: Source<T>,
-  effect: (input: T, dispatch: Dispatch) => unknown,
+  effect: (input: T, dispatch: Dispatch, resolve: Resolve) => unknown,
 ): SideEffect<T> {
   return { source: selector, effect, locks: new WeakMap() }
 }
@@ -39,19 +40,23 @@ export function createSideEffect<T>(
  * of the component calling `useSideEffect()`
  */
 export function useSideEffect<T>(sideEffect: SideEffect<T>) {
-  const { dispatch } = useContext(StoreContext)
+  const { dispatch, resolve: rawResolve } = useContext(StoreContext)
+
   const setup = useIsFirstRender()
   useEffect(
     setup
       ? () => {
+          function resolve<U>(wrapper: Source<U>) {
+            return rawResolve(getSlice(dispatch, wrapper))
+          }
           if (!sideEffect.locks.has(dispatch)) {
             const slice = getSlice(dispatch, sideEffect.source)
             sideEffect.locks.set(
               dispatch,
               semaphore(() => {
-                const subscription = slice.subscribe(value => {
-                  sideEffect.effect(value, dispatch)
-                })
+                const subscription = slice.subscribe(value =>
+                  sideEffect.effect(value, dispatch, resolve),
+                )
                 return () => slice.unsubscribe(subscription)
               }),
             )
