@@ -9,7 +9,7 @@ State management for React that just works.
 - `spider-hook` is made to play nice with all your favorite tools including `typescript`, `prettier`, `eslint`/`tslint`, `vscode`, and `webpack`/`rollup`.
 - `spider-hook` performs similarly to aggressively used `reselect`.
 
-Under the hood, `spider-hook` uses `@dwalter/spider-store` to do the heavy lifting. This has one extra benefit: `spider-hook` automatically and safely handles state stores split up across multiple bundles. Your state will be unaffected by load order and even duplicated modules.
+Under the hood, `spider-hook` uses `@dwalter/spider-store` to do the heavy lifting. This has one extra benefit: `spider-hook` automatically and safely handles state stores split up across multiple bundles. Your state will be unaffected by load order and duplicated modules.
 
 ```javascript
 // state reducer function
@@ -55,9 +55,14 @@ function Counter() {
 
 - [createSelector()](./docs/create-selector.md)
 - [createSideEffect()](./docs/create-side-effect.md)
-- [Fork](#fork)
-- [SpiderRoot](#spider-root)
-- [tuple()](#tuple)
-- [useActions()](#use-action)
-- [useSelector()](#use-selector)
-- [useSideEffect()](#use-side-effect)
+- [Fork](./docs/fork.md)
+- [SpiderRoot](./docs/spider-root.md)
+- [tuple()](./docs/tuple.md)
+- [useActions()](#use-actions)
+- [useSelector()](./docs/use-selector.md)
+- [useSideEffect()](./docs/use-side-effect.md)
+
+## Other Concepts
+
+- [dispatch()](./docs/dispatch.md)
+- [resolve()](./docs/resolve.md)
