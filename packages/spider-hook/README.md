@@ -47,7 +47,7 @@ function Counter() {
   const count = useSelector(counterReducer)
   const actions = useActions({ increment })
 
-  return <div onClick={() => actions.increment()}>{count}</div>
+  return <div onClick={actions.increment}>{count}</div>
 }
 ```
 
