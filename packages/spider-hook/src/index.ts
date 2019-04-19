@@ -21,17 +21,21 @@ export {
   Store,
 } from '@dwalter/spider-store'
 
-// powerful utils are provided for tinkering,
-// but generally shouldn't be used directly.
-
-import { utils as storeUtils } from '@dwalter/spider-store'
+import { utils as storeUtils, createStore } from '@dwalter/spider-store'
 import { createCustomSelector } from './useSelector'
 import { useStore } from './useStore'
 import { wrapThunk } from './useActions'
+import { StoreContext } from './SpiderRoot'
 
+/**
+ * powerful utils are provided for tinkering,
+ * but generally shouldn't be used directly.
+ */
 export const utils = {
   ...storeUtils,
   createCustomSelector,
   useStore,
   wrapThunk,
+  StoreContext,
+  createStore,
 }

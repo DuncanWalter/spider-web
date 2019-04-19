@@ -1,4 +1,12 @@
-# Spider Web
+# Spider
+
+This is a collection of packages related to `spider-store`:
+
+- [spider-hook](../packages/spider-hook/README.md)
+- [spider-operations](../packages/spider-operations/README.md)
+- [spider-store](../packages/spider-store/README.md)
+
+<!-- # Spider Web
 
 Tiny, efficient, and consistent state management library.
 
@@ -26,4 +34,4 @@ Tiny, efficient, and consistent state management library.
 
 ## React Hooks
 
-- [**useSlice()**](./reactHooksUseSlice.md)
+- [**useSlice()**](./reactHooksUseSlice.md) -->
