@@ -1,8 +1,8 @@
 {
   "name": "@dwalter/spider-hook",
-  "version": "1.4.2",
+  "version": "1.4.5",
   "sideEffects": false,
-  "description": "waste free state management",
+  "description": "state management for react powered by spider-store",
   "keywords": [
     "state",
     "hooks",
@@ -21,16 +21,13 @@
     "prepublishOnly": "npm run build",
     "build": "rollup -c"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/DuncanWalter/spider-web.git"
-  },
+  "repository": "https://github.com/DuncanWalter/spider-web/tree/master/packages/spider-hook",
   "author": "Duncan Walter",
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/DuncanWalter/spider-web/issues"
   },
-  "homepage": "https://github.com/DuncanWalter/spider-web#readme",
+  "homepage": "https://github.com/DuncanWalter/spider-web/packages/spider-hook#readme",
   "jest": {
     "transform": {
       "^.+\\.tsx?$": "ts-jest"

@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-operations",
-  "version": "1.4.2",
+  "version": "1.4.5",
   "sideEffects": false,
   "description": "waste free state management",
   "keywords": [
