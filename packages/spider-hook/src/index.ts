@@ -26,6 +26,7 @@ import { createCustomSelector } from './useSelector'
 import { useStore } from './useStore'
 import { wrapThunk } from './useActions'
 import { StoreContext } from './SpiderRoot'
+import { useIsFirstRender } from './utils'
 
 /**
  * powerful utils are provided for tinkering,
@@ -38,4 +39,5 @@ export const utils = {
   wrapThunk,
   StoreContext,
   createStore,
+  useIsFirstRender,
 }
