@@ -6,7 +6,8 @@ import { Dispatch } from '@dwalter/spider-store'
 import { SpiderRoot } from './SpiderRoot'
 import { useActions } from './useActions'
 import { createSideEffect, useSideEffect } from './useSideEffect'
-import { createSelector, useSelector } from './useSelector'
+import { useSelector } from './useSelector'
+import { createSelector } from './createSelector'
 
 afterEach(cleanup)
 

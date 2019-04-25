@@ -1,5 +1,5 @@
 import { Store, Reducer, Slice, Dispatch } from '@dwalter/spider-store'
-import { Selector, Source } from './useSelector'
+import { Selector, Source } from './types'
 import { SideEffect } from './useSideEffect'
 
 const sliceRetrievers = new WeakMap()

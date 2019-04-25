@@ -6,7 +6,9 @@ export {
   BindableAction,
   Resolve,
 } from './useActions'
-export { useSelector, createSelector } from './useSelector'
+
+export { useSelector } from './useSelector'
+export { createSelector } from './createSelector'
 export { SpiderRoot } from './SpiderRoot'
 export { useSideEffect, createSideEffect } from './useSideEffect'
 export { Fork } from './Fork'
@@ -22,7 +24,7 @@ export {
 } from '@dwalter/spider-store'
 
 import { utils as storeUtils, createStore } from '@dwalter/spider-store'
-import { createCustomSelector } from './useSelector'
+import { createCustomSelector } from './createCustomSelector'
 import { useStore } from './useStore'
 import { wrapThunk } from './useActions'
 import { StoreContext } from './SpiderRoot'

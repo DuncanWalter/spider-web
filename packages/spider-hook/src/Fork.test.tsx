@@ -5,8 +5,9 @@ import { createReducer, settable } from '@dwalter/create-reducer'
 
 import { SpiderRoot } from './SpiderRoot'
 import { useActions } from './useActions'
-import { useSelector, Selector } from './useSelector'
+import { useSelector } from './useSelector'
 import { Fork } from './Fork'
+import { Selector } from './types'
 
 afterEach(cleanup)
 

@@ -4,13 +4,10 @@ import { useState, memo } from 'react'
 import { Slice } from '@dwalter/spider-store'
 import { keyFork } from '@dwalter/spider-operations'
 
+import { createCustomSelector } from './createCustomSelector'
+import { Source, Selector } from './types'
+import { useSelector } from './useSelector'
 import { useIsFirstRender, noop } from './utils'
-import {
-  Source,
-  Selector,
-  createCustomSelector,
-  useSelector,
-} from './useSelector'
 
 interface ForkProps<K extends string | number, V> {
   selector: Source<V[]>

@@ -10,7 +10,7 @@ import {
 
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop } from './utils'
-import { Source } from './useSelector'
+import { Source } from './types'
 import { getSlice } from './getSlice'
 
 export interface Resolve {

@@ -1,101 +1,164 @@
-import { createBrowserHistory, History, Location, Action } from 'history'
-import React, { useContext, useEffect } from 'react'
-import {
-  Action as SpiderAction,
-  useActions,
-  useSelector,
-  utils,
-} from '@dwalter/spider-hook'
-import pathToRegexp from 'path-to-regexp'
+// import { createBrowserHistory, History, Location, Action } from 'history'
+// import React, { useContext, useEffect, ReactElement } from 'react'
+// import {
+//   Action as SpiderAction,
+//   useActions,
+//   useSelector,
+// } from '@dwalter/spider-hook'
+// import pathToRegexp from 'path-to-regexp'
 
-interface Match {
-  match: string
-}
+// type Route<R> = R | Router<R>
+// type Async<T> = T | Promise<T> | (() => T) | (() => Promise<T>)
+// type Router<R> = { [path: string]: string | Async<Route<R>> }
 
-type Route = React.ReactNode | ((match: Match) => React.ReactNode)
+// interface ResolutionContext<R> {
+//   path: string
+//   match: string
 
-type Router = { [path: string]: Route }
+//   params: { [param: string]: string }
 
-interface HistoryState {
-  location: Location
-  action: Action
-}
+//   push(path: string): unknown
 
-interface HistoryAction extends SpiderAction {
-  type: '@history/update-history'
-  location: Location
-  action: Action
-}
+//   isRoute(route: Async<Route<R>>): route is R
+//   // interpretRoute(ctx: ResolutionContext<R>): R | Promise<R>
+//   // selectRoute(ctx: ResolutionContext<R>): R | Promise<R>
 
-const HistoryContext = React.createContext<null | History>(null)
+//   router: Router<R>
+// }
 
-interface HistoryProviderProps {
-  history?: History
-  children: React.ReactNode
-}
+// interface HistoryState {
+//   location: Location
+//   action: Action
+// }
 
-function historyReducer(
-  state = null as HistoryState | null,
-  { type, action, location }: HistoryAction,
-) {
-  if (type === '@history/update-history') {
-    return { action, location }
-  }
-  return state
-}
+// interface HistoryAction extends SpiderAction {
+//   type: '@history/update-history'
+//   location: Location
+//   action: Action
+// }
 
-function updateHistory(location: Location, action: Action): HistoryAction {
-  return {
-    type: '@history/update-history',
-    location,
-    action,
-    reducers: [historyReducer],
-  }
-}
+// const HistoryContext = React.createContext<null | History>(null)
 
-function HistoryProvider({
-  history = createBrowserHistory(),
-  children,
-}: HistoryProviderProps) {
-  const actions = useActions({ updateHistory })
+// interface HistoryProviderProps {
+//   history?: History
+//   children: React.ReactNode
+// }
 
-  useEffect(() => {
-    actions.updateHistory(history.location, history.action)
-    return history.listen(actions.updateHistory)
-  }, [])
+// function historyReducer(
+//   state = null as HistoryState | null,
+//   { type, action, location }: HistoryAction,
+// ) {
+//   if (type === '@history/update-history') {
+//     return { action, location }
+//   }
+//   return state
+// }
 
-  useSelector(historyReducer)
+// function updateHistory(location: Location, action: Action): HistoryAction {
+//   return {
+//     type: '@history/update-history',
+//     location,
+//     action,
+//     reducers: [historyReducer],
+//   }
+// }
 
-  return (
-    <HistoryContext.Provider value={history}>
-      {children}
-    </HistoryContext.Provider>
-  )
-}
+// function HistoryProvider({
+//   history = createBrowserHistory(),
+//   children,
+// }: HistoryProviderProps) {
+//   const actions = useActions({ updateHistory })
 
-function useHistory() {
-  return useContext(HistoryContext)
-}
+//   useEffect(() => {
+//     actions.updateHistory(history.location, history.action)
+//     return history.listen(actions.updateHistory)
+//   }, [])
 
-function useRouter(
-  match: string | Match,
-  router: Router,
-  fallback?: React.ReactNode,
-) {
-  const history = useHistory()
+//   useSelector(historyReducer)
 
-  if (history === null) {
-    // TODO: awfulness incarnate
-    return undefined as never
-  }
+//   return (
+//     <HistoryContext.Provider value={history}>
+//       {children}
+//     </HistoryContext.Provider>
+//   )
+// }
 
-  const { pathname, search, hash } = history.location
+// function useHistory() {
+//   return useContext(HistoryContext)
+// }
 
-  Object.keys(router).find(path => {
-    const parse = pathToRegexp(`${match}${path}`).exec(
-      `${pathname}${search}${hash}`,
-    )
-    console.log(parse)
-    return !!parse
-  })
-}
+// function useRouter(
+//   // match: string | Match,
+//   router: Router<ReactElement>,
+//   fallback?: React.ReactNode,
+// ) {
+//   const history = useHistory()
+
+//   if (history === null) {
+//     // TODO: awfulness incarnate
+//     return undefined as never
+//   }
+
+//   const { pathname, search, hash } = history.location
+
+//   Object.keys(router).find(path => {
+//     const parse = pathToRegexp(`${match}${path}`).exec(
+//       `${pathname}${search}${hash}`,
+//     )
+//     console.log(parse)
+//     return !!parse
+//   })
+// }
+
+// function interpret<T>(
+//   route: Async<Route<T>>,
+//   isRoute: (arg: Async<Route<T>>) => arg is T,
+// ): T {
+//   if (isRoute(route)) {
+//     return route
+//   }
+//   if (typeof route === 'string') {
+//     // push
+//   }
+//   if (typeof route === 'function') {
+//     return interpret(route(), isRoute)
+//   }
+//   if (Promise && route instanceof Promise) {
+//     return route.then(interpret)
+//   }
+//   if (typeof route === 'object') {
+//     if ('$$typeof' in route) {
+//       return route
+//     } else {
+//       // TODO: recurse into the router switch
+//     }
+//   }
+//   if (typeof route === 'string') {
+//   }
+// }
+
+// function selectRoute<T>(ctx: ResolutionContext<T>) {
+//   const { router, isRoute, path, match, push } = ctx
+
+//   for (let routerPath of Object.keys(router)) {
+//     const pattern = pathToRegexp(`${routerPath}`)
+//     const parse = pattern.exec(path)
+//     if (parse) {
+//       const [match, ...parameters] = parse
+//       const remainingPath = path.slice(match.length)
+
+//       const route = router[routerPath]
+
+//       if (typeof route === 'string') {
+//         replace(route)
+//         return null
+//       } else if (isRoute(route)) {
+//         return route
+//       } else {
+//       }
+//     }
+
+//     console.log(parse)
+//     return !!parse
+//   }
+// }

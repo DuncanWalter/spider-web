@@ -3,7 +3,7 @@ const { terser } = require('rollup-plugin-terser')
 
 module.exports = [
   {
-    input: './src/index.ts',
+    input: './src/index.tsx',
     output: [
       {
         file: 'lib/index.js',
@@ -19,7 +19,7 @@ module.exports = [
     plugins: [typescript()],
   },
   {
-    input: './src/index.ts',
+    input: './src/index.tsx',
     output: [
       {
         file: 'lib/index.min.js',

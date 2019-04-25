@@ -2,11 +2,11 @@ import { useContext, useEffect } from 'react'
 
 import { Dispatch } from '@dwalter/spider-store'
 
-import { StoreContext } from './SpiderRoot'
-import { Source } from './useSelector'
-import { useIsFirstRender, noop, constant, semaphore } from './utils'
 import { getSlice } from './getSlice'
+import { StoreContext } from './SpiderRoot'
+import { Source } from './types'
 import { Resolve } from './useActions'
+import { useIsFirstRender, noop, constant, semaphore } from './utils'
 
 export interface SideEffect<T = any> {
   source: Source<T>
@@ -47,10 +47,10 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
     setup
       ? () => {
           function resolve<U>(wrapper: Source<U>) {
-            return rawResolve(getSlice(dispatch, wrapper))
+            return rawResolve(getSlice<U>(dispatch, wrapper))
           }
           if (!sideEffect.locks.has(dispatch)) {
-            const slice = getSlice(dispatch, sideEffect.source)
+            const slice = getSlice<T>(dispatch, sideEffect.source)
             sideEffect.locks.set(
               dispatch,
               semaphore(() => {
