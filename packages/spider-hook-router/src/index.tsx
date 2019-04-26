@@ -5,26 +5,21 @@
 //   useActions,
 //   useSelector,
 // } from '@dwalter/spider-hook'
-// import pathToRegexp from 'path-to-regexp'
+import pathToRegexp, { Key } from 'path-to-regexp'
+import { isAbsolute, join, formalize } from './join'
 
-// type Route<R> = R | Router<R>
-// type Async<T> = T | Promise<T> | (() => T) | (() => Promise<T>)
-// type Router<R> = { [path: string]: string | Async<Route<R>> }
+type Route<T> = T | string | Router<T> | ThunkRoute<T> | AsyncRoute<T>
+type Router<T> = { [path: string]: Route<T> }
+type ThunkRoute<T> = () => Route<T>
+interface AsyncRoute<T> extends Promise<Route<T>> {}
 
-// interface ResolutionContext<R> {
-//   path: string
-//   match: string
-
-//   params: { [param: string]: string }
-
-//   push(path: string): unknown
-
-//   isRoute(route: Async<Route<R>>): route is R
-//   // interpretRoute(ctx: ResolutionContext<R>): R | Promise<R>
-//   // selectRoute(ctx: ResolutionContext<R>): R | Promise<R>
-
-//   router: Router<R>
-// }
+interface ResolutionContext<T> {
+  path: string
+  match: string
+  params: { [param: string]: string }
+  isTerminal(route: Route<T>): route is T
+  router: Router<T>
+}
 
 // interface HistoryState {
 //   location: Location
@@ -110,55 +105,88 @@
 //   })
 // }
 
-// function interpret<T>(
-//   route: Async<Route<T>>,
-//   isRoute: (arg: Async<Route<T>>) => arg is T,
-// ): T {
-//   if (isRoute(route)) {
-//     return route
-//   }
-//   if (typeof route === 'string') {
-//     // push
-//   }
-//   if (typeof route === 'function') {
-//     return interpret(route(), isRoute)
-//   }
-//   if (Promise && route instanceof Promise) {
-//     return route.then(interpret)
-//   }
-//   if (typeof route === 'object') {
-//     if ('$$typeof' in route) {
-//       return route
-//     } else {
-//       // TODO: recurse into the router switch
-//     }
-//   }
-//   if (typeof route === 'string') {
-//   }
-// }
+function interpret<T>(
+  route: Route<T>,
+  ctx: ResolutionContext<T>,
+): [string | T | AsyncRoute<T> | null, ResolutionContext<T>] {
+  const { isTerminal } = ctx
+  if (isTerminal(route)) {
+    return [route, ctx]
+  } else if (typeof route === 'string') {
+    if (isAbsolute(route)) {
+      return [route, ctx]
+    } else {
+      return [join(ctx.match, route), ctx]
+    }
+  } else if (typeof route === 'function') {
+    return interpret(route(), ctx)
+  } else if (isPromise(route)) {
+    return [route, ctx]
+  } else if (typeof route === 'object') {
+    return selectRoute({ ...ctx, router: route })
+  } else {
+    return [null, ctx]
+  }
+}
 
-// function selectRoute<T>(ctx: ResolutionContext<T>) {
-//   const { router, isRoute, path, match, push } = ctx
+function selectRoute<T>(
+  ctx: ResolutionContext<T>,
+): [string | T | AsyncRoute<T> | null, ResolutionContext<T>] {
+  const { router, path } = ctx
 
-//   for (let routerPath of Object.keys(router)) {
-//     const pattern = pathToRegexp(`${routerPath}`)
-//     const parse = pattern.exec(path)
-//     if (parse) {
-//       const [match, ...parameters] = parse
-//       const remainingPath = path.slice(match.length)
+  for (let routerPath of Object.keys(router)) {
+    const keys: Key[] = []
+    const pattern = pathToRegexp(`${formalize(routerPath)}`, keys, {
+      end: false,
+    })
+    const parse = pattern.exec(path)
+    if (parse) {
+      const [match, ...parameters] = parse
 
-//       const route = router[routerPath]
+      const route = router[routerPath]
 
-//       if (typeof route === 'string') {
-//         replace(route)
-//         return null
-//       } else if (isRoute(route)) {
-//         return route
-//       } else {
-//       }
-//     }
+      return interpret(route, {
+        ...ctx,
+        path: path.slice(match.length),
+        match: `${ctx.match}${match}`,
+        params: {
+          ...ctx.params,
+          ...parameters.reduce(
+            (acc, param, i) => {
+              acc[keys[i].name] = param
+              return acc
+            },
+            {} as { [param: string]: string },
+          ),
+        },
+      })
+    }
+  }
+  return [null, ctx]
+}
 
-//     console.log(parse)
-//     return !!parse
-//   }
-// }
+function isPromise(arg: unknown): arg is Promise<any> {
+  return arg && Promise && arg instanceof Promise
+}
+
+type ResolutionQuery<T> = Partial<ResolutionContext<T>> & {
+  router: Router<T>
+  path: string
+  isTerminal: (arg: unknown) => arg is T
+}
+
+export function resolve<T>({
+  router,
+  path,
+  isTerminal,
+  match = '',
+  params = {},
+}: ResolutionQuery<T>) {
+  return selectRoute({
+    router,
+    params,
+    path,
+    match,
+    isTerminal,
+  })
+}
