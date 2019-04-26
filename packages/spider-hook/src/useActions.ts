@@ -1,39 +1,16 @@
-import { useContext, useState } from 'react'
+import { useContext, useRef } from 'react'
 
-import {
-  Dispatch,
-  Action,
-  ActionList,
-  Store,
-  Resolve as StoreResolve,
-} from '@dwalter/spider-store'
+import { Action, ActionList } from '@dwalter/spider-store'
 
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender, noop } from './utils'
-import { Source } from './types'
-import { getSlice } from './getSlice'
-
-export interface Resolve {
-  <V>(wrapper: Source<V>): V
-}
-
-export interface ThunkAction<Result = any> {
-  (dispatch: Dispatch, resolve: Resolve): Result
-}
-
-export interface ActionCreator<Args extends any[] = any[]> {
-  (...args: Args): Action | ActionList
-}
-
-export interface ActionScheduler<Args extends any[] = any[], Result = any> {
-  (...args: Args): ThunkAction<Result>
-}
-
-export type BindableAction =
-  | Action
-  | ActionList
-  | ActionCreator
-  | ActionScheduler
+import {
+  Store,
+  BindableAction,
+  ActionCreator,
+  ActionScheduler,
+  ThunkAction,
+} from './types'
 
 type BoundAction<A extends BindableAction> = A extends Action
   ? () => void
@@ -60,31 +37,20 @@ type BoundActionMap<Actions extends BindableActionMap> = {
 export function useActions<Actions extends BindableActionMap>(
   actions: Actions,
 ): BoundActionMap<Actions> {
-  const store = useContext(StoreContext)
   const setup = useIsFirstRender()
-  const boundActions = useState(
+  const store = useContext(StoreContext)
+  const { current: boundActions } = useRef(
     setup
-      ? () => {
-          return Object.keys(actions).reduce(
-            (acc, key) => {
-              acc[key] = bindAction(store, actions[key] as BindableAction)
-              return acc
-            },
-            {} as BoundActionMap<Actions>,
-          )
-        }
+      ? Object.keys(actions).reduce(
+          (acc, key) => {
+            acc[key] = bindAction(store, actions[key] as BindableAction)
+            return acc
+          },
+          {} as BoundActionMap<Actions>,
+        )
       : noop,
-  )[0]
+  )
   return boundActions
-}
-
-/**
- * `wrapThunk` is an escape hatch that should not be used.
- * @param thunk
- */
-export function wrapThunk<Result>(thunk: ThunkAction<Result>) {
-  return (dispatch: Dispatch, resolve: StoreResolve) =>
-    thunk(dispatch, wrapper => resolve(getSlice(dispatch, wrapper)))
 }
 
 function bindAction<Action extends BindableAction>(
@@ -92,8 +58,10 @@ function bindAction<Action extends BindableAction>(
   action: BindableAction,
 ): BoundAction<Action>
 
-function bindAction(store: Store, actionable: Action | ActionList | Function) {
-  const { dispatch } = store
+function bindAction(
+  { dispatch, resolve, getSlice }: Store,
+  actionable: Action | ActionList | Function,
+) {
   if (typeof actionable == 'function') {
     return function() {
       const action: Action | ActionList | ThunkAction = actionable.apply(
@@ -101,7 +69,7 @@ function bindAction(store: Store, actionable: Action | ActionList | Function) {
         arguments,
       )
       if (typeof action == 'function') {
-        return dispatch(wrapThunk(action))
+        return action(dispatch, source => resolve(getSlice(source)))
       } else {
         dispatch(action)
       }

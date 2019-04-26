@@ -1,54 +1,43 @@
 import { Slice, createSlice } from './slice'
 import { propagateSlices } from './propagateSlices'
-import { SliceSet } from './SliceSet'
+import { SliceSet } from './sliceSet'
 import { unstack } from './unstack'
 import { resolveSlice } from './resolveSlice'
 import { isFunction } from './isFunction'
+import {
+  Reducer,
+  Store as SafeStore,
+  Action,
+  ActionList,
+  Dispatch,
+  Resolve,
+  Middleware,
+} from './types'
 
-export interface StateSlice<V> extends Slice<V> {
+interface StateSlice<V> extends Slice<V> {
   updateState(action: Action, marks: SliceSet): void
 }
 
-export interface Resolve {
-  <V>(wrapper: Slice<V> | Reducer<V, any>): V
-}
-
-export interface Dispatch {
-  (action: Action | ActionList): void
-  <Result>(thunk: (dispatch: Dispatch, resolve: Resolve) => Result): Result
-}
-
-export interface Action {
-  type: string
-  reducers: Reducer<any, any>[]
-}
-
-export interface ActionList extends Array<ActionList | Action> {}
-
-export interface Reducer<State, A extends Action = Action> {
-  (state: State | undefined, action: A): State
-}
-
-export interface Store {
+interface Store {
   dispatch: Dispatch
   resolve: Resolve
   wrapReducer: <S>(reducer: Reducer<S, any>) => StateSlice<S>
   slices: Map<Reducer<any>, StateSlice<any>>
 }
 
-export function createStore(): Store {
-  const slices = new Map<Reducer<any>, StateSlice<any>>()
+export function createStore(...middlewares: Middleware[]): SafeStore {
+  const store = { slices: new Map() } as Store
 
-  const store = { slices } as Store
+  const { slices } = store
 
-  function dispatch(actions: Action | ActionList, marks: SliceSet): void {
+  function dispatch(actions: Action | ActionList, marks: SliceSet) {
     if (Array.isArray(actions)) {
       for (let action of actions) {
         dispatch(action, marks)
       }
     } else {
       for (let reducer of actions.reducers) {
-        const slice = slices.get(reducer) || store.wrapReducer(reducer)
+        const slice = store.wrapReducer(reducer)
         slice.updateState(actions, marks)
       }
     }
@@ -60,11 +49,15 @@ export function createStore(): Store {
     propagateSlices(marks)
   }
 
-  const unstackedDispatch = unstack(rootDispatch)
+  const appliedDispatch = middlewares
+    .map(middleware => middleware(store))
+    .reduceRight((next, middleware) => middleware(next), rootDispatch)
+
+  const unstackedDispatch = unstack(appliedDispatch)
 
   function safeDispatch(actionable: Action | ActionList | Function): unknown {
     if (isFunction(actionable)) {
-      return actionable(safeDispatch, resolve)
+      return actionable(safeDispatch, store.resolve)
     } else {
       unstackedDispatch(actionable)
     }
@@ -72,12 +65,7 @@ export function createStore(): Store {
 
   function resolve<V>(wrapper: Slice<V> | Reducer<V>) {
     if (isFunction(wrapper)) {
-      const slice = slices.get(wrapper)
-      if (slice) {
-        return resolveSlice(slice)
-      } else {
-        return wrapper(undefined, { type: '@store/resolve', reducers: [] })
-      }
+      return resolveSlice(store.wrapReducer(wrapper))
     } else {
       return resolveSlice(wrapper)
     }
@@ -86,11 +74,9 @@ export function createStore(): Store {
   function wrapReducer<State>(reducer: Reducer<State>) {
     if (slices.get(reducer)) return slices.get(reducer)!
 
-    let state = reducer(undefined, { type: '@store/init', reducers: [] })
+    let state = reducer(undefined, { type: '@store/init', reducers: [reducer] })
 
-    const slice = createSlice([] as Slice[], _ => state, state) as StateSlice<
-      State
-    >
+    const slice = createSlice([], _ => state, state) as StateSlice<State>
 
     function updateState(action: Action, marks: SliceSet) {
       const oldState = state
@@ -108,45 +94,7 @@ export function createStore(): Store {
   }
 
   store.dispatch = safeDispatch as Dispatch
-  store.resolve = resolve
+  store.resolve = resolve as Resolve
   store.wrapReducer = wrapReducer
   return store
-}
-
-function applyMiddleWare<T, R>(
-  middleware: ((t: T, next: (t: T) => R) => R)[],
-  baseFunction: (t: T) => R,
-) {
-  return (t: T) => {
-    let i = 0
-    let res: R
-
-    function next(t: T): R {
-      for (; i <= middleware.length; ) {
-        i += 1
-        if (i < middleware.length) {
-          res = middleware[i](t, next)
-        } else {
-          res = baseFunction(t)
-        }
-      }
-      return res
-    }
-
-    return next(t)
-  }
-}
-
-interface GeneralizedList<T> extends Array<GeneralizedListNode<T>> {}
-
-type GeneralizedListNode<T> = T | GeneralizedList<T>
-
-function walkGeneralizedList<T>(ts: GeneralizedListNode<T>, f: (t: T) => void) {
-  if (Array.isArray(ts)) {
-    for (let t of ts) {
-      walkGeneralizedList(t, f)
-    }
-  } else {
-    f(ts)
-  }
 }

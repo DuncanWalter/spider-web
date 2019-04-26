@@ -1,5 +1,5 @@
 import { Slice } from './slice'
-import { SliceSet } from './SliceSet'
+import { SliceSet } from './sliceSet'
 
 function propagateUpdate(slice: Slice, marks: SliceSet) {
   const updated = slice.tryUpdate()

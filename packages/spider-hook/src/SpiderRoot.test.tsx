@@ -5,9 +5,10 @@ import { Dispatch } from '@dwalter/spider-store'
 
 import { SpiderRoot } from './SpiderRoot'
 import { useActions } from './useActions'
-import { createSideEffect, useSideEffect } from './useSideEffect'
+import { useSideEffect } from './useSideEffect'
 import { useSelector } from './useSelector'
 import { createSelector } from './createSelector'
+import { createSideEffect } from './createSideEffect'
 
 afterEach(cleanup)
 

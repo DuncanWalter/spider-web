@@ -1,6 +1,5 @@
-import { useContext, useState, useEffect } from 'react'
+import { useContext, useState, useEffect, useRef } from 'react'
 
-import { getSlice } from './getSlice'
 import { StoreContext } from './SpiderRoot'
 import { Source } from './types'
 import { useIsFirstRender, noop, constant } from './utils'
@@ -14,20 +13,18 @@ import { useIsFirstRender, noop, constant } from './utils'
  */
 export function useSelector<T>(selector: Source<T>): T {
   const setup = useIsFirstRender()
-  const store = useContext(StoreContext)
-  const slice = useState(
-    setup ? getSlice<T>(store.dispatch, selector) : noop,
-  )[0]
 
-  const [value, setValue] = useState(setup ? () => store.resolve(slice) : noop)
+  const { resolve, getSlice } = useContext(StoreContext)
+
+  const { current: slice } = useRef(setup ? getSlice<T>(selector) : noop)
+
+  const [value, setValue] = useState(setup ? () => resolve(slice) : noop)
 
   useEffect(
     setup
       ? () => {
           const subscription = slice.subscribe(setValue)
-          return () => {
-            slice.unsubscribe(subscription)
-          }
+          return () => slice.unsubscribe(subscription)
         }
       : noop,
     constant,

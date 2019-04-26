@@ -1,5 +1,6 @@
-import { createStore, Action } from './createStore'
+import { createStore } from './createStore'
 import { joinSlices } from './joinSlices'
+import { Action, Middleware } from './types'
 
 test('Diamond case handling is efficient and stable', async done => {
   const { dispatch, wrapReducer } = createStore()
@@ -87,4 +88,31 @@ test('Arbitrary reducers with known action types can be used', () => {
   const { wrapReducer } = createStore()
 
   wrapReducer(reducer)
+})
+
+test('Middleware is properly applied and run', () => {
+  let count = 0
+  const countingMiddleware: Middleware = () => next => action => {
+    count++
+    next(action)
+  }
+
+  const { dispatch, wrapReducer } = createStore(countingMiddleware)
+
+  let reducerCalls = 0
+
+  function reducer(i: number = 0) {
+    reducerCalls += 1
+    return ++i
+  }
+
+  wrapReducer(reducer)
+
+  expect(count).toBe(0)
+  expect(reducerCalls).toBe(1)
+
+  dispatch({ type: 'increment', reducers: [reducer] })
+
+  expect(count).toBe(1)
+  expect(reducerCalls).toBe(2)
 })

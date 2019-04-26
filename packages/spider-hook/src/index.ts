@@ -1,18 +1,13 @@
-export {
-  useActions,
-  ThunkAction,
-  ActionCreator,
-  ActionScheduler,
-  BindableAction,
-  Resolve,
-} from './useActions'
-
-export { useSelector } from './useSelector'
 export { createSelector } from './createSelector'
-export { SpiderRoot } from './SpiderRoot'
-export { useSideEffect, createSideEffect } from './useSideEffect'
+export { createSideEffect } from './createSideEffect'
 export { Fork } from './Fork'
+export { SpiderRoot } from './SpiderRoot'
 export { tuple } from './utils'
+export { useActions } from './useActions'
+export { useSelector } from './useSelector'
+export { useSideEffect } from './useSideEffect'
+
+export * from './types'
 
 export {
   Action,
@@ -20,13 +15,11 @@ export {
   Reducer,
   Dispatch,
   Slice,
-  Store,
 } from '@dwalter/spider-store'
 
 import { utils as storeUtils, createStore } from '@dwalter/spider-store'
 import { createCustomSelector } from './createCustomSelector'
 import { useStore } from './useStore'
-import { wrapThunk } from './useActions'
 import { StoreContext } from './SpiderRoot'
 import { useIsFirstRender } from './utils'
 
@@ -38,7 +31,6 @@ export const utils = {
   ...storeUtils,
   createCustomSelector,
   useStore,
-  wrapThunk,
   StoreContext,
   createStore,
   useIsFirstRender,
