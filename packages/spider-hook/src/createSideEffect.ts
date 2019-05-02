@@ -1,5 +1,4 @@
-import { Dispatch } from '@dwalter/spider-store'
-import { Source, Resolve, SideEffect } from './types'
+import { Source, Resolve, SideEffect, Dispatch } from './types'
 
 /**
  * Creates a `SideEffect` which runs a callback whenever the value

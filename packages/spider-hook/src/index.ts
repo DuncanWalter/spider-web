@@ -3,7 +3,7 @@ export { createSideEffect } from './createSideEffect'
 export { Fork } from './Fork'
 export { SpiderRoot } from './SpiderRoot'
 export { tuple } from './utils'
-export { useActions } from './useActions'
+export { useDispatch } from './useDispatch'
 export { useSelector } from './useSelector'
 export { useSideEffect } from './useSideEffect'
 
@@ -21,7 +21,7 @@ import { utils as storeUtils, createStore } from '@dwalter/spider-store'
 import { createCustomSelector } from './createCustomSelector'
 import { useStore } from './useStore'
 import { StoreContext } from './SpiderRoot'
-import { useIsFirstRender } from './utils'
+import { useShouldUpdate } from './utils'
 
 /**
  * powerful utils are provided for tinkering,
@@ -33,5 +33,5 @@ export const utils = {
   useStore,
   StoreContext,
   createStore,
-  useIsFirstRender,
+  useShouldUpdate,
 }

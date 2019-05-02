@@ -1,8 +1,8 @@
 import React, { ReactChild, useRef } from 'react'
 
 import { createStore, Store as InnerStore, Slice } from '@dwalter/spider-store'
-import { Source, Selector, Store } from './types'
-import { useIsFirstRender, noop } from './utils'
+import { Source, Selector, Store, BindableAction } from './types'
+import { useShouldUpdate, noop } from './utils'
 
 function contextError(): any {
   throw new Error(
@@ -15,11 +15,13 @@ export const StoreContext = React.createContext<Store>({
   dispatch: contextError,
   resolve: contextError,
   getSlice: contextError,
+  hookDispatch: contextError,
+  hookResolve: contextError,
 })
 
 export interface SpiderRootProps {
   children: ReactChild
-  configureStore?: () => InnerStore
+  configureStore?: (storeFactory: typeof createStore) => InnerStore
 }
 
 /**
@@ -32,27 +34,44 @@ export interface SpiderRootProps {
  * `SpiderRoot`.
  *
  * `SpiderRoot` accepts a single optional prop: `configureStore`.
- * `configureStore` is a function which takes no parameters and
- * returns a `Store`.
  */
 export function SpiderRoot({
   children,
-  configureStore = createStore,
+  configureStore = () => createStore(),
 }: SpiderRootProps) {
-  const setup = useIsFirstRender()
+  const shouldUpdate = useShouldUpdate()
 
   const { current: store } = useRef(
-    setup ? createStoreContextContent(configureStore) : noop,
+    shouldUpdate ? createStoreContextContent(configureStore) : noop,
   )
 
   return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }
 
-function createStoreContextContent(configureStore: () => InnerStore) {
-  const store = configureStore()
+function createStoreContextContent(
+  configureStore: (storeFactory: typeof createStore) => InnerStore,
+) {
+  const store = configureStore(createStore)
+
+  const getSlice = createGetSlice(store)
+
+  function hookResolve<T>(source: Source<T>) {
+    return store.resolve(getSlice(source))
+  }
+
+  function hookDispatch(action: BindableAction) {
+    if (typeof action === 'function') {
+      return action(hookDispatch, hookResolve)
+    } else {
+      store.dispatch(action)
+    }
+  }
+
   return {
     ...store,
-    getSlice: createGetSlice(store),
+    getSlice,
+    hookResolve,
+    hookDispatch,
   }
 }
 

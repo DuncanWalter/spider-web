@@ -4,10 +4,11 @@ import { render, cleanup, waitForDomChange } from 'react-testing-library'
 import { createReducer, settable } from '@dwalter/create-reducer'
 
 import { SpiderRoot } from './SpiderRoot'
-import { useActions } from './useActions'
+import { useDispatch } from './useDispatch'
 import { useSelector } from './useSelector'
 import { Fork } from './Fork'
-import { Selector } from './types'
+import { Selector, Dispatch } from './types'
+import { noop } from './utils'
 
 afterEach(cleanup)
 
@@ -18,11 +19,11 @@ test('Testing the Fork component', async done => {
 
   let collectionRenderCount = 0
   let itemRenderCount = 0
-  let actions = { setNumbers: (v: number[]) => {} }
+  let dispatch: Dispatch = noop
 
   function Collection() {
     collectionRenderCount += 1
-    actions = useActions({ setNumbers })
+    dispatch = useDispatch()
     return (
       <div data-testid="collection">
         <Fork selector={numbers} render={Item} />
@@ -57,7 +58,7 @@ test('Testing the Fork component', async done => {
   expect(collectionRenderCount).toBe(2)
   expect(itemRenderCount).toBe(2)
 
-  actions.setNumbers([1, 3])
+  dispatch(setNumbers([1, 3]))
 
   waitForDomChange({ container: component })
 
@@ -65,7 +66,7 @@ test('Testing the Fork component', async done => {
   expect(collectionRenderCount).toBe(2)
   expect(itemRenderCount).toBe(3)
 
-  actions.setNumbers([1, 3, 2])
+  dispatch(setNumbers([1, 3, 2]))
 
   expect(component.children.length).toBe(3)
   expect(collectionRenderCount).toBe(2)

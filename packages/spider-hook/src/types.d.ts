@@ -1,7 +1,6 @@
 import {
   Slice,
   Reducer,
-  Dispatch,
   Store as InnerStore,
   Action,
   ActionList,
@@ -21,11 +20,18 @@ export interface SideEffect<T = any> {
 }
 
 export interface Resolve {
-  <V>(wrapper: Source<V>): V
+  <V>(source: Source<V>): V
+}
+
+export interface Dispatch {
+  (action: Action | ActionList): void
+  <Result>(thunk: (dispatch: Dispatch, resolve: Resolve) => Result): Result
 }
 
 export interface Store extends InnerStore {
   getSlice<T>(source: Source<T>): Slice<T>
+  hookDispatch: Dispatch
+  hookResolve: Resolve
 }
 
 export interface ThunkAction<Result = any> {

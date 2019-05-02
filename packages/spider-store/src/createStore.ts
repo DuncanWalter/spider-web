@@ -28,12 +28,19 @@ interface Store {
 export function createStore(...middlewares: Middleware[]): SafeStore {
   const store = { slices: new Map() } as Store
 
-  const { slices } = store
+  store.wrapReducer = createWrapReducer(store)
+  store.resolve = createResolve(store)
+  store.dispatch = createDispatch(store, middlewares)
 
-  function dispatch(actions: Action | ActionList, marks: SliceSet) {
+  return store
+}
+
+function createDispatch(store: Store, middlewares: Middleware[]) {
+  // apply state updates and mark slices with changed content
+  function executeDispatch(actions: Action | ActionList, marks: SliceSet) {
     if (Array.isArray(actions)) {
       for (let action of actions) {
-        dispatch(action, marks)
+        executeDispatch(action, marks)
       }
     } else {
       for (let reducer of actions.reducers) {
@@ -43,36 +50,48 @@ export function createStore(...middlewares: Middleware[]): SafeStore {
     }
   }
 
-  function rootDispatch(actions: Action | ActionList) {
+  // propagate updates from all marked slices
+  function internalDispatch(actions: Action | ActionList) {
     const marks = new SliceSet()
-    dispatch(actions, marks)
+    executeDispatch(actions, marks)
     propagateSlices(marks)
   }
 
-  const appliedDispatch = middlewares
+  // apply middleware chain
+  const augmentedDispatch = middlewares
     .map(middleware => middleware(store))
-    .reduceRight((next, middleware) => middleware(next), rootDispatch)
+    .reduceRight((next, middleware) => middleware(next), internalDispatch)
 
-  const unstackedDispatch = unstack(appliedDispatch)
+  // make it safe to call dispatch in more contexts
+  const unstackedDispatch = unstack(augmentedDispatch)
 
-  function safeDispatch(actionable: Action | ActionList | Function): unknown {
+  // make dispatch aware of thunk actions
+  return function dispatch(
+    actionable: Action | ActionList | Function,
+  ): unknown {
     if (isFunction(actionable)) {
-      return actionable(safeDispatch, store.resolve)
+      return actionable(dispatch, store.resolve)
     } else {
       unstackedDispatch(actionable)
     }
-  }
+  } as Dispatch
+}
 
-  function resolve<V>(wrapper: Slice<V> | Reducer<V>) {
+function createResolve(store: Store) {
+  return function resolve<V>(wrapper: Slice<V> | Reducer<V>) {
     if (isFunction(wrapper)) {
       return resolveSlice(store.wrapReducer(wrapper))
     } else {
       return resolveSlice(wrapper)
     }
   }
+}
 
-  function wrapReducer<State>(reducer: Reducer<State>) {
-    if (slices.get(reducer)) return slices.get(reducer)!
+function createWrapReducer(store: Store) {
+  return function wrapReducer<State>(reducer: Reducer<State>) {
+    if (store.slices.has(reducer)) {
+      return store.slices.get(reducer)!
+    }
 
     let state = reducer(undefined, { type: '@store/init', reducers: [reducer] })
 
@@ -88,13 +107,8 @@ export function createStore(...middlewares: Middleware[]): SafeStore {
 
     slice.updateState = updateState
 
-    slices.set(reducer, slice)
+    store.slices.set(reducer, slice)
 
     return slice
   }
-
-  store.dispatch = safeDispatch as Dispatch
-  store.resolve = resolve as Resolve
-  store.wrapReducer = wrapReducer
-  return store
 }

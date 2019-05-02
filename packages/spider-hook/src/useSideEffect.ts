@@ -1,8 +1,8 @@
 import { useContext, useEffect } from 'react'
 
 import { StoreContext } from './SpiderRoot'
-import { Source, SideEffect } from './types'
-import { useIsFirstRender, noop, constant, semaphore } from './utils'
+import { SideEffect } from './types'
+import { useShouldUpdate, noop, semaphore } from './utils'
 
 /**
  * Activates a `SideEffect` so it will begin watching
@@ -13,16 +13,17 @@ import { useIsFirstRender, noop, constant, semaphore } from './utils'
  * of the component calling `useSideEffect()`
  */
 export function useSideEffect<T>(sideEffect: SideEffect<T>) {
-  const setup = useIsFirstRender()
+  const deps = [sideEffect]
 
-  const { dispatch, resolve: rawResolve, getSlice } = useContext(StoreContext)
+  const shouldUpdate = useShouldUpdate(deps)
+
+  const { hookDispatch: dispatch, hookResolve: resolve, getSlice } = useContext(
+    StoreContext,
+  )
 
   useEffect(
-    setup
+    shouldUpdate
       ? () => {
-          function resolve<U>(wrapper: Source<U>) {
-            return rawResolve(getSlice<U>(wrapper))
-          }
           if (!sideEffect.locks.has(dispatch)) {
             const slice = getSlice<T>(sideEffect.source)
             sideEffect.locks.set(
@@ -38,6 +39,6 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
           return sideEffect.locks.get(dispatch)!()
         }
       : noop,
-    constant,
+    deps,
   )
 }

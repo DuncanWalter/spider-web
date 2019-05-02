@@ -1,14 +1,13 @@
 import * as React from 'react'
 import { render, cleanup, fireEvent } from 'react-testing-library'
 
-import { Dispatch } from '@dwalter/spider-store'
-
 import { SpiderRoot } from './SpiderRoot'
-import { useActions } from './useActions'
 import { useSideEffect } from './useSideEffect'
 import { useSelector } from './useSelector'
 import { createSelector } from './createSelector'
 import { createSideEffect } from './createSideEffect'
+import { useDispatch } from './useDispatch'
+import { Dispatch } from './types'
 
 afterEach(cleanup)
 
@@ -38,14 +37,17 @@ test('Testing the useAction hook', async done => {
     useSideEffect(watchDoubleCounter)
 
     // get fragments of your store
-    const counter = useSelector(getDoubleCounter)
-
-    // bind actions
-    const actions = useActions({ increment })
+    const dispatch = useDispatch()
+    const count = useSelector(getDoubleCounter)
 
     return (
-      <div data-testid="counter" onClick={actions.increment}>
-        {counter}
+      <div
+        data-testid="counter"
+        onClick={() => {
+          dispatch(increment())
+        }}
+      >
+        {count}
       </div>
     )
   }

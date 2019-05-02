@@ -2,7 +2,7 @@ import { useContext, useState, useEffect, useRef } from 'react'
 
 import { StoreContext } from './SpiderRoot'
 import { Source } from './types'
-import { useIsFirstRender, noop, constant } from './utils'
+import { noop, constant, useShouldUpdate } from './utils'
 
 /**
  * A React hook which reads state from a `Selector` or `Reducer` and
@@ -12,17 +12,17 @@ import { useIsFirstRender, noop, constant } from './utils'
  * @param selector The `Selector` or `Reducer` to read state from.
  */
 export function useSelector<T>(selector: Source<T>): T {
-  const setup = useIsFirstRender()
+  const shouldUpdate = useShouldUpdate([selector])
 
   const { resolve, getSlice } = useContext(StoreContext)
 
-  const { current: slice } = useRef(setup ? getSlice<T>(selector) : noop)
+  const slice = shouldUpdate ? getSlice<T>(selector) : noop
 
-  const [value, setValue] = useState(setup ? () => resolve(slice) : noop)
+  const [value, setValue] = useState(shouldUpdate ? () => resolve(slice) : noop)
 
   useEffect(
-    setup
-      ? () => {
+    shouldUpdate
+      ? function() {
           const subscription = slice.subscribe(setValue)
           return () => slice.unsubscribe(subscription)
         }

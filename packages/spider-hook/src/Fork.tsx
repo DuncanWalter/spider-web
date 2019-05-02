@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useState, memo } from 'react'
 
 import { Slice } from '@dwalter/spider-store'
@@ -7,7 +7,7 @@ import { keyFork } from '@dwalter/spider-operations'
 import { createCustomSelector } from './createCustomSelector'
 import { Source, Selector } from './types'
 import { useSelector } from './useSelector'
-import { useIsFirstRender, noop } from './utils'
+import { useShouldUpdate, noop } from './utils'
 
 interface ForkProps<K extends string | number, V> {
   selector: Source<V[]>
@@ -38,20 +38,27 @@ function Fork<K extends string | number, V>({
   getKey = (_, i) => i as K,
   render,
 }: ForkProps<K, V>) {
-  const setup = useIsFirstRender()
+  const deps = [selector]
 
-  const getSlices = useState(setup ? forkSelector(selector, getKey) : noop)[0]
+  const shouldUpdate = useShouldUpdate(deps)
+
+  const getSlices = useMemo(
+    shouldUpdate ? () => forkSelector(selector, getKey) : noop,
+    deps,
+  )
+
   const slices = useSelector(getSlices)
 
-  const MemoComponent = useState(
-    setup
+  const MemoComponent = useMemo(
+    shouldUpdate
       ? () =>
           memo(({ reactKey, slice }: MemoComponentProps<K, V>) => {
-            const getValue = useState(setup ? sliceSelector(slice) : noop)[0]
+            const getValue = sliceSelector(slice)
             return <React.Fragment>{render(getValue, reactKey)}</React.Fragment>
           })
       : noop,
-  )[0]
+    deps,
+  )
 
   return (
     <React.Fragment>
