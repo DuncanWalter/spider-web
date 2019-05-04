@@ -58,7 +58,7 @@ function Counter() {
 - [Fork](./docs/fork.md)
 - [SpiderRoot](./docs/spider-root.md)
 - [tuple()](./docs/tuple.md)
-- [useActions()](#use-actions)
+- [useDispatch()](./docs/use-dispatch.md)
 - [useSelector()](./docs/use-selector.md)
 - [useSideEffect()](./docs/use-side-effect.md)
 

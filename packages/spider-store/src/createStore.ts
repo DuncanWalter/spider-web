@@ -16,6 +16,8 @@ import {
 
 interface StateSlice<V> extends Slice<V> {
   updateState(action: Action, marks: SliceSet): void
+  injectState(state: V, marks: SliceSet): void
+  sliceName: string
 }
 
 interface Store {
@@ -34,6 +36,8 @@ export function createStore(...middlewares: Middleware[]): SafeStore {
 
   return store
 }
+
+const initAction = { type: '@store/init', reducers: [] }
 
 function createDispatch(store: Store, middlewares: Middleware[]) {
   // apply state updates and mark slices with changed content
@@ -93,11 +97,11 @@ function createWrapReducer(store: Store) {
       return store.slices.get(reducer)!
     }
 
-    let state = reducer(undefined, { type: '@store/init', reducers: [reducer] })
+    let state = reducer(undefined, initAction)
 
     const slice = createSlice([], _ => state, state) as StateSlice<State>
 
-    function updateState(action: Action, marks: SliceSet) {
+    slice.updateState = function updateState(action: Action, marks: SliceSet) {
       const oldState = state
       const newState = (state = reducer(state, action))
       if (oldState !== newState) {
@@ -105,7 +109,15 @@ function createWrapReducer(store: Store) {
       }
     }
 
-    slice.updateState = updateState
+    slice.injectState = function injectState(
+      newState = reducer(undefined, initAction),
+      marks: SliceSet,
+    ) {
+      if (state !== newState) {
+        marks.add(slice)
+        state = newState
+      }
+    }
 
     store.slices.set(reducer, slice)
 
