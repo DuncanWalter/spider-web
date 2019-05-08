@@ -1,11 +1,11 @@
-import React, { useReducer } from 'react'
+import React, { useReducer, ReactElement } from 'react'
 
 import { isPromise } from './utils'
 import { isAbsolute, join, formalize } from './join'
 import {
   MatchResult,
   RootContext,
-  Router as __Router__,
+  Router,
   Route,
   MatchRequest,
   AsyncMatchResult,
@@ -13,17 +13,25 @@ import {
 import { createContext, useContext, useRef } from 'react'
 import pathToRegexp from 'path-to-regexp'
 
-function interpretRoute<T>(
-  route: Route<T>,
-  request: MatchRequest<T>,
-  ctx: RootContext<T>,
-): AsyncMatchResult<T> {
+function interpretRoute(
+  route: Route,
+  request: MatchRequest,
+  ctx: RootContext,
+): AsyncMatchResult {
   if (ctx.isTerminal(route)) {
     return assignRoute(route, request)
   } else if (typeof route === 'string') {
     return assignRoute(resolvePath(route, request), request)
   } else if (typeof route === 'function') {
-    return interpretRoute(route(), request, ctx)
+    return interpretRoute(
+      route({
+        params: request.params,
+        exact: request.path === '',
+        match: request.globalMatch,
+      }),
+      request,
+      ctx,
+    )
   } else if (isPromise(route)) {
     return route.then(syncRoute => interpretRoute(syncRoute, request, ctx))
   } else if (typeof route === 'object') {
@@ -33,115 +41,98 @@ function interpretRoute<T>(
   }
 }
 
-function matchRoute<T>(
-  request: MatchRequest<T>,
-  ctx: RootContext<T>,
-): AsyncMatchResult<T> {
+function pickRoute(
+  cases: string[],
+  request: MatchRequest,
+  ctx: RootContext,
+): AsyncMatchResult {
   const { router, path } = request
+  const [casePath, ...rest] = cases
 
-  for (let routerPath of Object.keys(router)) {
-    const keys: pathToRegexp.Key[] = []
-    const pattern = pathToRegexp(`${formalize(routerPath)}`, keys, {
-      end: false,
-    })
-    const parse = pattern.exec(path)
-    if (parse) {
-      const [match, ...parameters] = parse
-
-      const route = router[routerPath]
-
-      const combinedParams = {
-        ...request.params,
-        ...parameters.reduce(
-          (acc, param, i) => {
-            acc[keys[i].name] = param
-            return acc
-          },
-          {} as { [param: string]: string },
-        ),
-      }
-
-      const innerRequest = {
-        router: request.router,
-        path: path.slice(match.length),
-        globalMatch: `${request.globalMatch}${match}`,
-        localMatch: match,
-        params: combinedParams,
-        parent: request,
-      }
-
-      return interpretRoute(route, innerRequest, ctx)
-    }
+  if (!rest.length) {
+    return assignRoute(null, request)
   }
 
-  return assignRoute(null, request)
+  const keys: pathToRegexp.Key[] = []
+  const pattern = pathToRegexp(`${formalize(casePath)}`, keys, {
+    end: false,
+  })
+  const parse = pattern.exec(path)
+  if (parse) {
+    const [match, ...parameters] = parse
+
+    const route = router[casePath]
+
+    const combinedParams = {
+      ...request.params,
+      ...parameters.reduce(
+        (acc, param, i) => {
+          acc[keys[i].name] = param
+          return acc
+        },
+        {} as { [param: string]: string },
+      ),
+    }
+
+    const innerRequest = {
+      router: request.router,
+      path: path.slice(match.length),
+      globalMatch: `${request.globalMatch}${match}`,
+      localMatch: match,
+      params: combinedParams,
+      parent: request,
+    }
+
+    const result = interpretRoute(route, innerRequest, ctx)
+
+    if (isPromise(result)) {
+      return result.then(route => {
+        if (route === null) {
+          return pickRoute(rest, request, ctx)
+        } else {
+          return result
+        }
+      })
+    } else {
+      if (result.route === null) {
+        return pickRoute(rest, request, ctx)
+      } else {
+        return result
+      }
+    }
+  } else {
+    if (rest.length) {
+      return pickRoute(rest, request, ctx)
+    } else {
+      return assignRoute(null, request)
+    }
+  }
 }
 
-function assignRoute<T>(
-  route: T | string | null,
-  request: MatchRequest<T>,
-): MatchResult<T> {
+function matchRoute(request: MatchRequest, ctx: RootContext): AsyncMatchResult {
+  const { router } = request
+
+  return pickRoute(Object.keys(router), request, ctx)
+}
+
+function assignRoute(
+  route: ReactElement | string | null,
+  request: MatchRequest,
+): MatchResult {
   return {
     ...request,
     route,
   }
 }
 
-// function createHistoryAccessor<T>(match: MatchResult<T>, ctx: RootContext<T>) {
-//   return function accessHistory(
-//     path: string,
-//     callback: (path: string, history: History) => unknown,
-//   ) {
-//     let proposedPath: string
-//     const currentPath = ctx.currentPath
+export const GlobalRoutingContext = createContext<RootContext>({} as any)
+export const LocalRoutingContext = createContext<MatchResult>({} as any)
 
-//     if (isAbsolute(path)) {
-//       proposedPath = path
-//       if (currentPath === path) return
-//     } else {
-//       proposedPath = join(match.match, path)
-//       if (currentPath === proposedPath) return
-//     }
-
-//     const result = matchRoute(
-//       { path, match: '', params: {}, router: match.router },
-//       ctx,
-//     )
-
-//     if (isPromise(result)) {
-//       result.then(({ route }) => {
-//         if (typeof route === 'string') {
-//           accessHistory(route, callback)
-//         } else {
-//           callback(path, history)
-//         }
-//       })
-//     } else {
-//       const { route } = result
-//       if (typeof route === 'string') {
-//         accessHistory(route, callback)
-//       } else {
-//         callback(path, history)
-//       }
-//     }
-//   }
-// }
-
-export const GlobalRoutingContext = createContext<
-  RootContext<React.ReactElement>
->({} as any)
-export const LocalRoutingContext = createContext<
-  MatchResult<React.ReactElement>
->({} as any)
-
-export function useHistory() /*(
-  path: string,
-  callback: (path: string, history: History) => unknown,
-) => void */ {
+export function useHistory() {
   const ctx = useContext(GlobalRoutingContext)
   const match = useContext(LocalRoutingContext)
 
-  const historyAPI = {
+  return {
     push(path: string) {
       ctx.history.push(resolvePath(path, match))
     },
@@ -150,13 +141,13 @@ export function useHistory() /*(
     },
     goBack: ctx.history.goBack,
     goForward: ctx.history.goForward,
+    location: ctx.history.location,
+    block: ctx.history.block,
+    params: match.params,
   }
-
-  return historyAPI //createHistoryAccessor(match, ctx)
 }
 
-type Match = MatchResult<React.ReactElement>
-type Router = __Router__<React.ReactElement>
+type Match = MatchResult
 type AsyncMatch = Match | Promise<Match>
 
 // For optimization, the rule needs to be that this ONLY
@@ -195,14 +186,17 @@ export function useRouter(router: Router): React.ReactElement {
   }
 
   if (isPromise(nextInnerMatch)) {
+    const lastInnerMatch = lastInnerMatchRef.current
     nextInnerMatch.then(innerMatch => {
-      if (typeof innerMatch.route == 'string') {
-        if (innerMatch.route !== ctx.currentPath) {
-          ctx.history.push(innerMatch.route)
+      if (lastInnerMatch === lastInnerMatchRef.current) {
+        if (typeof innerMatch.route == 'string') {
+          if (innerMatch.route !== ctx.currentPath) {
+            replace(innerMatch.route)
+          }
+        } else {
+          lastInnerMatchRef.current = innerMatch
+          forceUpdate()
         }
-      } else {
-        lastInnerMatchRef.current = innerMatch
-        forceUpdate()
       }
     })
   } else {
@@ -238,7 +232,7 @@ export function useForceUpdate() {
   return forceUpdate as () => void
 }
 
-function resolvePath(path: string, request: MatchRequest<any>) {
+function resolvePath(path: string, request: MatchRequest) {
   if (isAbsolute(path)) {
     return path
   } else {
@@ -251,5 +245,3 @@ function resolvePath(path: string, request: MatchRequest<any>) {
     )
   }
 }
-
-// const noop: never = (() => {}) as never

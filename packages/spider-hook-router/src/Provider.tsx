@@ -8,15 +8,12 @@ import {
 } from './push'
 
 interface ProviderProps {
-  history?: History
+  history: History
   children: ReactNode
 }
 
-export function Provider({
-  history = createHashHistory(),
-  children,
-}: ProviderProps) {
-  const ctx: RootContext<ReactElement> = useMemo(
+export function Provider({ history, children }: ProviderProps) {
+  const ctx: RootContext = useMemo(
     () => ({
       history,
       isTerminal: isReactElement,
@@ -35,7 +32,7 @@ export function Provider({
     return unsubscribe
   }, [])
 
-  const match: MatchResult<ReactElement> = useMemo(
+  const match: MatchResult = useMemo(
     () => ({
       path: ctx.currentPath,
       globalMatch: '',

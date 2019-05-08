@@ -1,31 +1,38 @@
 import { History } from 'history'
+import { ReactElement } from 'react'
 
-export type Route<T> = T | string | Router<T> | ThunkRoute<T> | AsyncRoute<T>
-export type Router<T> = { [path: string]: Route<T> }
-type ThunkRoute<T> = () => Route<T>
-interface AsyncRoute<T> extends Promise<Route<T>> {}
+export type Route = ReactElement | string | Router | ThunkRoute | AsyncRoute
+export type Router = { [path: string]: Route }
+type ThunkRoute = (match: ThunkRouteParams) => Route
+interface AsyncRoute extends Promise<Route> {}
 
-export interface MatchRequest<T> {
-  router: Router<T>
+interface ThunkRouteParams {
+  params: { [param: string]: string }
+  exact: boolean
+  match: string
+}
+
+export interface MatchRequest {
+  router: Router
   path: string
   globalMatch: string
   localMatch: string
   params: { [param: string]: string }
 }
 
-export interface MatchResult<T> {
-  route: string | T | null
-  router: Router<T>
+export interface MatchResult {
+  route: string | ReactElement | null
+  router: Router
   path: string
   globalMatch: string
   localMatch: string
   params: { [param: string]: string }
 }
 
-export type AsyncMatchResult<T> = Promise<MatchResult<T>> | MatchResult<T>
+export type AsyncMatchResult = Promise<MatchResult> | MatchResult
 
-export interface RootContext<T> {
+export interface RootContext {
   history: History
   currentPath: string
-  isTerminal(route: Route<T>): route is T
+  isTerminal(route: Route): route is ReactElement
 }
