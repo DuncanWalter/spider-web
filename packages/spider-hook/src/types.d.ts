@@ -7,6 +7,7 @@ import {
   Dispatch as InnerDispatch,
   Resolve as InnerResolve,
   WrapReducer,
+  createStore,
 } from '@dwalter/spider-store'
 
 export interface Selector<T = any> {
@@ -54,3 +55,5 @@ export type BindableAction =
   | ActionList
   | ActionCreator
   | ActionScheduler
+
+export type CreateStore = typeof createStore
