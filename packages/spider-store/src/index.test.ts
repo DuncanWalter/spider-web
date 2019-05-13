@@ -92,10 +92,12 @@ test('Arbitrary reducers with known action types can be used', () => {
 
 test('Middleware is properly applied and run', () => {
   let count = 0
-  const countingMiddleware: Middleware = () => next => action => {
-    count++
-    next(action)
-  }
+  const countingMiddleware: Middleware = (_, { dispatch }) => ({
+    dispatch(action) {
+      count++
+      dispatch(action)
+    },
+  })
 
   const { dispatch, wrapReducer } = createStore(countingMiddleware)
 

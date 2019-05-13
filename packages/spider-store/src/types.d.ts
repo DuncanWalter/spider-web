@@ -1,15 +1,30 @@
 import { Slice } from './slice'
-import { SliceSet } from './sliceSet'
-
-export { Subscription } from './sliceSet'
+import { SliceSet, Subscription } from './sliceSet'
+import { StateSlice } from './createStore'
 
 export interface Resolve {
   <V>(wrapper: Slice<V> | Reducer<V, any>): V
 }
 
-export interface Dispatch {
+/**
+ * Can be extended using declarations in order
+ * to strongly type middleware which modifies the
+ * call signature of dispatch.
+ */
+export interface RawDispatch {
   (action: Action | ActionList): void
+}
+
+export interface Dispatch extends RawDispatch {
   <Result>(thunk: (dispatch: Dispatch, resolve: Resolve) => Result): Result
+}
+
+export interface RawWrapReducer {
+  <S>(reducer: Reducer<S, any>): StateSlice<S>
+}
+
+export interface WrapReducer {
+  <S>(reducer: Reducer<S, any>): Slice<S>
 }
 
 export interface Action {
@@ -26,14 +41,26 @@ export interface Reducer<State, A extends Action = Action> {
 export interface Store {
   dispatch: Dispatch
   resolve: Resolve
-  wrapReducer: <S>(reducer: Reducer<S, any>) => Slice<S>
+  wrapReducer: WrapReducer
+}
+
+export interface MiddlewareAPI {
+  dispatch: RawDispatch
+  resolve: Resolve
+  wrapReducer: RawWrapReducer
 }
 
 export type Middleware = (
-  store: Store,
-) => (
-  next: (action: Action | ActionList) => void,
-) => (action: Action | ActionList) => void
+  store: RawStore,
+  middlewareAPI: MiddlewareAPI,
+) => Partial<MiddlewareAPI>
+
+export interface RawStore extends Store {
+  dispatch: Dispatch
+  resolve: Resolve
+  wrapReducer: RawWrapReducer
+  slices: Map<Reducer<any>, StateSlice<any>>
+}
 
 export interface Operation<Mixin extends {}> {
   type: '@slice/operation'
