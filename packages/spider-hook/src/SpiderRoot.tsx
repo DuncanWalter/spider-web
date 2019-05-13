@@ -1,6 +1,12 @@
 import React, { ReactChild, useRef } from 'react'
 
-import { createStore, Store as InnerStore, Slice } from '@dwalter/spider-store'
+import {
+  createStore,
+  Store as InnerStore,
+  Slice,
+  utils,
+  WrapReducer,
+} from '@dwalter/spider-store'
 import { Source, Selector, Store, BindableAction } from './types'
 import { useShouldUpdate, noop } from './utils'
 
@@ -15,8 +21,6 @@ export const StoreContext = React.createContext<Store>({
   dispatch: contextError,
   resolve: contextError,
   getSlice: contextError,
-  hookDispatch: contextError,
-  hookResolve: contextError,
 })
 
 export interface SpiderRootProps {
@@ -41,7 +45,7 @@ export function SpiderRoot({
 }: SpiderRootProps) {
   const shouldUpdate = useShouldUpdate()
 
-  const { current: store } = useRef(
+  const { current: store } = useRef<Store>(
     shouldUpdate ? createStoreContextContent(configureStore) : noop,
   )
 
@@ -50,32 +54,36 @@ export function SpiderRoot({
 
 function createStoreContextContent(
   configureStore: (storeFactory: typeof createStore) => InnerStore,
-) {
-  const store = configureStore(createStore)
+): Store {
+  const { wrapReducer, dispatch, resolve } = configureStore(createStore)
 
-  const getSlice = createGetSlice(store)
+  const getSlice = createGetSlice(wrapReducer)
 
-  function hookResolve<T>(source: Source<T>) {
-    return store.resolve(getSlice(source))
+  function hookResolve<T>(source: Source<T> | Slice<T>) {
+    if (utils.isSlice(source)) {
+      return resolve(source)
+    } else {
+      return resolve(getSlice(source as Source<T>))
+    }
   }
 
   function hookDispatch(action: BindableAction) {
     if (typeof action === 'function') {
       return action(hookDispatch, hookResolve)
     } else {
-      store.dispatch(action)
+      dispatch(action)
     }
   }
 
   return {
-    ...store,
+    wrapReducer,
+    resolve: hookResolve,
+    dispatch: hookDispatch,
     getSlice,
-    hookResolve,
-    hookDispatch,
   }
 }
 
-function createGetSlice({ wrapReducer }: InnerStore) {
+function createGetSlice(wrapReducer: WrapReducer) {
   const selectorSlices = new WeakMap<Selector<any>, Slice>()
 
   function getSelectorSlice<T>(selector: Selector<T>): Slice<T> {

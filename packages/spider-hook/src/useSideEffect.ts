@@ -17,9 +17,7 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
 
   const shouldUpdate = useShouldUpdate(deps)
 
-  const { hookDispatch: dispatch, hookResolve: resolve, getSlice } = useContext(
-    StoreContext,
-  )
+  const { dispatch, resolve, getSlice } = useContext(StoreContext)
 
   useEffect(
     shouldUpdate

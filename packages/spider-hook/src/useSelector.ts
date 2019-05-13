@@ -1,4 +1,4 @@
-import { useContext, useState, useEffect, useRef } from 'react'
+import { useContext, useState, useEffect } from 'react'
 
 import { StoreContext } from './SpiderRoot'
 import { Source } from './types'

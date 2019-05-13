@@ -1,9 +1,12 @@
 import {
   Slice,
   Reducer,
-  Store as InnerStore,
   Action,
   ActionList,
+  Store as InnerStore,
+  Dispatch as InnerDispatch,
+  Resolve as InnerResolve,
+  WrapReducer,
 } from '@dwalter/spider-store'
 
 export interface Selector<T = any> {
@@ -19,19 +22,19 @@ export interface SideEffect<T = any> {
   locks: WeakMap<Dispatch, () => () => void>
 }
 
-export interface Resolve {
+export interface Resolve extends InnerResolve {
   <V>(source: Source<V>): V
 }
 
-export interface Dispatch {
-  (action: Action | ActionList): void
+export interface Dispatch extends InnerDispatch {
   <Result>(thunk: (dispatch: Dispatch, resolve: Resolve) => Result): Result
 }
 
-export interface Store extends InnerStore {
+export interface Store {
   getSlice<T>(source: Source<T>): Slice<T>
-  hookDispatch: Dispatch
-  hookResolve: Resolve
+  dispatch: Dispatch
+  resolve: Resolve
+  wrapReducer: WrapReducer
 }
 
 export interface ThunkAction<Result = any> {

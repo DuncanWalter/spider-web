@@ -1,21 +1,21 @@
 import { useRef } from 'react'
 
-let hash = -(2 ** 53) + 1
 export function useShouldUpdate(deps?: unknown[]) {
-  const depsRef = useRef(deps)
-  const isFirstRender = useRef(++hash).current === hash
+  const depsRef = useRef<unknown[]>()
+  const { current } = depsRef
 
-  if (isFirstRender) {
+  if (!current) {
+    depsRef.current = deps || []
     return true
   }
 
-  if (depsRef.current && deps) {
-    if (deps.length !== depsRef.current.length) {
+  if (deps) {
+    if (deps.length != current.length) {
       depsRef.current = deps
       return true
     }
     for (let i = 0; i < deps.length; i++) {
-      if (deps[i] !== depsRef.current[i]) {
+      if (deps[i] !== current[i]) {
         depsRef.current = deps
         return true
       }

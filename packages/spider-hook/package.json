@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@dwalter/spider-operations": "^1.4.5",
-    "@dwalter/spider-store": "^1.4.6"
+    "@dwalter/spider-store": "^1.5.0"
   },
   "devDependencies": {
     "@dwalter/create-reducer": "1.0.1",
