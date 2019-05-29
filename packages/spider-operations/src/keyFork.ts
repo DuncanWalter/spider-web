@@ -1,5 +1,5 @@
 import { createOperation } from './createOperation'
-import { Slice, utils, Shallow } from '@dwalter/spider-store'
+import { Slice, utils } from '@dwalter/spider-store'
 
 const { createSlice, terminateSlice } = utils
 
@@ -7,7 +7,6 @@ interface KeyFork {
   keyFork<K, V>(
     this: Slice<V[]>,
     getKey: (value: V, index: number) => K,
-    shallow?: Shallow<V>,
   ): Slice<[K, Slice<V>][]>
 }
 
@@ -15,7 +14,6 @@ export const keyFork = createOperation<KeyFork>({
   keyFork<K, V>(
     this: Slice<V[]>,
     getKey: (value: V, index: number) => K,
-    shallow: Shallow<V> = true,
   ): Slice<[K, Slice<V>][]> {
     let lastPairs = new Map<K, [K, Slice<V>]>()
     let keyIndices = new Map<K, number>()
@@ -32,7 +30,6 @@ export const keyFork = createOperation<KeyFork>({
             [this, root as never],
             (values: V[]) => values[keyIndices.get(key)!] as V,
             undefined,
-            shallow,
           ) as Slice<V>,
         ]
 

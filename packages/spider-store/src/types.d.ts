@@ -91,17 +91,3 @@ type OperationSetMixin<O extends OperationSet> = O extends Operation<infer M>
 export type OperationSetListMixin<Os extends OperationSet[]> = Intersection<
   OperationSetMixin<Os[number]>
 >
-
-/**
- * `Shallow` is a type which represents the policy followed by
- * a `Slice` when determining whether an update should be pushed
- * to subscribers. If `true`, the `Slice` will perform a shallow
- * equality check and only push changes if the old and new values
- * of the `Slice` are not equal. If `false`, the `Slice` will push
- * all updates regardless of whether the value appears to have
- * changed. For cases where `false` is not fine grained enough,
- * a function comparing the old and new values can be passed. If the
- * comparing function returns true, the values are considered equal and
- * the update is not pushed to subscribers.
- */
-export type Shallow<V = unknown> = boolean | ((a: V, b: V) => boolean)

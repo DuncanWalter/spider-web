@@ -1,6 +1,5 @@
 import { SliceSet, Subscription } from './sliceSet'
-import { isFunction } from './isFunction'
-import { OperationSet, OperationSetListMixin, Shallow } from './types'
+import { OperationSet, OperationSetListMixin } from './types'
 
 type ValueMap<Slices extends __Slice__[]> = {
   [K in keyof Slices]: Slices[K] extends __Slice__<infer Value> ? Value : never
@@ -19,26 +18,18 @@ type __Slice__<Value = any, Ops = {}> = Slice<Value, any> & Ops
 
 export { __Slice__ as Slice }
 
-function didUpdate<V>(shallow: Shallow<V>, a: V, b: V) {
-  if (isFunction(shallow)) return !shallow(a, b)
-  if (shallow) return a !== b
-  return true
-}
-
 class Slice<V, Ds extends __Slice__[] = any> {
   depth: number
   children: SliceSet
   evaluate: (...dependencies: ValueMap<Ds>) => V
   dependencies: Ds
   value: V
-  shallow: Shallow<V>
   subscriptions: null | Subscription[]
 
   constructor(
     dependencies: Ds,
     evaluate: (...inputs: ValueMap<Ds>) => V,
     initialValue?: V,
-    shallow: Shallow<V> = true,
   ) {
     let depth = 0
     for (let i = 0; i < dependencies.length; i++) {
@@ -47,7 +38,6 @@ class Slice<V, Ds extends __Slice__[] = any> {
       }
     }
     this.depth = depth + 1
-    this.shallow = shallow
     this.value = initialValue as V
     this.evaluate = evaluate
     this.children = new SliceSet()
@@ -62,7 +52,7 @@ class Slice<V, Ds extends __Slice__[] = any> {
   tryUpdate(): boolean {
     const oldValue = this.value
     const newValue = this.resolveShallow()
-    if (didUpdate(this.shallow, oldValue, newValue)) {
+    if (oldValue !== newValue) {
       this.value = newValue
       return true
     }
@@ -135,9 +125,8 @@ export function createSlice<Ds extends __Slice__[], V>(
   dependencies: Ds,
   evaluate: (...inputs: ValueMap<Ds>) => V,
   initialValue?: V,
-  shallow: Shallow<V> = true,
 ): __Slice__<V> {
-  return new Slice(dependencies, evaluate, initialValue, shallow)
+  return new Slice(dependencies, evaluate, initialValue)
 }
 
 export function isSlice<T>(query: unknown): query is __Slice__<T> {
