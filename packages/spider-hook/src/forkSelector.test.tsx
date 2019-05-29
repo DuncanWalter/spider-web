@@ -6,7 +6,7 @@ import { createReducer, settable } from '@dwalter/create-reducer'
 import { SpiderRoot } from './SpiderRoot'
 import { useDispatch } from './useDispatch'
 import { useSelector } from './useSelector'
-import { forkSelector } from './Fork'
+import { forkSelector } from './forkSelector'
 import { Dispatch, Selector } from './types'
 import { noop } from './utils'
 
