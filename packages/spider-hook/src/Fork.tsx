@@ -1,73 +1,68 @@
-import React, { useMemo } from 'react'
-import { useState, memo } from 'react'
+// import React, { useMemo, memo } from 'react'
 
-import { Slice } from '@dwalter/spider-store'
+// import { Slice } from '@dwalter/spider-store'
 import { keyFork } from '@dwalter/spider-operations'
 
 import { createCustomSelector } from './createCustomSelector'
-import { Source, Selector } from './types'
-import { useSelector } from './useSelector'
-import { useShouldUpdate, noop } from './utils'
+import { Selector } from './types'
+// import { useSelector } from './useSelector'
+// import { useShouldUpdate, noop } from './utils'
 
-interface ForkProps<K extends string | number, V> {
-  selector: Source<V[]>
-  render: (selector: Selector<V>, key: K) => React.ReactNode
-  getKey?: (value: V, index: number) => K
-}
+// interface ForkProps<K extends string | number, V> {
+//   selector: Source<V[]>
+//   render: (selector: Selector<V>, key: K) => React.ReactNode
+//   getKey?: (value: V, index: number) => K
+// }
 
-interface MemoComponentProps<K extends string | number, V> {
-  reactKey: K
-  slice: Slice<V>
-}
+// interface MemoComponentProps<K extends string | number, V> {
+//   reactKey: K
+//   slice: Slice<V>
+// }
 
-function forkSelector<K, V>(
-  selector: Source<V[]>,
+export function forkSelector<K, V>(
+  selector: Selector<V[]>,
   getKey: (t: V, i: number) => K,
-): Selector<{ key: K; value: Slice<V> }[]> {
+) {
   return createCustomSelector([selector], slice =>
     slice.use(keyFork).keyFork(getKey),
-  )
+  ) as Selector<[K, Selector<V>][]>
 }
 
-function sliceSelector<V>(slice: Slice<V>): Selector<V> {
-  return createCustomSelector<any[], V>([], () => slice)
-}
+// function Fork<K extends string | number, V>({
+//   selector,
+//   getKey = (_, i) => i as K,
+//   render,
+// }: ForkProps<K, V>) {
+//   const deps = [selector]
 
-function Fork<K extends string | number, V>({
-  selector,
-  getKey = (_, i) => i as K,
-  render,
-}: ForkProps<K, V>) {
-  const deps = [selector]
+//   const shouldUpdate = useShouldUpdate(deps)
 
-  const shouldUpdate = useShouldUpdate(deps)
+//   const getSlices = useMemo(
+//     shouldUpdate ? () => forkSelector(selector, getKey) : noop,
+//     deps,
+//   )
 
-  const getSlices = useMemo(
-    shouldUpdate ? () => forkSelector(selector, getKey) : noop,
-    deps,
-  )
+//   const slices = useSelector(getSlices)
 
-  const slices = useSelector(getSlices)
+//   const MemoComponent = useMemo(
+//     shouldUpdate
+//       ? () =>
+//           memo(({ reactKey, slice }: MemoComponentProps<K, V>) => {
+//             const getValue = sliceSelector(slice)
+//             return <React.Fragment>{render(getValue, reactKey)}</React.Fragment>
+//           })
+//       : noop,
+//     deps,
+//   )
 
-  const MemoComponent = useMemo(
-    shouldUpdate
-      ? () =>
-          memo(({ reactKey, slice }: MemoComponentProps<K, V>) => {
-            const getValue = sliceSelector(slice)
-            return <React.Fragment>{render(getValue, reactKey)}</React.Fragment>
-          })
-      : noop,
-    deps,
-  )
-
-  return (
-    <React.Fragment>
-      {slices.map(({ key, value }) => {
-        return <MemoComponent key={key} reactKey={key} slice={value} />
-      })}
-    </React.Fragment>
-  )
-}
+//   return (
+//     <React.Fragment>
+//       {slices.map(([key, value]) => {
+//         return <MemoComponent key={key} reactKey={key} slice={value} />
+//       })}
+//     </React.Fragment>
+//   )
+// }
 
 /**
  * `Fork` is a heavily optimized component for rendering
@@ -90,6 +85,6 @@ function Fork<K extends string | number, V>({
  * returns a valid React key. This allows for even further
  * optimization.
  */
-const MemoFork = memo(Fork) as typeof Fork
+// const MemoFork = memo(Fork) as typeof Fork
 
-export { MemoFork as Fork }
+// export { MemoFork as Fork }

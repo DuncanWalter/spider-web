@@ -10,21 +10,21 @@ import {
   createStore,
 } from '@dwalter/spider-store'
 
-export interface Selector<T = any> {
-  sources: Source<any>[]
+interface CustomSelector<T> {
+  sources: Selector<any>[]
   mapping: (...slices: any) => Slice<T>
 }
 
-export type Source<T = any> = Reducer<T, any> | Selector<T>
+export type Selector<T = any> = Reducer<T, any> | Slice<T> | CustomSelector<T>
 
 export interface SideEffect<T = any> {
-  source: Source<T>
+  source: Selector<T>
   effect: (input: T, dispatch: Dispatch, resolve: Resolve) => unknown
   locks: WeakMap<Dispatch, () => () => void>
 }
 
 export interface Resolve extends InnerResolve {
-  <V>(source: Source<V>): V
+  <V>(selector: Selector<V>): V
 }
 
 export interface Dispatch extends InnerDispatch {
@@ -32,7 +32,7 @@ export interface Dispatch extends InnerDispatch {
 }
 
 export interface Store {
-  getSlice<T>(source: Source<T>): Slice<T>
+  getSlice<T>(source: Selector<T>): Slice<T>
   dispatch: Dispatch
   resolve: Resolve
   wrapReducer: WrapReducer

@@ -1,14 +1,14 @@
 import { createOperation } from './createOperation'
 import { Slice, utils, Shallow } from '@dwalter/spider-store'
 
-const { createSlice } = utils
+const { createSlice, terminateSlice } = utils
 
 interface KeyFork {
   keyFork<K, V>(
     this: Slice<V[]>,
     getKey: (value: V, index: number) => K,
     shallow?: Shallow<V>,
-  ): Slice<{ key: K; value: Slice<V> }[]>
+  ): Slice<[K, Slice<V>][]>
 }
 
 export const keyFork = createOperation<KeyFork>({
@@ -16,53 +16,55 @@ export const keyFork = createOperation<KeyFork>({
     this: Slice<V[]>,
     getKey: (value: V, index: number) => K,
     shallow: Shallow<V> = true,
-  ): Slice<{ key: K; value: Slice<V> }[]> {
-    const sliceMap = new Map<K, Slice<V>>()
-    const indexMap = new Map<K, number>()
-    let lastValue: { key: K; value: Slice<V> }[] = []
+  ): Slice<[K, Slice<V>][]> {
+    let lastPairs = new Map<K, [K, Slice<V>]>()
+    let keyIndices = new Map<K, number>()
+    let lastResult: [K, Slice<V>][] = []
 
-    const root = createSlice([this], values => {
-      if (sliceMap.size > 2 * values.length) {
-        const keys = new Set()
-        values.map(getKey).forEach(key => keys.add(key))
-        sliceMap.forEach((_, key) => {
-          if (keys.has(key)) {
-            sliceMap.delete(key)
-            indexMap.delete(key)
-          }
-        })
-      }
-
-      let mutated = values.length === lastValue.length ? false : true
-      let result = mutated ? [] : lastValue
-
-      values.forEach((value, index) => {
+    const root: Slice<[K, Slice<V>][]> = createSlice([this], values => {
+      let newPairs = new Map<K, [K, Slice<V>]>()
+      const newResult = values.map((value, index) => {
         const key = getKey(value, index)
-        const slice =
-          sliceMap.get(key) ||
+
+        const pair = lastPairs.get(key) || [
+          key,
           createSlice(
-            [this, root],
-            values => values[indexMap.get(key)!] as V,
+            [this, root as never],
+            (values: V[]) => values[keyIndices.get(key)!] as V,
             undefined,
             shallow,
-          )
-        if (mutated) {
-          indexMap.set(key, index)
-          sliceMap.set(key, slice)
-          result.push({ key, value: slice })
-        } else {
-          let pair = result[index]
-          if (pair.key !== key || pair.value !== slice) {
-            mutated = true
-            result = result.slice(0, index)
-            result.push({ key, value: slice })
-          }
-        }
+          ) as Slice<V>,
+        ]
+
+        keyIndices.set(key, index)
+        lastPairs.delete(key)
+        newPairs.set(key, pair)
+
+        return pair
       })
 
-      lastValue = result
-      return result
+      lastPairs.forEach(([key, value]) => {
+        keyIndices.delete(key)
+        terminateSlice(value)
+      })
+
+      lastPairs = newPairs
+
+      if (contentsMatch(lastResult, newResult)) {
+        return lastResult
+      } else {
+        lastResult = newResult
+        return newResult
+      }
     })
     return root
   },
 })
+
+function contentsMatch(a: unknown[], b: unknown[]) {
+  if (a.length != b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}

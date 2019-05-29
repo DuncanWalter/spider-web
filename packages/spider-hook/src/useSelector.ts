@@ -1,8 +1,8 @@
 import { useContext, useState, useEffect } from 'react'
 
 import { StoreContext } from './SpiderRoot'
-import { Source } from './types'
 import { noop, constant, useShouldUpdate } from './utils'
+import { Selector } from './types'
 
 /**
  * A React hook which reads state from a `Selector` or `Reducer` and
@@ -11,7 +11,7 @@ import { noop, constant, useShouldUpdate } from './utils'
  * correct store using the context api.
  * @param selector The `Selector` or `Reducer` to read state from.
  */
-export function useSelector<T>(selector: Source<T>): T {
+export function useSelector<T>(selector: Selector<T>): T {
   const shouldUpdate = useShouldUpdate([selector])
 
   const { resolve, getSlice } = useContext(StoreContext)

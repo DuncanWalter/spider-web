@@ -1,20 +1,20 @@
 import { createCustomSelector } from './createCustomSelector'
 import { Shallow } from '@dwalter/spider-store'
 import { utils } from '@dwalter/spider-store'
-import { Source, Selector } from './types'
+import { Selector, CustomSelector } from './types'
 
 const { createSlice } = utils
 
-type SourceInputs<Sources extends Source[]> = {
-  [K in keyof Sources]: Sources[K] extends Source<infer T> ? T : never
+type SelectorInputs<Selectors extends Selector[]> = {
+  [K in keyof Selectors]: Selectors[K] extends Selector<infer T> ? T : never
 }
 
-export function createSelector<Sources extends Source[], Result>(
-  sources: Sources,
-  mapping: (...args: SourceInputs<Sources>) => Result,
+export function createSelector<Selectors extends Selector[], Result>(
+  selectors: Selectors,
+  mapping: (...args: SelectorInputs<Selectors>) => Result,
   shallow: Shallow<Result> = true,
-): Selector<Result> {
-  return createCustomSelector(sources, (...slices) =>
+): CustomSelector<Result> {
+  return createCustomSelector(selectors, (...slices) =>
     createSlice(slices, mapping as any, undefined, shallow),
   )
 }

@@ -140,6 +140,6 @@ export function createSlice<Ds extends __Slice__[], V>(
   return new Slice(dependencies, evaluate, initialValue, shallow)
 }
 
-export function isSlice(query: unknown): query is Slice<any> {
+export function isSlice<T>(query: unknown): query is __Slice__<T> {
   return query && query instanceof Slice
 }

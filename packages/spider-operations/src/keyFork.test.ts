@@ -19,7 +19,7 @@ test('Keyed forking dedups and updates properly', async done => {
 
   slices.subscribe(initialContents => {
     outerChanges++
-    let [{ value: innerSlice }] = initialContents
+    let [[, innerSlice]] = initialContents
     if (outerChanges === 1) {
       inner = innerSlice
       innerSlice.subscribe(v => {
@@ -43,6 +43,9 @@ test('Keyed forking dedups and updates properly', async done => {
 
   expect(outerChanges).toBe(2)
   expect(innerChanges).toBe(2)
+
+  dispatch(collectionActions.set([2]))
+  dispatch(collectionActions.set([2, 3]))
 
   done()
 })

@@ -7,7 +7,7 @@ import {
   utils,
   WrapReducer,
 } from '@dwalter/spider-store'
-import { Source, Selector, Store, BindableAction } from './types'
+import { Selector, Store, BindableAction, CustomSelector } from './types'
 import { useShouldUpdate, noop } from './utils'
 
 function contextError(): any {
@@ -59,11 +59,11 @@ function createStoreContextContent(
 
   const getSlice = createGetSlice(wrapReducer)
 
-  function hookResolve<T>(source: Source<T> | Slice<T>) {
-    if (utils.isSlice(source)) {
-      return resolve(source)
+  function hookResolve<T>(selector: Selector<T>) {
+    if (utils.isSlice<T>(selector)) {
+      return resolve(selector)
     } else {
-      return resolve(getSlice(source as Source<T>))
+      return resolve(getSlice(selector))
     }
   }
 
@@ -86,25 +86,27 @@ function createStoreContextContent(
 function createGetSlice(wrapReducer: WrapReducer) {
   const selectorSlices = new WeakMap<Selector<any>, Slice>()
 
-  function getSelectorSlice<T>(selector: Selector<T>): Slice<T> {
+  function getCustomSelectorSlice<T>(selector: CustomSelector<T>): Slice<T> {
     const { sources, mapping } = selector
     if (selectorSlices.has(selector)) {
       return selectorSlices.get(selector)!
     } else {
-      const parents = sources.map(getSourceSlice)
+      const parents = sources.map(getSelectorSlice)
       const slice = mapping.apply(null, parents)
       selectorSlices.set(selector, slice)
       return slice
     }
   }
 
-  function getSourceSlice<T>(source: Source<T>): Slice<T> {
-    if (typeof source === 'function') {
-      return wrapReducer(source)
-    } else {
-      return getSelectorSlice(source)
+  function getSelectorSlice<T>(selector: Selector<T>): Slice<T> {
+    if (utils.isSlice<T>(selector)) {
+      return selector
     }
+    if (typeof selector === 'function') {
+      return wrapReducer(selector)
+    }
+    return getCustomSelectorSlice(selector)
   }
 
-  return getSourceSlice
+  return getSelectorSlice
 }

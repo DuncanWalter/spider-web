@@ -1,4 +1,4 @@
-import * as React from 'react'
+import React, { memo } from 'react'
 import { render, cleanup, waitForDomChange } from 'react-testing-library'
 
 import { createReducer, settable } from '@dwalter/create-reducer'
@@ -6,8 +6,8 @@ import { createReducer, settable } from '@dwalter/create-reducer'
 import { SpiderRoot } from './SpiderRoot'
 import { useDispatch } from './useDispatch'
 import { useSelector } from './useSelector'
-import { Fork } from './Fork'
-import { Selector, Dispatch } from './types'
+import { forkSelector } from './Fork'
+import { Dispatch, Selector } from './types'
 import { noop } from './utils'
 
 afterEach(cleanup)
@@ -17,6 +17,8 @@ test('Testing the Fork component', async done => {
     ...settable<number[]>(),
   })
 
+  const getNumberSelectors = forkSelector(numbers, (_, i) => i)
+
   let collectionRenderCount = 0
   let itemRenderCount = 0
   let dispatch: Dispatch = noop
@@ -24,18 +26,21 @@ test('Testing the Fork component', async done => {
   function Collection() {
     collectionRenderCount += 1
     dispatch = useDispatch()
+    const numberSelectors = useSelector(getNumberSelectors)
     return (
       <div data-testid="collection">
-        <Fork selector={numbers} render={Item} />
+        {numberSelectors.map(([key, getNumber]) => {
+          return <Item key={key} getItem={getNumber} />
+        })}
       </div>
     )
   }
 
-  function Item(getItem: Selector<number>) {
+  const Item = memo(function({ getItem }: { getItem: Selector<number> }) {
     itemRenderCount += 1
     const item = useSelector(getItem)
     return <div>{item}</div>
-  }
+  })
 
   const { getByTestId, rerender } = render(
     <SpiderRoot>
@@ -69,7 +74,7 @@ test('Testing the Fork component', async done => {
   dispatch(setNumbers([1, 3, 2]))
 
   expect(component.children.length).toBe(3)
-  expect(collectionRenderCount).toBe(2)
+  expect(collectionRenderCount).toBe(3)
   expect(itemRenderCount).toBe(4)
 
   done()

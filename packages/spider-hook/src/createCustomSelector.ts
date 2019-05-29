@@ -1,13 +1,13 @@
 import { Slice } from '@dwalter/spider-store'
-import { Source, Selector } from './types'
+import { Selector, CustomSelector } from './types'
 
-type SourceSlices<Sources extends Source[]> = {
-  [K in keyof Sources]: Sources[K] extends Source<infer T> ? Slice<T> : never
+type SourceSlices<Sources extends Selector[]> = {
+  [K in keyof Sources]: Sources[K] extends Selector<infer T> ? Slice<T> : never
 }
 
-export function createCustomSelector<Sources extends Source[], Result>(
+export function createCustomSelector<Sources extends Selector[], Result>(
   sources: Sources,
   mapping: (...slices: SourceSlices<Sources>) => Slice<Result>,
-): Selector<Result> {
+): CustomSelector<Result> {
   return { sources, mapping }
 }

@@ -1,6 +1,6 @@
 export { createSelector } from './createSelector'
 export { createSideEffect } from './createSideEffect'
-export { Fork } from './Fork'
+export { forkSelector } from './Fork'
 export { SpiderRoot } from './SpiderRoot'
 export { tuple } from './utils'
 export { useDispatch } from './useDispatch'

@@ -1,4 +1,4 @@
-import { Source, Resolve, SideEffect, Dispatch } from './types'
+import { Resolve, SideEffect, Dispatch, Selector } from './types'
 
 /**
  * Creates a `SideEffect` which runs a callback whenever the value
@@ -11,7 +11,7 @@ import { Source, Resolve, SideEffect, Dispatch } from './types'
  * value updates.
  */
 export function createSideEffect<T>(
-  selector: Source<T>,
+  selector: Selector<T>,
   effect: (input: T, dispatch: Dispatch, resolve: Resolve) => unknown,
 ): SideEffect<T> {
   return { source: selector, effect, locks: new WeakMap() }
