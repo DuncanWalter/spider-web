@@ -1,7 +1,7 @@
 import * as React from 'react'
 import { render, cleanup, fireEvent } from 'react-testing-library'
 
-import { SpiderRoot } from './SpiderRoot'
+import { Provider } from './Provider'
 import { useSideEffect } from './useSideEffect'
 import { useSelector } from './useSelector'
 import { createSelector } from './createSelector'
@@ -53,9 +53,9 @@ test('Testing the useAction hook', async done => {
   }
 
   const { getByTestId, rerender } = render(
-    <SpiderRoot>
+    <Provider>
       <Counter />
-    </SpiderRoot>,
+    </Provider>,
   )
 
   const component = getByTestId('counter')
@@ -64,9 +64,9 @@ test('Testing the useAction hook', async done => {
   // Rerendering will force effects to run.
   // Normally they would run asynchronously after rendering.
   rerender(
-    <SpiderRoot>
+    <Provider>
       <Counter />
-    </SpiderRoot>,
+    </Provider>,
   )
 
   expect(component.textContent).toBe('2')

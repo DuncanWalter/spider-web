@@ -1,32 +1,25 @@
-import { SliceSet, Subscription } from './sliceSet'
-import { OperationSet, OperationSetListMixin } from './types'
+import { SwapSet, Subscription } from './SwapSet'
+import { Network } from './types'
 
 type ValueMap<Slices extends __Slice__[]> = {
   [K in keyof Slices]: Slices[K] extends __Slice__<infer Value> ? Value : never
 }
 
-/**
- * A `Slice` is similar to an observable with a few key differences.
- * `Slice`s cannot complete, are guaranteed to have exactly one
- * valid state at all times, and have built in support for
- * de-duplicating equivalent states if desired. A `Slice` should
- * be thought of as a wrapper around some piece of state which
- * can be accessed by subscribing to the `Slice`. `Slices` also
- * support an operator API similar to that of `rxjs` (but not the same).
- */
-type __Slice__<Value = any, Ops = {}> = Slice<Value, any> & Ops
+type __Slice__<Value = any> = Slice<Value, any>
 
 export { __Slice__ as Slice }
 
 class Slice<V, Ds extends __Slice__[] = any> {
+  network: Network
   depth: number
-  children: SliceSet
+  children: SwapSet<Slice<unknown>>
   evaluate: (...dependencies: ValueMap<Ds>) => V
   dependencies: Ds
   value: V
-  subscriptions: null | Subscription[]
+  subscriptions: null | Subscription<V>[]
 
   constructor(
+    network: Network,
     dependencies: Ds,
     evaluate: (...inputs: ValueMap<Ds>) => V,
     initialValue?: V,
@@ -37,10 +30,11 @@ class Slice<V, Ds extends __Slice__[] = any> {
         depth = dependencies[i].depth
       }
     }
+    this.network = network
     this.depth = depth + 1
     this.value = initialValue as V
     this.evaluate = evaluate
-    this.children = new SliceSet()
+    this.children = new SwapSet()
     this.dependencies = dependencies
     this.subscriptions = null
   }
@@ -76,6 +70,10 @@ class Slice<V, Ds extends __Slice__[] = any> {
     }
   }
 
+  push() {
+    this.network.queuedUpdates.add(this)
+  }
+
   subscribe(newChild: __Slice__ | ((v: V) => unknown)) {
     if (this.children.isEmpty()) {
       this.subscriptions = this.dependencies.map(d => d.subscribe(this))
@@ -84,7 +82,7 @@ class Slice<V, Ds extends __Slice__[] = any> {
     if (newChild instanceof Slice) {
       return this.children.add(newChild)
     } else {
-      const slice = createSlice([this], newChild as any)
+      const slice = this.map(newChild)
       slice.depth = Infinity
       const subscription = this.children.add(slice)
       newChild(this.value)
@@ -92,7 +90,7 @@ class Slice<V, Ds extends __Slice__[] = any> {
     }
   }
 
-  unsubscribe(subscription: Subscription) {
+  unsubscribe(subscription: Subscription<V>) {
     this.children.remove(subscription)
     if (this.children.isEmpty()) {
       this.dependencies.forEach((d, i) => {
@@ -102,31 +100,18 @@ class Slice<V, Ds extends __Slice__[] = any> {
     }
   }
 
-  use<Os extends OperationSet[]>(
-    this: Slice<V>,
-    ...operations: Os
-  ): Slice<V> & OperationSetListMixin<Os> {
-    for (let set of operations) {
-      if (set.applied) {
-        continue
-      } else if (set.type === '@slice/operation-cluster') {
-        for (let operation of set.operations) {
-          this.use(operation)
-        }
-      } else {
-        Object.assign(Slice.prototype, set.operation)
-      }
-    }
-    return this as any
+  map<T>(mapping: (v: V) => T): Slice<T, [Slice<V>]> {
+    return createSlice(this.network, [this], mapping as any)
   }
 }
 
 export function createSlice<Ds extends __Slice__[], V>(
+  network: Network,
   dependencies: Ds,
   evaluate: (...inputs: ValueMap<Ds>) => V,
   initialValue?: V,
 ): __Slice__<V> {
-  return new Slice(dependencies, evaluate, initialValue)
+  return new Slice(network, dependencies, evaluate, initialValue)
 }
 
 export function isSlice<T>(query: unknown): query is __Slice__<T> {

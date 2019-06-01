@@ -1,4 +1,4 @@
-import React, { ReactChild, useRef } from 'react'
+import React, { ReactChild, useRef, Provider } from 'react'
 
 import {
   createStore,
@@ -7,8 +7,10 @@ import {
   utils,
   WrapReducer,
 } from '@dwalter/spider-store'
-import { Selector, Store, BindableAction, CustomSelector } from './types'
+
 import { useShouldUpdate, noop } from './utils'
+
+import { Selector, Store, BindableAction, CreateStore } from './types'
 
 function contextError(): any {
   throw new Error(
@@ -23,15 +25,15 @@ export const StoreContext = React.createContext<Store>({
   getSlice: contextError,
 })
 
-export interface SpiderRootProps {
+export interface ProviderProps {
   children: ReactChild
-  configureStore?: (storeFactory: typeof createStore) => InnerStore
+  configureStore?: (storeFactory: CreateStore) => InnerStore
 }
 
-export function SpiderRoot({
+export function Provider({
   children,
   configureStore = () => createStore(),
-}: SpiderRootProps) {
+}: ProviderProps) {
   const shouldUpdate = useShouldUpdate()
 
   const { current: store } = useRef<Store>(
@@ -42,7 +44,7 @@ export function SpiderRoot({
 }
 
 function createStoreContextContent(
-  configureStore: (storeFactory: typeof createStore) => InnerStore,
+  configureStore: (storeFactory: CreateStore) => InnerStore,
 ): Store {
   const { wrapReducer, dispatch, resolve } = configureStore(createStore)
 
@@ -73,29 +75,33 @@ function createStoreContextContent(
 }
 
 function createGetSlice(wrapReducer: WrapReducer) {
-  const selectorSlices = new WeakMap<Selector<any>, Slice>()
-
-  function getCustomSelectorSlice<T>(selector: CustomSelector<T>): Slice<T> {
-    const { sources, mapping } = selector
-    if (selectorSlices.has(selector)) {
-      return selectorSlices.get(selector)!
-    } else {
-      const parents = sources.map(getSelectorSlice)
-      const slice = mapping.apply(null, parents)
-      selectorSlices.set(selector, slice)
-      return slice
-    }
-  }
-
   function getSelectorSlice<T>(selector: Selector<T>): Slice<T> {
     if (utils.isSlice<T>(selector)) {
       return selector
     }
-    if (typeof selector === 'function') {
+    if (utils.isFunction(selector)) {
       return wrapReducer(selector)
     }
-    return getCustomSelectorSlice(selector)
+    const { sources, mapping } = selector
+    return mapping.apply(null, sources.map(getSelectorSlice))
   }
 
-  return getSelectorSlice
+  return weakCacheMemo(getSelectorSlice)
+}
+
+function weakCacheMemo<K extends object, V>(get: (key: K) => V) {
+  // using a weak cache to prevent memory leaks when using
+  // dynamically created selectors. Also preserves refs between
+  // renders, which keeps things quick. Looks a bit odd.
+  const cache = new WeakMap<K, V>()
+
+  return (key: K) => {
+    if (cache.has(key)) {
+      return cache.get(key)!
+    } else {
+      const value = get(key)
+      cache.set(key, value)
+      return value
+    }
+  }
 }

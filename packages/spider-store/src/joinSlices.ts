@@ -47,5 +47,8 @@ export function joinSlices<V, S1, S2, S3, S4, S5, S6>(
 
 export function joinSlices(...slices: any[]) {
   const mapping = slices.pop()
-  return createSlice(slices, mapping)
+  if (!slices.length) {
+    throw new Error()
+  }
+  return createSlice(slices[0].network, slices, mapping)
 }

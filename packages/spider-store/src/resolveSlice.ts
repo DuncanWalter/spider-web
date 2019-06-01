@@ -1,7 +1,7 @@
 import { Slice } from './slice'
 
-function resolveSlice<V>(slice: Slice<V, any>, marks: Slice[]): V {
-  if (slice.children.size > 0 || marks.indexOf(slice) >= 0) {
+function resolveSlice<V>(slice: Slice<V>, marks: Slice[]): V {
+  if (!slice.children.isEmpty() || marks.indexOf(slice) >= 0) {
     return slice.value
   }
   marks.push(slice)

@@ -1,18 +1,16 @@
 import { createSlice, isSlice } from './slice'
 import { isFunction } from './isFunction'
-import { SliceSet } from './sliceSet'
-import { propagateSlices } from './propagateSlices'
+import { SwapSet } from './SwapSet'
+import { createNetwork } from './createNetwork'
 import { resolveSlice } from './resolveSlice'
-import { terminateSlice } from './terminateSlice'
 
 export const utils = {
   createSlice,
   isSlice,
   isFunction,
-  SliceSet,
-  propagateSlices,
+  SwapSet,
   resolveSlice,
-  terminateSlice,
+  createNetwork,
 }
 
 export { Slice } from './slice'
@@ -21,6 +19,8 @@ export { createStore } from './createStore'
 
 export { joinSlices } from './joinSlices'
 
-export { Subscription } from './sliceSet'
+export { forkSlice } from './forkSlice'
+
+export { Subscription } from './SwapSet'
 
 export * from './types'

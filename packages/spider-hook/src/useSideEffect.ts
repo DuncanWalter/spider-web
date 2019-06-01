@@ -1,6 +1,6 @@
 import { useContext, useEffect } from 'react'
 
-import { StoreContext } from './SpiderRoot'
+import { StoreContext } from './Provider'
 import { SideEffect } from './types'
 import { useShouldUpdate, noop, semaphore } from './utils'
 

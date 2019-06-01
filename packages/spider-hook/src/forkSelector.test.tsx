@@ -3,7 +3,7 @@ import { render, cleanup, waitForDomChange } from 'react-testing-library'
 
 import { createReducer, settable } from '@dwalter/create-reducer'
 
-import { SpiderRoot } from './SpiderRoot'
+import { Provider } from './Provider'
 import { useDispatch } from './useDispatch'
 import { useSelector } from './useSelector'
 import { forkSelector } from './forkSelector'
@@ -43,9 +43,9 @@ test('Testing the Fork component', async done => {
   })
 
   const { getByTestId, rerender } = render(
-    <SpiderRoot>
+    <Provider>
       <Collection />
-    </SpiderRoot>,
+    </Provider>,
   )
 
   const component = getByTestId('collection')
@@ -54,9 +54,9 @@ test('Testing the Fork component', async done => {
   expect(itemRenderCount).toBe(2)
 
   rerender(
-    <SpiderRoot>
+    <Provider>
       <Collection />
-    </SpiderRoot>,
+    </Provider>,
   )
 
   expect(component.children.length).toBe(2)

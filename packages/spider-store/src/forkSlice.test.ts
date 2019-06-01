@@ -1,6 +1,6 @@
-import { createStore } from '@dwalter/spider-store'
+import { createStore } from './createStore'
 import { createReducer, settable } from '@dwalter/create-reducer'
-import { keyFork } from '.'
+import { forkSlice } from './forkSlice'
 
 test('Keyed forking dedups and updates properly', async done => {
   const { dispatch, wrapReducer } = createStore()
@@ -9,9 +9,7 @@ test('Keyed forking dedups and updates properly', async done => {
     ...settable<number[]>(),
   })
 
-  const slices = wrapReducer(collection)
-    .use(keyFork)
-    .keyFork((_, i) => i)
+  const slices = forkSlice(wrapReducer(collection), (_, i) => i)
 
   let outerChanges = 0
   let innerChanges = 0

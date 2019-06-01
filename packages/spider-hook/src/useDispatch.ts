@@ -1,5 +1,5 @@
 import { useContext } from 'react'
-import { StoreContext } from './SpiderRoot'
+import { StoreContext } from './Provider'
 
 export function useDispatch() {
   return useContext(StoreContext).dispatch

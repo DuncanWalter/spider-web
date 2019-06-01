@@ -2,14 +2,14 @@
 
 State management for React that just works.
 
-`spider-hook` replaces `redux`, `redux-react`, `redux-thunk`, and `redux-select` without all the bloat.
+`spider-hook` replaces `redux`, `react-redux`, `redux-thunk`, and `reselect` without all the bloat.
 
 - `spider-hook` and its 2 dependencies are smaller than `react-redux` is alone.
 - `spider-hook` exports only 8 members, and only half of those are frequently used.
 - `spider-hook` is made to play nice with all your favorite tools including `typescript`, `prettier`, `eslint`/`tslint`, `vscode`, and `webpack`/`rollup`.
 - `spider-hook` performs similarly to aggressively used `reselect`.
 
-Under the hood, `spider-hook` uses `@dwalter/spider-store` to do the heavy lifting. This has one extra benefit: `spider-hook` automatically and safely handles state stores split up across multiple bundles. Your state will be unaffected by load order and duplicated modules.
+Under the hood, `spider-hook` uses `@dwalter/spider-store` to do the heavy lifting. This has one extra benefit: `spider-hook` automatically and safely handles state stores split up across multiple bundles. Your state will be unaffected by load order.
 
 ```javascript
 // state reducer function

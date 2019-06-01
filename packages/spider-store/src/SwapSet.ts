@@ -1,26 +1,26 @@
 import { Slice } from './slice'
 
-type Subscription = [number, Slice]
+type Subscription<V> = [number, Slice]
 
-type ReadonlySubscription = Readonly<Subscription>
+type ReadonlySubscription<V> = Readonly<Subscription<V>>
 
 export { ReadonlySubscription as Subscription }
 
-export class SliceSet {
-  slices: Subscription[] = []
+export class SwapSet<V> {
+  slices: Subscription<V>[] = []
 
   isEmpty(): boolean {
     return this.slices.length == 0
   }
 
-  add(slice: Slice): Readonly<Subscription> {
+  add(slice: Slice): Readonly<Subscription<V>> {
     const slices = this.slices
-    const subscription: Subscription = [slices.length, slice]
+    const subscription: Subscription<V> = [slices.length, slice]
     slices.push(subscription)
     return subscription
   }
 
-  remove(subscription: Readonly<Subscription>): void {
+  remove(subscription: Readonly<Subscription<V>>): void {
     const slices = this.slices
     const [idx] = subscription
 

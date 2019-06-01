@@ -1,6 +1,4 @@
 import { Slice, createSlice } from './slice'
-import { propagateSlices } from './propagateSlices'
-import { SliceSet } from './sliceSet'
 import { unstack } from './unstack'
 import { resolveSlice } from './resolveSlice'
 import { isFunction } from './isFunction'
@@ -10,26 +8,26 @@ import {
   Action,
   ActionList,
   Dispatch,
-  Resolve,
   Middleware,
   RawDispatch,
   MiddlewareAPI,
-  WrapReducer,
   RawStore,
 } from './types'
+import { createNetwork } from './createNetwork'
 
 export interface StateSlice<V> extends Slice<V> {
-  updateState(action: Action, marks: SliceSet): void
-  injectState(state: V, marks: SliceSet): void
+  updateState(action: Action): void
+  injectState(state: V): void
   sliceName: string
 }
 
 export function createStore(...middlewares: Middleware[]): Store {
-  const store = { slices: new Map() } as RawStore
+  const store = {
+    network: createNetwork(),
+    slices: new Map(),
+  } as RawStore
 
-  // TODO: ADD WARNING FUNCTION TO STORE TO BE OVERWRITTEN
-
-  const foo = middlewares.reduceRight<MiddlewareAPI>(
+  const storeAPI = middlewares.reduceRight<MiddlewareAPI>(
     (acc, middleware) => Object.assign(acc, middleware(store, acc)),
     {
       wrapReducer: createWrapReducer(store),
@@ -38,9 +36,9 @@ export function createStore(...middlewares: Middleware[]): Store {
     },
   )
 
-  store.wrapReducer = foo.wrapReducer
-  store.resolve = foo.resolve
-  store.dispatch = createDispatch(store, foo.dispatch)
+  store.wrapReducer = storeAPI.wrapReducer
+  store.resolve = storeAPI.resolve
+  store.dispatch = createDispatch(store, storeAPI.dispatch)
 
   return store
 }
@@ -49,30 +47,24 @@ const initAction = { type: '@store/init', reducers: [] }
 
 function createRawDispatch(store: RawStore) {
   // apply state updates and mark slices with changed content
-  function executeDispatch(actions: Action | ActionList, marks: SliceSet) {
+  function executeDispatch(actions: Action | ActionList) {
     if (Array.isArray(actions)) {
       for (let action of actions) {
-        executeDispatch(action, marks)
+        executeDispatch(action)
       }
     } else {
       for (let reducer of actions.reducers) {
         const slice = store.wrapReducer(reducer)
-        slice.updateState(actions, marks)
+        slice.updateState(actions)
       }
     }
   }
 
   // propagate updates from all marked slices
   return function internalDispatch(actions: Action | ActionList) {
-    const marks = new SliceSet()
-    executeDispatch(actions, marks)
-    propagateSlices(marks)
+    executeDispatch(actions)
+    store.network.propagate()
   }
-
-  // // apply middleware chain
-  // const augmentedDispatch = middlewares
-  //   .map(middleware => middleware(store))
-  //   .reduceRight((next, middleware) => middleware(next), internalDispatch)
 }
 
 function createDispatch(store: Store, rawDispatch: RawDispatch) {
@@ -109,23 +101,27 @@ function createWrapReducer(store: RawStore) {
 
     let state = reducer(undefined, initAction)
 
-    const slice = createSlice([], _ => state, state) as StateSlice<State>
+    const slice = createSlice(
+      store.network,
+      [],
+      _ => state,
+      state,
+    ) as StateSlice<State>
 
-    slice.updateState = function updateState(action: Action, marks: SliceSet) {
+    slice.updateState = function updateState(action: Action) {
       const oldState = state
       const newState = (state = reducer(state, action))
       if (oldState !== newState) {
-        marks.add(slice)
+        slice.push()
       }
     }
 
     slice.injectState = function injectState(
       newState = reducer(undefined, initAction),
-      marks: SliceSet,
     ) {
       if (state !== newState) {
-        marks.add(slice)
         state = newState
+        slice.push()
       }
     }
 

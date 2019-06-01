@@ -1,6 +1,10 @@
 import { useRef } from 'react'
 
 export function useShouldUpdate(deps?: unknown[]) {
+  // Effectively serves the same purpose as deps
+  // arguments in many React hooks. used to prevent
+  // callbacks which will never be called from
+  // being created.
   const depsRef = useRef<unknown[]>()
   const { current } = depsRef
 
@@ -31,16 +35,16 @@ export const noop: never = (() => {
 
 export const constant: [] = []
 
-/**
- * Used to construct selectors because the first argument is
- * an array and will not be properly interpreted as a tuple
- * by default.
- */
 export function tuple<Args extends any[]>(...args: Args): Args {
+  // Used to construct selectors because the first argument is
+  // an array and will not be properly interpreted as a tuple
+  // by default.
   return args
 }
 
 export function semaphore(fun: () => () => void): () => () => void {
+  // Prevents pub-sub objects from forming multiple of the same
+  // subscription.
   let semaphore = 0
   let callback: () => void = noop
   return () => {
