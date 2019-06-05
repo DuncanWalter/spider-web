@@ -56,7 +56,7 @@ export type Middleware = (
 ) => Partial<MiddlewareAPI>
 
 export interface Network {
-  queuedUpdates: SwapSet<Slice<unknown>>
+  enqueue(slice: Slice<any>): void
   propagate(): void
 }
 

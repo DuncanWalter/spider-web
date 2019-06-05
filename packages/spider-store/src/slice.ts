@@ -43,7 +43,7 @@ class Slice<V, Ds extends __Slice__[] = any> {
     return this.dependencies[n].value
   }
 
-  tryUpdate(): boolean {
+  hasUpdate(): boolean {
     const oldValue = this.value
     const newValue = this.resolveShallow()
     if (oldValue !== newValue) {
@@ -71,13 +71,13 @@ class Slice<V, Ds extends __Slice__[] = any> {
   }
 
   push() {
-    this.network.queuedUpdates.add(this)
+    this.network.enqueue(this)
   }
 
   subscribe(newChild: __Slice__ | ((v: V) => unknown)) {
     if (this.children.isEmpty()) {
       this.subscriptions = this.dependencies.map(d => d.subscribe(this))
-      this.tryUpdate()
+      this.hasUpdate()
     }
     if (newChild instanceof Slice) {
       return this.children.add(newChild)

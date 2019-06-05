@@ -3,28 +3,27 @@ import { SwapSet } from './SwapSet'
 import { Slice } from './slice'
 
 export function createNetwork(): Network {
+  const queuedUpdates = new SwapSet()
+
   return {
-    queuedUpdates: new SwapSet(),
+    enqueue(slice) {
+      queuedUpdates.add(slice)
+    },
     propagate() {
-      propagateSlices(this.queuedUpdates)
+      while (!queuedUpdates.isEmpty()) {
+        propagateUpdate(queuedUpdates.popMin()!)
+      }
     },
   }
 }
 
-function propagateSlices(marks: SwapSet<Slice<unknown>>) {
-  while (!marks.isEmpty()) {
-    propagateUpdate(marks.popMin()!, marks)
-  }
-}
-
-function propagateUpdate(slice: Slice, marks: SwapSet<Slice<unknown>>) {
-  const updated = slice.tryUpdate()
-  if (updated) {
+function propagateUpdate(slice: Slice) {
+  if (slice.hasUpdate()) {
     for (let [, child] of slice.children.slices) {
       if (child.dependencies.length === 1) {
-        propagateUpdate(child, marks)
+        propagateUpdate(child)
       } else {
-        marks.add(child)
+        child.push()
       }
     }
   }

@@ -18,7 +18,6 @@ import { createNetwork } from './createNetwork'
 export interface StateSlice<V> extends Slice<V> {
   updateState(action: Action): void
   injectState(state: V): void
-  sliceName: string
 }
 
 export function createStore(...middlewares: Middleware[]): Store {
@@ -27,7 +26,7 @@ export function createStore(...middlewares: Middleware[]): Store {
     slices: new Map(),
   } as RawStore
 
-  const storeAPI = middlewares.reduceRight<MiddlewareAPI>(
+  const { dispatch, ...storeAPI } = middlewares.reduceRight<MiddlewareAPI>(
     (acc, middleware) => Object.assign(acc, middleware(store, acc)),
     {
       wrapReducer: createWrapReducer(store),
@@ -36,9 +35,9 @@ export function createStore(...middlewares: Middleware[]): Store {
     },
   )
 
-  store.wrapReducer = storeAPI.wrapReducer
-  store.resolve = storeAPI.resolve
-  store.dispatch = createDispatch(store, storeAPI.dispatch)
+  Object.assign(store, storeAPI)
+
+  store.dispatch = createDispatch(store, dispatch)
 
   return store
 }
