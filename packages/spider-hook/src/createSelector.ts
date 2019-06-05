@@ -12,7 +12,11 @@ export function createSelector<Selectors extends Selector[], Result>(
   selectors: Selectors,
   mapping: (...args: SelectorInputs<Selectors>) => Result,
 ): CustomSelector<Result> {
-  return createCustomSelector(selectors, (...slices) =>
-    createSlice(slices, mapping as any),
-  )
+  return createCustomSelector(selectors, (...slices) => {
+    if (!slices.length) {
+      throw new Error()
+    }
+
+    return createSlice(slices[0].network, slices, mapping as any)
+  })
 }

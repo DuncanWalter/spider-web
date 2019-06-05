@@ -86,7 +86,7 @@ function createGetSlice(wrapReducer: WrapReducer) {
     return mapping.apply(null, sources.map(getSelectorSlice))
   }
 
-  return weakCacheMemo(getSelectorSlice)
+  return weakCacheMemo(getSelectorSlice) as typeof getSelectorSlice
 }
 
 function weakCacheMemo<K extends object, V>(get: (key: K) => V) {

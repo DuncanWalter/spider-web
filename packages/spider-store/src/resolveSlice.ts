@@ -8,7 +8,7 @@ function resolveSlice<V>(slice: Slice<V>, marks: Slice[]): V {
   for (let dependency of slice.dependencies) {
     resolveSlice(dependency, marks)
   }
-  slice.tryUpdate()
+  slice.hasUpdate()
   return slice.value
 }
 
