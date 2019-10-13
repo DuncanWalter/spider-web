@@ -23,7 +23,7 @@ export function createNetwork(): Network {
     },
     propagate() {
       while (!queuedUpdates.isEmpty()) {
-        propagateUpdate(queuedUpdates.popMin()!)
+        propagateUpdate(queuedUpdates.popMin() as Slice)
       }
     },
   }

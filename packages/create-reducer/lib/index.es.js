@@ -21,7 +21,6 @@ function __spreadArrays() {
     return r;
 }
 
-var keys = Object.keys;
 function defaultNamer(prefix) {
     return function (name) {
         return "@" + prefix + "/" + name;
@@ -69,7 +68,7 @@ function createReducer(name, initialState, config) {
             return { type: type, payload: payload, reducers: reducers };
         };
     };
-    for (var _i = 0, _a = keys(config); _i < _a.length; _i++) {
+    for (var _i = 0, _a = Object.keys(config); _i < _a.length; _i++) {
         var key = _a[_i];
         _loop_1(key);
     }
@@ -171,4 +170,116 @@ function arraylike() {
     };
 }
 
-export { createReducer, settable, entityTable, arraylike };
+function createDeepClone(draftSpecs, draftStorage) {
+    return function deepClone(original) {
+        for (var i = 0; i < draftSpecs.length; i++) {
+            var _a = draftSpecs[i], isMember = _a.isMember, clone = _a.clone;
+            if (isMember(original)) {
+                var draft = clone(original, deepClone);
+                draftStorage.set(draft, original);
+                return draft;
+            }
+        }
+        return original;
+    };
+}
+function createDeepReconcile(draftSpecs, draftStorage) {
+    return function deepReconcile(draft) {
+        for (var i = 0; i < draftSpecs.length; i++) {
+            var _a = draftSpecs[i], isMember = _a.isMember, reconcile = _a.reconcile;
+            if (isMember(draft)) {
+                var stored = draftStorage.get(draft);
+                if (stored !== undefined) {
+                    return reconcile(stored, draft, deepReconcile);
+                }
+                return draft;
+            }
+            return draft;
+        }
+        return draft;
+    };
+}
+function createProducer(draftSpecs) {
+    return function produce(operation, original) {
+        var draftStorage = new Map();
+        var deepClone = createDeepClone(draftSpecs, draftStorage);
+        var deepReconcile = createDeepReconcile(draftSpecs, draftStorage);
+        return deepReconcile(operation(deepClone(original)));
+    };
+}
+var arraySpec = {
+    isMember: Array.isArray,
+    clone: function (original, clone) {
+        var draft = new Array(original.length);
+        for (var i = 0; i < original.length; i++) {
+            draft[i] = clone(original[i]);
+        }
+        return draft;
+    },
+    reconcile: function (original, draft, reconcile) {
+        var dirty = false;
+        for (var i = 0; i < draft.length; i++) {
+            draft[i] = reconcile(draft[i]);
+            if (draft[i] !== original[i]) {
+                dirty = false;
+            }
+        }
+        if (!dirty && draft.length === original.length) {
+            return original;
+        }
+        return draft;
+    },
+};
+var objectSpec = {
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    isMember: function (maybeObject) {
+        return (typeof maybeObject === 'object' &&
+            maybeObject !== null &&
+            maybeObject.constructor === Object);
+    },
+    clone: function (original, clone) {
+        var draft = {};
+        var keys = Object.keys(original);
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            draft[key] = clone(original[key]);
+        }
+        return draft;
+    },
+    reconcile: function (original, draft, reconcile) {
+        var dirty = false;
+        var keys = Object.keys(draft);
+        for (var i = 0; i < keys.length; i++) {
+            var key = keys[i];
+            draft[key] = reconcile(draft[key]);
+            if (original[key] !== draft[key]) {
+                dirty = true;
+            }
+        }
+        if (!dirty && Object.keys(original).length === keys.length) {
+            return original;
+        }
+        return draft;
+    },
+};
+
+function createDraftStateMiddleware(_a) {
+    var _b = (_a === void 0 ? {} : _a).draftSpecs, draftSpecs = _b === void 0 ? [arraySpec, objectSpec] : _b;
+    var draftStateMiddleware = function (store, _a) {
+        var wrapReducer = _a.wrapReducer;
+        var produce = createProducer(draftSpecs);
+        return {
+            wrapReducer: function (reducer) {
+                var slice = wrapReducer(reducer);
+                var nextState = slice.nextState;
+                slice.nextState = function (oldState, actions) {
+                    return produce(function (draftState) { return nextState(draftState, actions); }, oldState);
+                };
+                return slice;
+            },
+        };
+    };
+    return draftStateMiddleware;
+}
+
+export { createReducer, settable, entityTable, arraylike, createDraftStateMiddleware };

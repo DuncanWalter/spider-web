@@ -1,10 +1,4 @@
-const { keys } = Object
-
-interface Action {
-  type: string
-  reducers: ((state: any, action: any) => any)[]
-  payload: unknown
-}
+import { Action } from './types'
 
 interface Reducer<State> {
   (state: State | undefined, action: { type: string }): State
@@ -76,7 +70,7 @@ export function createReducer<Config extends ReducerConfig<any>>(
 
   const actions = {} as any
 
-  for (const key of keys(config)) {
+  for (const key of Object.keys(config)) {
     const type = typeName(key)
     handlerKeys[type] = key
     actions[key] = function(...payload: any[]) {

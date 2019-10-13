@@ -4,11 +4,15 @@ function peekSlice<V>(slice: Slice<V>, marks: Slice[]): V {
   if (!slice.children.isEmpty() || marks.indexOf(slice) >= 0) {
     return slice.value
   }
+
   marks.push(slice)
+
   for (const dependency of slice.dependencies) {
     peekSlice(dependency, marks)
   }
+
   slice.hasUpdate()
+
   return slice.value
 }
 

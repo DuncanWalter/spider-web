@@ -119,3 +119,17 @@ test('Middleware is properly applied and run', () => {
   expect(count).toBe(1)
   expect(reducerCalls).toBe(2)
 })
+
+test('peek extracts slice states', () => {
+  const store = createStore()
+
+  const reducer = (i = 0) => ++i
+
+  const slice = store.wrapReducer(reducer)
+
+  expect(store.peek(slice)).toBe(1)
+
+  store.dispatch({ type: 'test', reducers: [reducer] })
+
+  expect(store.peek(slice)).toBe(2)
+})
