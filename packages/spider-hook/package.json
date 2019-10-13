@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-hook",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "sideEffects": false,
   "description": "state management for react powered by spider-store",
   "keywords": [
