@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-store",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "sideEffects": false,
   "description": "waste free state management",
   "keywords": [
@@ -39,6 +39,6 @@
     ]
   },
   "devDependencies": {
-    "@dwalter/create-reducer": "2.0.1"
+    "@dwalter/create-reducer": "2.0.4"
   }
 }

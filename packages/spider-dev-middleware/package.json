@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-dev-middleware",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "sideEffects": false,
   "description": "developer middleware for spider-store",
   "keywords": [
@@ -50,9 +50,9 @@
     "tabWidth": 2
   },
   "devDependencies": {
-    "@dwalter/spider-store": "^2.0.1"
+    "@dwalter/spider-store": "^2.0.4"
   },
   "peerDependencies": {
-    "@dwalter/spider-store": "^2.0.1"
+    "@dwalter/spider-store": "^2.0.4"
   }
 }

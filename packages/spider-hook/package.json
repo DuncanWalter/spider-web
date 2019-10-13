@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-hook",
-  "version": "2.0.3",
+  "version": "2.0.4",
   "sideEffects": false,
   "description": "state management for react powered by spider-store",
   "keywords": [
@@ -44,9 +44,9 @@
     "react": "^16.8.6"
   },
   "dependencies": {
-    "@dwalter/spider-store": "^2.0.1"
+    "@dwalter/spider-store": "^2.0.4"
   },
   "devDependencies": {
-    "@dwalter/create-reducer": "^2.0.1"
+    "@dwalter/create-reducer": "^2.0.4"
   }
 }
