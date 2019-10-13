@@ -145,11 +145,6 @@
     exec-sh "^0.3.2"
     minimist "^1.2.0"
 
-"@dwalter/create-reducer@1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@dwalter/create-reducer/-/create-reducer-1.0.1.tgz#59f8d18505ed4d05044141f74e2212c9d563e3cc"
-  integrity sha512-ue4xxyLkoFS2GNas+ddC/rCrqh9fEzKXGoptZoQsm1xEQhiPsSESQrlhUgZJOZAIpKAWBFRN/1FHW4KQBTee4g==
-
 "@jest/console@^24.7.1", "@jest/console@^24.9.0":
   version "24.9.0"
   resolved "https://registry.yarnpkg.com/@jest/console/-/console-24.9.0.tgz#79b1bc06fb74a8cfb01cbdedf945584b1b9707f0"

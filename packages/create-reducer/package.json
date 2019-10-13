@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/create-reducer",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "sideEffects": false,
   "description": "reusable reducer patterns and helpers",
   "keywords": [
@@ -41,7 +41,7 @@
       "js"
     ]
   },
-  "peerDependencies": {
-    "@dwalter/spider-store": "1.7.0"
+  "dependencies": {
+    "@dwalter/spider-store": "2.0.1"
   }
 }
