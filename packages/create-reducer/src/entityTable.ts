@@ -11,52 +11,43 @@ export function entityTable<Entity>(
       const key = getKey(entity)
       const entityPair = state[key]
       if (entityPair) {
-        const { lock, entity } = entityPair
-        return { ...state, [key]: { lock: lock + 1, entity } }
+        entityPair.lock += 1
+        entityPair.entity = entity
       } else {
-        return { ...state, [key]: { lock: 1, entity } }
+        state[key] = { lock: 1, entity }
       }
+      return state
     },
     remove(state: EntityTable<Entity>, entity: Entity): EntityTable<Entity> {
       const key = getKey(entity)
       const entityPair = state[key]
       if (entityPair) {
-        const { lock, entity } = entityPair
-        if (lock == 1) {
-          const newState = { ...state }
-          delete newState[key]
-          return newState
+        if (entityPair.lock == 1) {
+          delete state[key]
         } else {
-          return { ...state, [key]: { lock: lock - 1, entity } }
+          entityPair.lock -= 1
         }
-      } else {
-        return state
       }
+      return state
     },
     delete(state: EntityTable<Entity>, key: string | number) {
       const entityPair = state[key]
       if (entityPair) {
-        const { lock, entity } = entityPair
-        if (lock == 1) {
-          const newState = { ...state }
-          delete newState[key]
-          return newState
+        if (entityPair.lock == 1) {
+          delete state[key]
         } else {
-          return { ...state, [key]: { lock: lock - 1, entity } }
+          entityPair.lock -= 1
         }
-      } else {
-        return state
       }
+      return state
     },
     update(state: EntityTable<Entity>, entity: Entity): EntityTable<Entity> {
       const key = getKey(entity)
       const entityPair = state[key]
       if (entityPair) {
-        const { lock } = entityPair
-        return { ...state, [key]: { lock, entity } }
-      } else {
-        return state
+        entityPair.entity = entity
       }
+      return state
     },
   }
 }

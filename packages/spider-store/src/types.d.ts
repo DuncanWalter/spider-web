@@ -1,5 +1,4 @@
 import { Slice } from './slice'
-import { SwapSet, Subscription } from './SwapSet'
 import { StateSlice } from './createStore'
 
 type Maybe<T> = T | null | undefined | false
@@ -36,9 +35,10 @@ export interface Action {
   reducers: Reducer<any, any>[]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
 export interface ActionList extends Array<Maybe<ActionList | Action>> {}
 
-export interface Reducer<State, A extends Action = Action> {
+export interface Reducer<State = any, A extends Action = Action> {
   (state: State | undefined, action: A): State
 }
 

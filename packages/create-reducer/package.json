@@ -23,14 +23,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DuncanWalter/create-reducer.git"
+    "url": "git+https://github.com/DuncanWalter/spider-web.git"
   },
   "author": "Duncan Walter",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/DuncanWalter/create-reducer/issues"
+    "url": "https://github.com/DuncanWalter/spider-web/issues"
   },
-  "homepage": "https://github.com/DuncanWalter/create-reducer#readme",
+  "homepage": "https://github.com/DuncanWalter/spider-web#readme",
   "jest": {
     "transform": {
       "^.+\\.ts$": "ts-jest"

@@ -1,4 +1,4 @@
-import React, { ReactChild, useRef, Provider } from 'react'
+import React, { ReactChild, useRef } from 'react'
 
 import {
   createStore,
@@ -31,17 +31,37 @@ export interface ProviderProps {
   configureStore?: (storeFactory: CreateStore) => InnerStore
 }
 
-export function Provider({
-  children,
-  configureStore = () => createStore(),
-}: ProviderProps) {
-  const shouldUpdate = useShouldUpdate()
+function weakCacheMemo<K extends object, V>(get: (key: K) => V) {
+  // using a weak cache to prevent memory leaks when using
+  // dynamically created selectors. Also preserves refs between
+  // renders, which keeps things quick. Looks a bit odd.
+  const cache = new WeakMap<K, V>()
 
-  const { current: store } = useRef<Store>(
-    shouldUpdate ? createStoreContextContent(configureStore) : noop,
-  )
+  return (key: K) => {
+    if (cache.has(key)) {
+      return cache.get(key)!
+    } else {
+      const value = get(key)
+      cache.set(key, value)
+      return value
+    }
+  }
+}
+function createGetSlice(wrapReducer: WrapReducer) {
+  function getSelectorSlice<T>(selector: Selector<T>): Slice<T> {
+    if (utils.isSlice<T>(selector)) {
+      return selector
+    }
+    if (utils.isFunction(selector)) {
+      return wrapReducer(selector)
+    }
+    const { sources, mapping } = selector
 
-  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
+    // eslint-disable-next-line prefer-spread
+    return mapping.apply(null, sources.map(getSelectorSlice))
+  }
+
+  return weakCacheMemo(getSelectorSlice) as typeof getSelectorSlice
 }
 
 function createStoreContextContent(
@@ -75,34 +95,15 @@ function createStoreContextContent(
   }
 }
 
-function createGetSlice(wrapReducer: WrapReducer) {
-  function getSelectorSlice<T>(selector: Selector<T>): Slice<T> {
-    if (utils.isSlice<T>(selector)) {
-      return selector
-    }
-    if (utils.isFunction(selector)) {
-      return wrapReducer(selector)
-    }
-    const { sources, mapping } = selector
-    return mapping.apply(null, sources.map(getSelectorSlice))
-  }
+export function Provider({
+  children,
+  configureStore = () => createStore(),
+}: ProviderProps) {
+  const shouldUpdate = useShouldUpdate()
 
-  return weakCacheMemo(getSelectorSlice) as typeof getSelectorSlice
-}
+  const { current: store } = useRef<Store>(
+    shouldUpdate ? createStoreContextContent(configureStore) : noop,
+  )
 
-function weakCacheMemo<K extends object, V>(get: (key: K) => V) {
-  // using a weak cache to prevent memory leaks when using
-  // dynamically created selectors. Also preserves refs between
-  // renders, which keeps things quick. Looks a bit odd.
-  const cache = new WeakMap<K, V>()
-
-  return (key: K) => {
-    if (cache.has(key)) {
-      return cache.get(key)!
-    } else {
-      const value = get(key)
-      cache.set(key, value)
-      return value
-    }
-  }
+  return <StoreContext.Provider value={store}>{children}</StoreContext.Provider>
 }

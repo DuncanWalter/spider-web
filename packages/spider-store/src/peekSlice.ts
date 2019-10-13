@@ -5,7 +5,7 @@ function peekSlice<V>(slice: Slice<V>, marks: Slice[]): V {
     return slice.value
   }
   marks.push(slice)
-  for (let dependency of slice.dependencies) {
+  for (const dependency of slice.dependencies) {
     peekSlice(dependency, marks)
   }
   slice.hasUpdate()

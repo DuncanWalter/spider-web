@@ -9,7 +9,7 @@ export function forkSelector<K, V>(
 ) {
   // advanced selector creator for optimizing
   // list rendering.
-  return createCustomSelector([selector], slice =>
-    forkSlice(slice, getKey),
-  ) as Selector<[K, Selector<V>][]>
+  return createCustomSelector(slice => forkSlice(slice, getKey), [
+    selector,
+  ]) as Selector<[K, Selector<V>][]>
 }

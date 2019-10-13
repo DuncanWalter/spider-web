@@ -1,3 +1,8 @@
 node_modules
 .*
+packages/*/lib/*.js
+packages/*/lib/*.es
+**/*gz
 !.gitignore
+!.eslintignore
+!.eslintrc.js

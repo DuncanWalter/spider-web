@@ -18,6 +18,15 @@ class Slice<V, Ds extends __Slice__[] = any> {
   value: V
   subscriptions: null | Subscription<V>[]
 
+  static createSlice<Ds extends __Slice__[], V>(
+    network: Network,
+    dependencies: Ds,
+    evaluate: (...inputs: ValueMap<Ds>) => V,
+    initialValue?: V,
+  ): __Slice__<V> {
+    return new Slice(network, dependencies, evaluate, initialValue)
+  }
+
   constructor(
     network: Network,
     dependencies: Ds,
@@ -101,18 +110,11 @@ class Slice<V, Ds extends __Slice__[] = any> {
   }
 
   map<T>(mapping: (v: V) => T): Slice<T, [Slice<V>]> {
-    return createSlice(this.network, [this], mapping as any)
+    return Slice.createSlice(this.network, [this], mapping as any)
   }
 }
 
-export function createSlice<Ds extends __Slice__[], V>(
-  network: Network,
-  dependencies: Ds,
-  evaluate: (...inputs: ValueMap<Ds>) => V,
-  initialValue?: V,
-): __Slice__<V> {
-  return new Slice(network, dependencies, evaluate, initialValue)
-}
+export const createSlice = Slice.createSlice
 
 export function isSlice<T>(query: unknown): query is __Slice__<T> {
   return query && query instanceof Slice

@@ -1,5 +1,13 @@
 import { Slice, createSlice } from './slice'
 
+function contentsMatch(a: unknown[], b: unknown[]) {
+  if (a.length != b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false
+  }
+  return true
+}
+
 export function forkSlice<K, V>(
   slice: Slice<V[]>,
   getKey: (value: V, index: number) => K,
@@ -51,7 +59,7 @@ export function forkSlice<K, V>(
         })
       }
 
-      for (let [, child] of newResult) {
+      for (const [, child] of newResult) {
         child.push()
       }
 
@@ -64,12 +72,4 @@ export function forkSlice<K, V>(
     },
   )
   return root
-}
-
-function contentsMatch(a: unknown[], b: unknown[]) {
-  if (a.length != b.length) return false
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false
-  }
-  return true
 }

@@ -3,7 +3,6 @@ import {
   Reducer,
   Action,
   ActionList,
-  Store as InnerStore,
   Dispatch as InnerDispatch,
   Peek as InnerPeek,
   WrapReducer,
@@ -15,7 +14,7 @@ interface CustomSelector<T> {
   mapping: (...slices: any) => Slice<T>
 }
 
-export type Selector<T = any> = Reducer<T, any> | Slice<T> | CustomSelector<T>
+export type Selector<T = any> = Reducer<T> | Slice<T> | CustomSelector<T>
 
 export interface SideEffect<T = any> {
   source: Selector<T>

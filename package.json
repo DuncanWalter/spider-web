@@ -11,6 +11,8 @@
     "@typescript-eslint/parser": "2.3.0",
     "eslint": "6.4.0",
     "eslint-config-prettier": "6.3.0",
+    "eslint-config-react": "1.1.7",
+    "eslint-plugin-react": "7.14.3",
     "husky": "1.2.0",
     "jest": "24.9.0",
     "lerna": "3.13.3",
@@ -28,10 +30,8 @@
   },
   "scripts": {
     "test": "lerna run build && lerna run test",
-    "postinstall": "lerna bootstrap",
     "publish": "lerna publish from-package",
-    "lerna": "lerna exec",
-    "lint": "eslint ."
+    "lint": "eslint . --ext .js,.ts,.tsx"
   },
   "workspaces": [
     "packages/*"

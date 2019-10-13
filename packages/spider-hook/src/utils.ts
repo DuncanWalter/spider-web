@@ -38,14 +38,14 @@ export const constant: [] = []
 export function semaphore(fun: () => () => void): () => () => void {
   // Prevents pub-sub objects from forming multiple of the same
   // subscription.
-  let semaphore = 0
+  let semaphoreValue = 0
   let callback: () => void = noop
   return () => {
-    if (!semaphore++) {
+    if (!semaphoreValue++) {
       callback = fun()
     }
     return () => {
-      if (!--semaphore) {
+      if (!--semaphoreValue) {
         callback()
         callback = noop
       }

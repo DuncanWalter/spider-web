@@ -1,4 +1,4 @@
-const { assign, create, keys } = Object
+const { keys } = Object
 
 interface Action {
   type: string
@@ -10,8 +10,7 @@ interface Reducer<State> {
   (state: State | undefined, action: { type: string }): State
 }
 
-interface ReducerConfig<State = any>
-  extends Record<string, Handler<State, any[]>> {}
+type ReducerConfig<State = any> = Record<string, Handler<State, any[]>>
 
 interface Handler<State = any, Payload extends any[] = any[]> {
   (state: State, ...payload: Payload): State
@@ -32,11 +31,6 @@ type ActionCreators<State, Config extends ReducerConfig<State>> = {
     : never
 }
 
-interface ActionableReducer<Config extends ReducerConfig<any>>
-  extends Reducer<ConfigState<Config>> {
-  actions: ActionCreators<ConfigState<Config>, Config>
-}
-
 function defaultNamer(prefix: string) {
   return function(name: string) {
     return `@${prefix}/${name}`
@@ -54,8 +48,10 @@ export function createReducer<Config extends ReducerConfig<any>>(
   name: string | ((name: string) => string),
   initialState: ConfigState<Config>,
   config: Config,
-): ActionableReducer<Config> {
-  const reducerName = typeof name === 'string' ? name : name.name
+): [Reducer<ConfigState<Config>>, ActionCreators<ConfigState<Config>, Config>] {
+  const reducerName = typeof name === 'string' ? name : `${name.name}Reducer`
+
+  const handlerKeys = {} as { [actionType: string]: string }
 
   const reducer = function(state = initialState, action: any) {
     const handlerKey = handlerKeys[action.type]
@@ -67,7 +63,7 @@ export function createReducer<Config extends ReducerConfig<any>>(
       return state
     }
     return handler(state, ...action.payload)
-  } as ActionableReducer<Config>
+  }
 
   const reducers = [reducer]
 
@@ -78,24 +74,20 @@ export function createReducer<Config extends ReducerConfig<any>>(
     typeName = defaultNamer(name)
   }
 
-  const handlerKeys = {} as { [actionType: string]: string }
   const actions = {} as any
 
-  const baseAction = Object.create(null, {
-    reducers: { value: reducers },
-  })
-
-  for (let key of keys(config)) {
-    handlerKeys[typeName(key)] = key
+  for (const key of keys(config)) {
+    const type = typeName(key)
+    handlerKeys[type] = key
     actions[key] = function(...payload: any[]) {
-      return assign(create(baseAction), { type: typeName(key), payload })
+      return { type, payload, reducers }
     }
   }
 
-  Object.defineProperties(reducer, {
-    name: { value: reducerName, enumerable: false },
-    actions: { value: actions, enumerable: false },
+  Object.defineProperty(reducer, 'name', {
+    value: reducerName,
+    enumerable: false,
   })
 
-  return reducer
+  return [reducer, actions]
 }

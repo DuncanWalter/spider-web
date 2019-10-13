@@ -27,7 +27,8 @@ function enumerateActions(actions: Dispatchable): Action[] {
   if (!actions) return allActions
 
   if (Array.isArray(actions)) {
-    for (let action of actions) {
+    for (const action of actions) {
+      // eslint-disable-next-line prefer-spread
       allActions.push.apply(allActions, enumerateActions(action))
     }
   } else {
@@ -37,33 +38,11 @@ function enumerateActions(actions: Dispatchable): Action[] {
   return allActions
 }
 
-export function createStore(...middlewares: Middleware[]): Store {
-  const store = {
-    network: createNetwork(),
-    slices: new Map(),
-  } as RawStore
-
-  const { dispatch, ...storeAPI } = middlewares.reduceRight<MiddlewareAPI>(
-    (acc, middleware) => Object.assign(acc, middleware(store, acc)),
-    {
-      wrapReducer: createWrapReducer(store),
-      peek: createPeek(store),
-      dispatch: createRawDispatch(store),
-    },
-  )
-
-  Object.assign(store, storeAPI)
-
-  store.dispatch = createDispatch(store, dispatch)
-
-  return store
-}
-
 const initAction = { type: '@store/init', reducers: [] }
 
 function createRawDispatch(store: RawStore) {
   // apply state updates and mark slices with changed content
-  function executeDispatch(actions: Action[], reducer: Reducer<any>) {
+  function executeDispatch(actions: Action[], reducer: Reducer) {
     const slice = store.wrapReducer(reducer)
     const oldState = slice.value
     const newState = slice.nextState(oldState, actions)
@@ -74,7 +53,7 @@ function createRawDispatch(store: RawStore) {
   return function internalDispatch(actions: Dispatchable) {
     const receivedActions = enumerateActions(actions)
 
-    const actionsByReducer = new Map<Reducer<any>, Action[]>()
+    const actionsByReducer = new Map<Reducer, Action[]>()
 
     for (const action of receivedActions) {
       for (const reducer of action.reducers) {
@@ -122,8 +101,10 @@ function createPeek(store: Store) {
 
 function createWrapReducer(store: RawStore) {
   return function wrapReducer<State>(reducer: Reducer<State>) {
-    if (store.slices.has(reducer)) {
-      return store.slices.get(reducer)!
+    const existingSlice = store.slices.get(reducer)
+
+    if (existingSlice) {
+      return existingSlice
     }
 
     let state = reducer(undefined, initAction)
@@ -135,8 +116,8 @@ function createWrapReducer(store: RawStore) {
       state,
     ) as StateSlice<State>
 
-    slice.nextState = function updateState(state: State, actions: Action[]) {
-      let newState = state
+    slice.nextState = function updateState(oldState: State, actions: Action[]) {
+      let newState = oldState
       for (const action of actions) {
         newState = reducer(newState, action)
       }
@@ -154,4 +135,26 @@ function createWrapReducer(store: RawStore) {
 
     return slice
   }
+}
+
+export function createStore(...middlewares: Middleware[]): Store {
+  const store = {
+    network: createNetwork(),
+    slices: new Map(),
+  } as RawStore
+
+  const { dispatch, ...storeAPI } = middlewares.reduceRight<MiddlewareAPI>(
+    (acc, middleware) => Object.assign(acc, middleware(store, acc)),
+    {
+      wrapReducer: createWrapReducer(store),
+      peek: createPeek(store),
+      dispatch: createRawDispatch(store),
+    },
+  )
+
+  Object.assign(store, storeAPI)
+
+  store.dispatch = createDispatch(store, dispatch)
+
+  return store
 }

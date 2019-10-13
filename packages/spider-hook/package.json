@@ -47,6 +47,6 @@
     "@dwalter/spider-store": "^1.7.0"
   },
   "devDependencies": {
-    "@dwalter/create-reducer": "1.0.1"
+    "@dwalter/create-reducer": "2.0.0"
   }
 }

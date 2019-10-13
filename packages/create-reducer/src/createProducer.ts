@@ -12,75 +12,6 @@ export interface DraftSpec<T = unknown> {
   reconcile(original: T, draft: T, reconcile: Reconciler): T
 }
 
-export function createProducer(draftSpecs: DraftSpec<any>[]): Producer {
-  return function produce(operation, original) {
-    const draftStorage = new Map()
-    const deepClone = createDeepClone(draftSpecs, draftStorage)
-    const deepReconcile = createDeepReconcile(draftSpecs, draftStorage)
-
-    return deepReconcile(operation(deepClone(original)))
-  }
-}
-
-export const arraySpec: DraftSpec<any[]> = {
-  isMember: Array.isArray,
-  clone(original, clone) {
-    const draft = new Array(original.length)
-    for (let i = 0; i < original.length; i++) {
-      draft[i] = clone(original[i])
-    }
-    return draft
-  },
-  reconcile(original, draft, reconcile) {
-    let dirty = false
-    for (let i = 0; i < draft.length; i++) {
-      draft[i] = reconcile(draft[i])
-
-      if (draft[i] !== original[i]) {
-        dirty = false
-      }
-    }
-    if (!dirty && draft.length === original.length) {
-      return original
-    }
-    return draft
-  },
-}
-
-export const objectSpec: DraftSpec<Object> = {
-  isMember(maybeObject): maybeObject is Object {
-    return (
-      typeof maybeObject === 'object' &&
-      maybeObject !== null &&
-      maybeObject.constructor === Object
-    )
-  },
-  clone(original: any, clone) {
-    const draft = {} as any
-    const keys = Object.keys(original)
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i]
-      draft[key] = clone(original[key])
-    }
-    return draft
-  },
-  reconcile(original: any, draft: any, reconcile) {
-    let dirty = false
-    const keys = Object.keys(draft)
-    for (let i = 0; i < keys.length; i++) {
-      const key = keys[i]
-      draft[key] = reconcile(draft[key])
-      if (original[key] !== draft[key]) {
-        dirty = true
-      }
-    }
-    if (!dirty && Object.keys(original).length === keys.length) {
-      return original
-    }
-    return draft
-  },
-}
-
 function createDeepClone(
   draftSpecs: DraftSpec<any>[],
   draftStorage: Map<unknown, unknown>,
@@ -123,4 +54,74 @@ function createDeepReconcile(
 
     return draft
   }
+}
+
+export function createProducer(draftSpecs: DraftSpec<any>[]): Producer {
+  return function produce(operation, original) {
+    const draftStorage = new Map()
+    const deepClone = createDeepClone(draftSpecs, draftStorage)
+    const deepReconcile = createDeepReconcile(draftSpecs, draftStorage)
+
+    return deepReconcile(operation(deepClone(original)))
+  }
+}
+
+export const arraySpec: DraftSpec<any[]> = {
+  isMember: Array.isArray,
+  clone(original, clone) {
+    const draft = new Array(original.length)
+    for (let i = 0; i < original.length; i++) {
+      draft[i] = clone(original[i])
+    }
+    return draft
+  },
+  reconcile(original, draft, reconcile) {
+    let dirty = false
+    for (let i = 0; i < draft.length; i++) {
+      draft[i] = reconcile(draft[i])
+
+      if (draft[i] !== original[i]) {
+        dirty = false
+      }
+    }
+    if (!dirty && draft.length === original.length) {
+      return original
+    }
+    return draft
+  },
+}
+
+export const objectSpec: DraftSpec<Record<string, any>> = {
+  // eslint-disable-next-line @typescript-eslint/ban-types
+  isMember(maybeObject): maybeObject is Object {
+    return (
+      typeof maybeObject === 'object' &&
+      maybeObject !== null &&
+      maybeObject.constructor === Object
+    )
+  },
+  clone(original: any, clone) {
+    const draft = {} as any
+    const keys = Object.keys(original)
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      draft[key] = clone(original[key])
+    }
+    return draft
+  },
+  reconcile(original: any, draft: any, reconcile) {
+    let dirty = false
+    const keys = Object.keys(draft)
+    for (let i = 0; i < keys.length; i++) {
+      const key = keys[i]
+      draft[key] = reconcile(draft[key])
+      if (original[key] !== draft[key]) {
+        dirty = true
+      }
+    }
+    if (!dirty && Object.keys(original).length === keys.length) {
+      return original
+    }
+    return draft
+  },
 }

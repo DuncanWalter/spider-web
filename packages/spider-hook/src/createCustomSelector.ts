@@ -6,8 +6,8 @@ type SourceSlices<Sources extends Selector[]> = {
 }
 
 export function createCustomSelector<Sources extends Selector[], Result>(
-  sources: Sources,
   mapping: (...slices: SourceSlices<Sources>) => Slice<Result>,
+  sources: Sources,
 ): CustomSelector<Result> {
   return { sources, mapping }
 }

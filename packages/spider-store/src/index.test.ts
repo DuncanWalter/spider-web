@@ -9,7 +9,7 @@ test('Diamond case handling is efficient and stable', async done => {
   let subscriptionCalls = 0
   let value = 0
 
-  function reducer(i: number = 0) {
+  function reducer(i = 0) {
     reducerCalls += 1
     return ++i
   }
@@ -52,7 +52,7 @@ test('Diamond case handling is efficient and stable', async done => {
 
 test('Calls to dispatch are flattened', done => {
   const { dispatch, wrapReducer } = createStore()
-  function reducer(i: number = 0) {
+  function reducer(i = 0) {
     return i + 1
   }
   const counter = wrapReducer(reducer)
@@ -81,6 +81,7 @@ test('Arbitrary reducers with known action types can be used', () => {
     type: 'test-action-2'
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   function reducer(state = 1, action: TestAction1 | TestAction2) {
     return state + 1
   }
@@ -103,7 +104,7 @@ test('Middleware is properly applied and run', () => {
 
   let reducerCalls = 0
 
-  function reducer(i: number = 0) {
+  function reducer(i = 0) {
     reducerCalls += 1
     return ++i
   }

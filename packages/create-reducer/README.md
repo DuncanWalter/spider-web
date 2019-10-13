@@ -222,7 +222,7 @@ dispatch(fooActions.add({ id: 2, name: 'bill' }))
 dispatch(fooActions.add({ id: 2, name: 'bill' }))
 
 // entity's reference count is decremented,
-// but it was referenced twice to it is not
+// but it was referenced twice so it is not
 // removed
 dispatch(fooActions.remove({ id: 2, name: 'bill' }))
 
@@ -243,7 +243,3 @@ dispatch(fooActions.update({ id: 2, name: 'ted' }))
 #### Does `create-reducer` come with support for thunk and/or async actions?
 
 Yes and no? This library only deals with plain object actions. However, these actions can be dispatched freely from within other actionlike abstractions. these features have more to do with the dispatch function than with the reducers, so `create-reducer` opts not to deal with them internally.
-
-#### Why do the type signatures of the generated action creators include a `reducers` prop in the returned actions?
-
-That prop is there for compatibility with `@dwalter/spider-store`, which this library was originally spawned from. The `reducers` prop is in a prototype of the generated actions, so it won't show up in `redux-dev-tools` or break any behaviors of `redux`.
