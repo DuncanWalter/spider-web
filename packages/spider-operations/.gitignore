@@ -1,8 +1,0 @@
-node_modules
-.*
-lib/*.js
-lib/*.es
-*gz
-!rollup.config.js
-!.gitignore
-types

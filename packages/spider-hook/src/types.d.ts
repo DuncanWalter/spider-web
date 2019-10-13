@@ -5,7 +5,7 @@ import {
   ActionList,
   Store as InnerStore,
   Dispatch as InnerDispatch,
-  Resolve as InnerResolve,
+  Peek as InnerPeek,
   WrapReducer,
   createStore,
 } from '@dwalter/spider-store'
@@ -19,27 +19,27 @@ export type Selector<T = any> = Reducer<T, any> | Slice<T> | CustomSelector<T>
 
 export interface SideEffect<T = any> {
   source: Selector<T>
-  effect: (input: T, dispatch: Dispatch, resolve: Resolve) => unknown
+  effect: (input: T, dispatch: Dispatch, peek: Peek) => unknown
   locks: WeakMap<Dispatch, () => () => void>
 }
 
-export interface Resolve extends InnerResolve {
+export interface Peek extends InnerPeek {
   <V>(selector: Selector<V>): V
 }
 
 export interface Dispatch extends InnerDispatch {
-  <Result>(thunk: (dispatch: Dispatch, resolve: Resolve) => Result): Result
+  <Result>(thunk: (dispatch: Dispatch, peek: Peek) => Result): Result
 }
 
 export interface Store {
   getSlice<T>(source: Selector<T>): Slice<T>
   dispatch: Dispatch
-  resolve: Resolve
+  peek: Peek
   wrapReducer: WrapReducer
 }
 
 export interface ThunkAction<Result = any> {
-  (dispatch: Dispatch, resolve: Resolve): Result
+  (dispatch: Dispatch, peek: Peek): Result
 }
 
 export interface ActionCreator<Args extends any[] = any[]> {

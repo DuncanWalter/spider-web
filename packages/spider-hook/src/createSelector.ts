@@ -9,8 +9,8 @@ type SelectorInputs<Selectors extends Selector[]> = {
 }
 
 export function createSelector<Selectors extends Selector[], Result>(
-  selectors: Selectors,
   mapping: (...args: SelectorInputs<Selectors>) => Result,
+  ...selectors: Selectors
 ): CustomSelector<Result> {
   return createCustomSelector(selectors, (...slices) => {
     if (!slices.length) {

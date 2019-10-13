@@ -2,9 +2,13 @@ import { Slice } from './slice'
 import { SwapSet, Subscription } from './SwapSet'
 import { StateSlice } from './createStore'
 
-export interface Resolve {
+type Maybe<T> = T | null | undefined | false
+
+export interface Peek {
   <V>(wrapper: Slice<V> | Reducer<V, any>): V
 }
+
+export type Dispatchable = Maybe<Action | ActionList>
 
 /**
  * Can be extended using declarations in order
@@ -12,11 +16,11 @@ export interface Resolve {
  * call signature of dispatch.
  */
 export interface RawDispatch {
-  (action: Action | ActionList): void
+  (action: Dispatchable): void
 }
 
 export interface Dispatch extends RawDispatch {
-  <Result>(thunk: (dispatch: Dispatch, resolve: Resolve) => Result): Result
+  <Result>(thunk: (dispatch: Dispatch, peek: Peek) => Result): Result
 }
 
 export interface RawWrapReducer {
@@ -32,7 +36,7 @@ export interface Action {
   reducers: Reducer<any, any>[]
 }
 
-export interface ActionList extends Array<ActionList | Action> {}
+export interface ActionList extends Array<Maybe<ActionList | Action>> {}
 
 export interface Reducer<State, A extends Action = Action> {
   (state: State | undefined, action: A): State
@@ -40,13 +44,13 @@ export interface Reducer<State, A extends Action = Action> {
 
 export interface Store {
   dispatch: Dispatch
-  resolve: Resolve
+  peek: Peek
   wrapReducer: WrapReducer
 }
 
 export interface MiddlewareAPI {
   dispatch: RawDispatch
-  resolve: Resolve
+  peek: Peek
   wrapReducer: RawWrapReducer
 }
 
@@ -62,7 +66,7 @@ export interface Network {
 
 export interface RawStore extends Store {
   dispatch: Dispatch
-  resolve: Resolve
+  peek: Peek
   wrapReducer: RawWrapReducer
   slices: Map<Reducer<any>, StateSlice<any>>
   network: Network

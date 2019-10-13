@@ -9,7 +9,7 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
 
   const shouldUpdate = useShouldUpdate(deps)
 
-  const { dispatch, resolve, getSlice } = useContext(StoreContext)
+  const { dispatch, peek, getSlice } = useContext(StoreContext)
 
   useEffect(
     shouldUpdate
@@ -20,7 +20,7 @@ export function useSideEffect<T>(sideEffect: SideEffect<T>) {
               dispatch,
               semaphore(() => {
                 const subscription = slice.subscribe(value =>
-                  sideEffect.effect(value, dispatch, resolve),
+                  sideEffect.effect(value, dispatch, peek),
                 )
                 return () => slice.unsubscribe(subscription)
               }),

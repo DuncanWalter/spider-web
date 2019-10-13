@@ -1,6 +1,6 @@
 import { Slice, createSlice } from './slice'
 import { unstack } from './unstack'
-import { resolveSlice } from './resolveSlice'
+import { peekSlice } from './peekSlice'
 import { isFunction } from './isFunction'
 import {
   Reducer,
@@ -8,6 +8,7 @@ import {
   Action,
   ActionList,
   Dispatch,
+  Dispatchable,
   Middleware,
   RawDispatch,
   MiddlewareAPI,
@@ -16,8 +17,24 @@ import {
 import { createNetwork } from './createNetwork'
 
 export interface StateSlice<V> extends Slice<V> {
-  updateState(action: Action): void
-  injectState(state: V): void
+  nextState(state: V, actions: Action[]): V
+  setState(state: V): void
+}
+
+function enumerateActions(actions: Dispatchable): Action[] {
+  const allActions = [] as Action[]
+
+  if (!actions) return allActions
+
+  if (Array.isArray(actions)) {
+    for (let action of actions) {
+      allActions.push.apply(allActions, enumerateActions(action))
+    }
+  } else {
+    allActions.push(actions)
+  }
+
+  return allActions
 }
 
 export function createStore(...middlewares: Middleware[]): Store {
@@ -30,7 +47,7 @@ export function createStore(...middlewares: Middleware[]): Store {
     (acc, middleware) => Object.assign(acc, middleware(store, acc)),
     {
       wrapReducer: createWrapReducer(store),
-      resolve: createResolve(store),
+      peek: createPeek(store),
       dispatch: createRawDispatch(store),
     },
   )
@@ -46,22 +63,33 @@ const initAction = { type: '@store/init', reducers: [] }
 
 function createRawDispatch(store: RawStore) {
   // apply state updates and mark slices with changed content
-  function executeDispatch(actions: Action | ActionList) {
-    if (Array.isArray(actions)) {
-      for (let action of actions) {
-        executeDispatch(action)
-      }
-    } else {
-      for (let reducer of actions.reducers) {
-        const slice = store.wrapReducer(reducer)
-        slice.updateState(actions)
-      }
-    }
+  function executeDispatch(actions: Action[], reducer: Reducer<any>) {
+    const slice = store.wrapReducer(reducer)
+    const oldState = slice.value
+    const newState = slice.nextState(oldState, actions)
+    slice.setState(newState)
   }
 
   // propagate updates from all marked slices
-  return function internalDispatch(actions: Action | ActionList) {
-    executeDispatch(actions)
+  return function internalDispatch(actions: Dispatchable) {
+    const receivedActions = enumerateActions(actions)
+
+    const actionsByReducer = new Map<Reducer<any>, Action[]>()
+
+    for (const action of receivedActions) {
+      for (const reducer of action.reducers) {
+        let actionsTargetingReducer = actionsByReducer.get(reducer)
+
+        if (!actionsTargetingReducer) {
+          actionsTargetingReducer = [] as Action[]
+          actionsByReducer.set(reducer, actionsTargetingReducer)
+        }
+
+        actionsTargetingReducer.push(action)
+      }
+    }
+
+    actionsByReducer.forEach(executeDispatch)
     store.network.propagate()
   }
 }
@@ -75,19 +103,19 @@ function createDispatch(store: Store, rawDispatch: RawDispatch) {
     actionable: Action | ActionList | Function,
   ): unknown {
     if (isFunction(actionable)) {
-      return actionable(dispatch, store.resolve)
+      return actionable(dispatch, store.peek)
     } else {
       unstackedDispatch(actionable)
     }
   } as Dispatch
 }
 
-function createResolve(store: Store) {
-  return function resolve<V>(wrapper: Slice<V> | Reducer<V>) {
+function createPeek(store: Store) {
+  return function peek<V>(wrapper: Slice<V> | Reducer<V>) {
     if (isFunction(wrapper)) {
-      return resolveSlice(store.wrapReducer(wrapper))
+      return peekSlice(store.wrapReducer(wrapper))
     } else {
-      return resolveSlice(wrapper)
+      return peekSlice(wrapper)
     }
   }
 }
@@ -103,21 +131,19 @@ function createWrapReducer(store: RawStore) {
     const slice = createSlice(
       store.network,
       [],
-      _ => state,
+      () => state,
       state,
     ) as StateSlice<State>
 
-    slice.updateState = function updateState(action: Action) {
-      const oldState = state
-      const newState = (state = reducer(state, action))
-      if (oldState !== newState) {
-        slice.push()
+    slice.nextState = function updateState(state: State, actions: Action[]) {
+      let newState = state
+      for (const action of actions) {
+        newState = reducer(newState, action)
       }
+      return newState
     }
 
-    slice.injectState = function injectState(
-      newState = reducer(undefined, initAction),
-    ) {
+    slice.setState = function injectState(newState: State) {
       if (state !== newState) {
         state = newState
         slice.push()

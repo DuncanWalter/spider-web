@@ -16,8 +16,9 @@ test('Testing the useAction hook', async done => {
   const counter = (state = 0) => state + 1
 
   const getDoubleCounter = createSelector(
-    [counter, counter],
     (x, y) => x + y,
+    counter,
+    counter,
   )
 
   let lastValue = NaN

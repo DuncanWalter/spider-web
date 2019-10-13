@@ -20,9 +20,9 @@ test('Diamond case handling is efficient and stable', async done => {
   expect(reducerCalls).toBe(1)
   expect(subscriptionCalls).toBe(0)
 
-  const left = joinSlices(counter, i => i)
-  const right = joinSlices(counter, i => i)
-  const union = joinSlices(left, right, (l, r) => l + r)
+  const left = joinSlices(i => i, counter)
+  const right = joinSlices(i => i, counter)
+  const union = joinSlices((l, r) => l + r, left, right)
 
   union.subscribe(u => {
     subscriptionCalls++

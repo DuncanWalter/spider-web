@@ -2,14 +2,14 @@ import { createSlice, isSlice } from './slice'
 import { isFunction } from './isFunction'
 import { SwapSet } from './SwapSet'
 import { createNetwork } from './createNetwork'
-import { resolveSlice } from './resolveSlice'
+import { peekSlice } from './peekSlice'
 
 export const utils = {
   createSlice,
   isSlice,
   isFunction,
   SwapSet,
-  resolveSlice,
+  peekSlice,
   createNetwork,
 }
 

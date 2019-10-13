@@ -35,13 +35,6 @@ export const noop: never = (() => {
 
 export const constant: [] = []
 
-export function tuple<Args extends any[]>(...args: Args): Args {
-  // Used to construct selectors because the first argument is
-  // an array and will not be properly interpreted as a tuple
-  // by default.
-  return args
-}
-
 export function semaphore(fun: () => () => void): () => () => void {
   // Prevents pub-sub objects from forming multiple of the same
   // subscription.

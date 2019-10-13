@@ -51,7 +51,7 @@
     "react": "^16.8.6"
   },
   "dependencies": {
-    "@dwalter/spider-store": "^1.5.0"
+    "@dwalter/spider-store": "1.6.0"
   },
   "devDependencies": {
     "@dwalter/create-reducer": "1.0.1",

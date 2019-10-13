@@ -7,10 +7,10 @@ import { Selector } from './types'
 export function useSelector<T>(selector: Selector<T>): T {
   const shouldUpdate = useShouldUpdate([selector])
 
-  const { resolve, getSlice } = useContext(StoreContext)
+  const { peek, getSlice } = useContext(StoreContext)
 
   const [value, setValue] = useState(
-    shouldUpdate ? () => resolve(getSlice(selector)) : noop,
+    shouldUpdate ? () => peek(getSlice(selector)) : noop,
   )
 
   useEffect(

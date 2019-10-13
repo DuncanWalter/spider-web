@@ -4,8 +4,9 @@ import {
   createStore,
   Store as InnerStore,
   Slice,
-  utils,
   WrapReducer,
+  utils,
+  Dispatchable,
 } from '@dwalter/spider-store'
 
 import { useShouldUpdate, noop } from './utils'
@@ -21,7 +22,7 @@ function contextError(): any {
 export const StoreContext = React.createContext<Store>({
   wrapReducer: contextError,
   dispatch: contextError,
-  resolve: contextError,
+  peek: contextError,
   getSlice: contextError,
 })
 
@@ -46,21 +47,21 @@ export function Provider({
 function createStoreContextContent(
   configureStore: (storeFactory: CreateStore) => InnerStore,
 ): Store {
-  const { wrapReducer, dispatch, resolve } = configureStore(createStore)
+  const { wrapReducer, dispatch, peek } = configureStore(createStore)
 
   const getSlice = createGetSlice(wrapReducer)
 
-  function hookResolve<T>(selector: Selector<T>) {
+  function hookPeek<T>(selector: Selector<T>) {
     if (utils.isSlice<T>(selector)) {
-      return resolve(selector)
+      return peek(selector)
     } else {
-      return resolve(getSlice(selector))
+      return peek(getSlice(selector))
     }
   }
 
-  function hookDispatch(action: BindableAction) {
-    if (typeof action === 'function') {
-      return action(hookDispatch, hookResolve)
+  function hookDispatch(action: BindableAction | Dispatchable) {
+    if (utils.isFunction(action)) {
+      return action(hookDispatch, hookPeek)
     } else {
       dispatch(action)
     }
@@ -68,7 +69,7 @@ function createStoreContextContent(
 
   return {
     wrapReducer,
-    resolve: hookResolve,
+    peek: hookPeek,
     dispatch: hookDispatch,
     getSlice,
   }

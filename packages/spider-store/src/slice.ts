@@ -1,7 +1,7 @@
 import { SwapSet, Subscription } from './SwapSet'
 import { Network } from './types'
 
-type ValueMap<Slices extends __Slice__[]> = {
+export type ValueMap<Slices extends __Slice__[]> = {
   [K in keyof Slices]: Slices[K] extends __Slice__<infer Value> ? Value : never
 }
 

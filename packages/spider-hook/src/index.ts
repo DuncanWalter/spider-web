@@ -2,10 +2,10 @@ export { createSelector } from './createSelector'
 export { createSideEffect } from './createSideEffect'
 export { forkSelector } from './forkSelector'
 export { Provider } from './Provider'
-export { tuple } from './utils'
 export { useDispatch } from './useDispatch'
 export { useSelector } from './useSelector'
 export { useSideEffect } from './useSideEffect'
+export { useShouldUpdate } from './utils'
 
 export * from './types'
 
@@ -21,7 +21,6 @@ import { utils as storeUtils, createStore } from '@dwalter/spider-store'
 import { createCustomSelector } from './createCustomSelector'
 import { useStore } from './useStore'
 import { StoreContext } from './Provider'
-import { useShouldUpdate } from './utils'
 
 /**
  * powerful utils are provided for tinkering,
@@ -33,5 +32,4 @@ export const utils = {
   useStore,
   StoreContext,
   createStore,
-  useShouldUpdate,
 }
