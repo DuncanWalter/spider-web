@@ -59,7 +59,7 @@ test('Testing the useAction hook', async done => {
     </Provider>,
   )
 
-  const component = getByTestId('counter')
+  const component = getByTestId('counter') as HTMLElement
   expect(component.textContent).toBe('2')
 
   // Rerendering will force effects to run.

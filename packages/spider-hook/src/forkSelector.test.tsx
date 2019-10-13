@@ -48,7 +48,7 @@ test('Testing the Fork component', async done => {
     </Provider>,
   )
 
-  const component = getByTestId('collection')
+  const component = getByTestId('collection') as HTMLElement
   expect(component.children.length).toBe(2)
   expect(collectionRenderCount).toBe(1)
   expect(itemRenderCount).toBe(2)
