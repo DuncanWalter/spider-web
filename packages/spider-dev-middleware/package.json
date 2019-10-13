@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/spider-dev-middleware",
-  "version": "2.0.1",
+  "version": "2.0.3",
   "sideEffects": false,
   "description": "developer middleware for spider-store",
   "keywords": [
