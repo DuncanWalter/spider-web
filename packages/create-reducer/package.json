@@ -1,6 +1,6 @@
 {
   "name": "@dwalter/create-reducer",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "sideEffects": false,
   "description": "reusable reducer patterns and helpers",
   "keywords": [
