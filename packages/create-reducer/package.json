@@ -1,13 +1,13 @@
 {
-  "name": "@dwalter/spider-store",
-  "version": "1.7.0",
+  "name": "@dwalter/create-reducer",
+  "version": "2.0.0",
   "sideEffects": false,
-  "description": "waste free state management",
+  "description": "reusable reducer patterns and helpers",
   "keywords": [
-    "state",
-    "hooks",
-    "observable",
-    "store"
+    "reducer",
+    "action creator",
+    "utility",
+    "mixin"
   ],
   "main": "lib/index.js",
   "module": "lib/index.es.js",
@@ -21,13 +21,16 @@
     "prepublishOnly": "npm run build",
     "build": "rollup -c"
   },
-  "repository": "https://github.com/DuncanWalter/spider-web/tree/master/packages/spider-store",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DuncanWalter/create-reducer.git"
+  },
   "author": "Duncan Walter",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/DuncanWalter/spider-web/issues"
+    "url": "https://github.com/DuncanWalter/create-reducer/issues"
   },
-  "homepage": "https://github.com/DuncanWalter/spider-web/packages/spider-store#readme",
+  "homepage": "https://github.com/DuncanWalter/create-reducer#readme",
   "jest": {
     "transform": {
       "^.+\\.ts$": "ts-jest"
@@ -37,8 +40,5 @@
       "ts",
       "js"
     ]
-  },
-  "devDependencies": {
-    "@dwalter/create-reducer": "1.0.1"
   }
 }
