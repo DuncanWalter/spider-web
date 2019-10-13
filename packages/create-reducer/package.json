@@ -42,6 +42,6 @@
     ]
   },
   "dependencies": {
-    "@dwalter/spider-store": "2.0.4"
+    "@dwalter/spider-store": "^2.0.4"
   }
 }

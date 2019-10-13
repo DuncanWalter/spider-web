@@ -39,6 +39,6 @@
     ]
   },
   "devDependencies": {
-    "@dwalter/create-reducer": "2.0.4"
+    "@dwalter/create-reducer": "^2.0.4"
   }
 }
